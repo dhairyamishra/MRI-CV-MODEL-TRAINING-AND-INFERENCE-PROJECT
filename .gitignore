@@ -1,6 +1,7 @@
 # # Dataset directories
 kaggle_cache/
-data/
+# data/
+/data
 # datasets/
 *.jpg
 *.jpeg
