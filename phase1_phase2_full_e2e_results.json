@@ -1,0 +1,81 @@
+{
+  "timestamp": "2025-12-03 23:48:58",
+  "phase1_tests": {
+    "Data Download": {
+      "status": "PASSED",
+      "message": "Skipped (data exists): 154 tumor, 91 no tumor"
+    },
+    "Data Preprocessing": {
+      "status": "PASSED",
+      "message": "Using existing 245 preprocessed files"
+    },
+    "Data Splitting": {
+      "status": "PASSED",
+      "message": "Using existing splits: 171 train, 37 val, 37 test"
+    },
+    "Dataset Loading": {
+      "status": "PASSED",
+      "message": "Loaded 171 samples, {'count': 107, 'percentage': 62.57309941520468} tumor, {'count': 64, 'percentage': 37.42690058479532} no tumor"
+    },
+    "Transform Pipeline": {
+      "status": "PASSED",
+      "message": "Tested 4 transform presets: train, val, strong, light"
+    },
+    "DataLoader Creation": {
+      "status": "PASSED",
+      "message": "Created loaders: 171 train, 37 val, 37 test"
+    }
+  },
+  "phase2_tests": {
+    "Model Creation": {
+      "status": "PASSED",
+      "message": "EfficientNet: 4,009,534 params, ConvNeXt: 27,817,058 params"
+    },
+    "Mini Training": {
+      "status": "PASSED",
+      "message": "Trained 2 epochs, final acc=47.50%"
+    },
+    "Model Evaluation": {
+      "status": "PASSED",
+      "message": "Acc=62.16%, AUC=0.470"
+    },
+    "Grad-CAM Generation": {
+      "status": "PASSED",
+      "message": "Generated (8, 8) heatmap with overlay"
+    },
+    "Inference Pipeline": {
+      "status": "PASSED",
+      "message": "Single: Tumor (69.48%), Batch: 3 images"
+    },
+    "API Endpoints": {
+      "status": "PASSED",
+      "message": "API working, model: EfficientNet-B0"
+    },
+    "Full Integration": {
+      "status": "PASSED",
+      "message": "\u2717 Incorrect prediction with 69.48% confidence, Grad-CAM generated"
+    }
+  },
+  "overall_status": "PASSED",
+  "summary": {
+    "phase1": {
+      "total": 6,
+      "passed": 6,
+      "failed": 0,
+      "success_rate": 100.0
+    },
+    "phase2": {
+      "total": 7,
+      "passed": 7,
+      "failed": 0,
+      "success_rate": 100.0
+    },
+    "overall": {
+      "total": 13,
+      "passed": 13,
+      "failed": 0,
+      "success_rate": 100.0,
+      "elapsed_time": 8.887344360351562
+    }
+  }
+}
