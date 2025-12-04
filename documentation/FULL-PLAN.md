@@ -68,22 +68,19 @@ High-level phases for the SliceWise project. Check items off as you go.
 ## Phase 1 — Data Acquisition & 2D Preprocessing
 
 - [x] **Download + organize datasets**
-  - [ ] BraTS 2020–2021:
+  - [x] BraTS 2020–2021:
     - [x] Document how to request/download (TCIA/Kaggle).
     - [x] Create `DATA_README.md` explaining access and licenses.
+    - [x] Downloaded BraTS 2020 dataset (988 patients, ~80 GB)
+    - [x] Created `scripts/download_brats_data.py` for automated download
+    - [x] Created `scripts/verify_brats_structure.py` for structure verification
+    - [x] Created `scripts/diagnose_brats_data.py` for diagnostics
+    - [x] Created comprehensive `documentation/BRATS_DATASET_GUIDE.md` (359 lines)
   - [x] Kaggle Brain MRI (yes/no):
     - [x] Download dataset.
     - [x] Store under `data/raw/kaggle_brain_mri/`.
     - [x] Created `scripts/download_kaggle_data.py` for automated download
     - [x] Verified download (245 images: 154 tumor, 91 no tumor)
-
-- [x] **Define unified data layout**
-  - [x] Decide on processed structure, e.g.:
-    - [x] `data/processed/brats2d/{split}/{patient_id}_{slice_idx}.npz`
-    - [x] `data/processed/kaggle/{split}/{id}.npz`
-  - [x] Ensure `.npz` contains `image`, `mask` (if any), and metadata.
-  - [x] Created `src/data/preprocess_kaggle.py` for Kaggle preprocessing
-  - [x] Preprocessed all 245 images to .npz format (256×256, normalized)
 
 - [ ] **Implement BraTS 3D → 2D slice extraction**
   - [ ] Create `src/data/preprocess_brats_2d.py`:
@@ -136,7 +133,7 @@ High-level phases for the SliceWise project. Check items off as you go.
 
 ---
 
-## Phase 2 — Classification MVP (Kaggle Yes/No) ✅ COMPLETE
+## Phase 2 — Classification MVP (Kaggle Yes/No) 
 
 - [x] **Implement classifier model**
   - [x] `src/models/classifier.py`:
@@ -193,20 +190,29 @@ High-level phases for the SliceWise project. Check items off as you go.
 
 ---
 
-## Phase 3 — Baseline 2D Segmentation Pipeline (U-Net)
+## Phase 3 — Baseline 2D Segmentation Pipeline (U-Net) 
 
-- [ ] **Implement U-Net architecture**
-  - [ ] `src/models/unet2d.py`:
-    - [ ] Implement configurable 2D U-Net, or wrap MONAI’s UNet.
-    - [ ] Parameters: `in_channels`, `out_channels`, `base_filters`, `depth`.
+- [x] **Implement U-Net architecture**
+  - [x] `src/models/unet2d.py`:
+    - [x] Implement configurable 2D U-Net (352 lines)
+    - [x] Parameters: `in_channels`, `out_channels`, `base_filters`, `depth`
+    - [x] Encoder-decoder with skip connections
+    - [x] Bilinear or transposed conv upsampling
+    - [x] Binary and multi-class segmentation support
+    - [x] 31.4M parameters (standard config: 64 base filters, depth 4)
+    - [x] Tested: forward pass, gradient flow, multiple input sizes
+    - [x] Factory function `create_unet()` for easy instantiation
 
-- [ ] **Implement loss functions**
-  - [ ] `src/training/losses.py`:
-    - [ ] Dice loss.
-    - [ ] BCE with logits.
-    - [ ] Combined Dice + BCE.
-    - [ ] Tversky loss (configurable α, β).
-  - [ ] Make loss type selectable via YAML config.
+- [x] **Implement loss functions**
+  - [x] `src/training/losses.py` (396 lines):
+    - [x] Dice loss
+    - [x] BCE with logits
+    - [x] Combined Dice + BCE
+    - [x] Tversky loss (configurable α, β for FP/FN weighting)
+    - [x] Focal loss (focuses on hard examples)
+    - [x] Factory function `get_loss_function()` for easy selection
+    - [x] All losses tested with backward pass
+  - [ ] Make loss type selectable via YAML config
 
 - [ ] **Segmentation training script**
   - [ ] `src/training/train_seg2d.py`:
