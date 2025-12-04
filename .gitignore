@@ -1,7 +1,7 @@
-# Dataset directories
+# # Dataset directories
 kaggle_cache/
 data/
-datasets/
+# datasets/
 *.jpg
 *.jpeg
 *.png
@@ -10,104 +10,104 @@ datasets/
 *.tiff
 *.tif
 
-# But allow Python source files in src/
-!src/**/*.py
-!src/**/__init__.py
+# # But allow Python source files in src/
+# !src/**/*.py
+# !src/**/__init__.py
 
-# Model checkpoints and weights
-*.pth
-*.pt
-*.ckpt
-*.h5
-*.pb
-*.onnx
+# # Model checkpoints and weights
+# *.pth
+# *.pt
+# *.ckpt
+# *.h5
+# *.pb
+# *.onnx
 checkpoints/
 saved_models/
 weights/
 model_weights/
 
-# Allow src/models/ directory (source code)
-!src/models/
-!src/models/**/*.py
+# # Allow src/models/ directory (source code)
+# !src/models/
+# !src/models/**/*.py
 
-# Jupyter Notebook checkpoints
+# # Jupyter Notebook checkpoints
 .ipynb_checkpoints/
 */.ipynb_checkpoints/*
 
-# Python cache
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
+# # Python cache
+# __pycache__/
+# *.py[cod]
+# *$py.class
+# *.so
+# .Python
+# build/
+# develop-eggs/
+# dist/
+# downloads/
+# eggs/
+# .eggs/
+# lib/
+# lib64/
+# parts/
+# sdist/
+# var/
+# wheels/
+# *.egg-info/
+# .installed.cfg
+# *.egg
 
-# Virtual environments
+# # Virtual environments
 venv/
 env/
 ENV/
 .venv
 
-# IDE settings
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-.DS_Store
+# # IDE settings
+# .vscode/
+# .idea/
+# *.swp
+# *.swo
+# *~
+# .DS_Store
 
-# Logs and databases
-*.log
-*.sql
-*.sqlite
-*.db
+# # Logs and databases
+# *.log
+# *.sql
+# *.sqlite
+# *.db
 
-# TensorBoard logs
-runs/
-logs/
-tensorboard/
+# # TensorBoard logs
+# runs/
+# logs/
+# tensorboard/
 
-# Large files (>100MB)
-*.zip
-*.tar
-*.tar.gz
-*.rar
-*.7z
+# # Large files (>100MB)
+# *.zip
+# *.tar
+# *.tar.gz
+# *.rar
+# *.7z
 
-# Temporary files
+# # Temporary files
 *.tmp
 *.temp
 *.cache
 
-# OS generated files
-Thumbs.db
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Desktop.ini
+# # OS generated files
+# Thumbs.db
+# .DS_Store
+# .DS_Store?
+# ._*
+# .Spotlight-V100
+# .Trashes
+# ehthumbs.db
+# Desktop.ini
 
-# PyTorch specific
+# # PyTorch specific
 lightning_logs/
 wandb/
 
-# Backup files
-*.bak
-*.backup
-*~
+# # Backup files
+# *.bak
+# *.backup
+# *~
