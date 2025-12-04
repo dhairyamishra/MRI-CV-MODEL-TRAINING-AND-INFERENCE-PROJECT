@@ -86,10 +86,7 @@ def main():
     print("Starting backend...")
     backend_process = subprocess.Popen(
         backend_cmd,
-        cwd=str(project_root),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        universal_newlines=True
+        cwd=str(project_root)
     )
     
     # Wait for backend to start
@@ -111,10 +108,7 @@ def main():
     print("Starting frontend...")
     frontend_process = subprocess.Popen(
         frontend_cmd,
-        cwd=str(project_root),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        universal_newlines=True
+        cwd=str(project_root)
     )
     
     print("\n✓ Both servers started successfully!")

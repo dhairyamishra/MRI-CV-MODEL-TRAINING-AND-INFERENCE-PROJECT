@@ -277,7 +277,7 @@ def render_classification_tab():
         
         if uploaded_file:
             image = Image.open(uploaded_file)
-            st.image(image, caption="Uploaded Image", use_container_width=True)
+            st.image(image, caption="Uploaded Image", width=300)
             st.caption(f"Size: {image.size[0]}×{image.size[1]} | Mode: {image.mode}")
     
     with col2:
@@ -387,10 +387,10 @@ def render_classification_tab():
             
             col1, col2 = st.columns(2)
             with col1:
-                st.image(image, caption="Original", use_container_width=True)
+                st.image(image, caption="Original", width=400)
             with col2:
                 gradcam_img = base64_to_image(result['gradcam_overlay'])
-                st.image(gradcam_img, caption="Grad-CAM Overlay", use_container_width=True)
+                st.image(gradcam_img, caption="Grad-CAM Overlay", width=400)
         
         # Clear button
         if st.button("🔄 Analyze Another Image", key="cls_clear"):
@@ -423,7 +423,7 @@ def render_segmentation_tab():
         
         if uploaded_file:
             image = Image.open(uploaded_file)
-            st.image(image, caption="Uploaded Image", use_container_width=True)
+            st.image(image, caption="Uploaded Image", width=300)
             st.caption(f"Size: {image.size[0]}×{image.size[1]}")
     
     with col2:
@@ -510,21 +510,21 @@ def render_segmentation_tab():
         cols = st.columns(4)
         
         with cols[0]:
-            st.image(original_image, caption="Original", use_container_width=True)
+            st.image(original_image, caption="Original", width=300)
         
         with cols[1]:
             mask_img = base64_to_image(result['mask_base64'])
-            st.image(mask_img, caption="Binary Mask", use_container_width=True)
+            st.image(mask_img, caption="Binary Mask", width=300)
         
         with cols[2]:
             if result.get('probability_map_base64'):
                 prob_img = base64_to_image(result['probability_map_base64'])
-                st.image(prob_img, caption="Probability Map", use_container_width=True)
+                st.image(prob_img, caption="Probability Map", width=300)
         
         with cols[3]:
             if result.get('overlay_base64'):
                 overlay_img = base64_to_image(result['overlay_base64'])
-                st.image(overlay_img, caption="Overlay", use_container_width=True)
+                st.image(overlay_img, caption="Overlay", width=300)
         
         # Uncertainty metrics
         if result.get('uncertainty_map_base64'):
@@ -534,7 +534,7 @@ def render_segmentation_tab():
             
             with col1:
                 uncertainty_img = base64_to_image(result['uncertainty_map_base64'])
-                st.image(uncertainty_img, caption="Epistemic Uncertainty", use_container_width=True)
+                st.image(uncertainty_img, caption="Epistemic Uncertainty", width=300)
             
             with col2:
                 if result.get('metrics'):
@@ -581,7 +581,7 @@ def render_batch_tab():
             for idx, (col, file) in enumerate(zip(cols, uploaded_files[:5])):
                 with col:
                     image = Image.open(file)
-                    st.image(image, caption=file.name, use_container_width=True)
+                    st.image(image, caption=file.name, width=300)
             if len(uploaded_files) > 5:
                 st.caption(f"... and {len(uploaded_files) - 5} more")
         
@@ -719,7 +719,7 @@ def render_patient_tab():
             for idx, (col, file) in enumerate(zip(cols, uploaded_files[:5])):
                 with col:
                     image = Image.open(file)
-                    st.image(image, caption=f"Slice {idx}", use_container_width=True)
+                    st.image(image, caption=f"Slice {idx}", width=300)
             if len(uploaded_files) > 5:
                 st.caption(f"... and {len(uploaded_files) - 5} more slices")
         
