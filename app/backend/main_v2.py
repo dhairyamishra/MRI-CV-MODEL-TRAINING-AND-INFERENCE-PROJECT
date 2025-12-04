@@ -493,7 +493,9 @@ async def segment_slice(
             image_array = image_array.astype(np.float32) / 255.0
         
         # Run segmentation
-        prob_map, binary_mask = segmentation_predictor.predict_slice(image_array)
+        result = segmentation_predictor.predict_slice(image_array)
+        prob_map = result.get('prob', result['mask'])
+        binary_mask = result['mask']
         
         # Apply post-processing if requested
         if apply_postprocessing:
@@ -513,7 +515,7 @@ async def segment_slice(
             }
         
         # Calculate metrics
-        has_tumor = stats['total_area'] > 0
+        has_tumor = stats.get('final_pixels', stats.get('total_area', 0)) > 0
         tumor_probability = float(prob_map.max()) if has_tumor else 0.0
         
         # Create visualizations
@@ -528,15 +530,18 @@ async def segment_slice(
         return SegmentationResponse(
             has_tumor=has_tumor,
             tumor_probability=tumor_probability,
-            tumor_area_pixels=int(stats['total_area']),
+            tumor_area_pixels=int(stats.get('final_pixels', stats.get('total_area', 0))),
             tumor_area_mm2=None,  # Would need pixel spacing metadata
-            num_components=int(stats['num_components']),
+            num_components=int(stats.get('num_components', 0)),
             mask_base64=mask_base64,
             probability_map_base64=prob_map_base64,
             overlay_base64=overlay_base64
         )
     
     except Exception as e:
+        import traceback
+        print(f"Error in /segment endpoint: {str(e)}")
+        print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Segmentation failed: {str(e)}")
 
 
@@ -633,7 +638,9 @@ async def segment_batch(
             if image_array.max() > 1.0:
                 image_array = image_array.astype(np.float32) / 255.0
             
-            prob_map, binary_mask = segmentation_predictor.predict_slice(image_array)
+            result = segmentation_predictor.predict_slice(image_array)
+            prob_map = result.get('prob', result['mask'])
+            binary_mask = result['mask']
             binary_mask, stats = postprocess_mask(prob_map, threshold=threshold, min_object_size=min_object_size)
             
             has_tumor = stats['total_area'] > 0
@@ -699,7 +706,9 @@ async def analyze_patient_stack(
             if image_array.max() > 1.0:
                 image_array = image_array.astype(np.float32) / 255.0
             
-            prob_map, binary_mask = segmentation_predictor.predict_slice(image_array)
+            result = segmentation_predictor.predict_slice(image_array)
+            prob_map = result.get('prob', result['mask'])
+            binary_mask = result['mask']
             binary_mask, stats = postprocess_mask(prob_map, threshold=threshold, min_object_size=min_object_size)
             
             has_tumor = stats['total_area'] > 0

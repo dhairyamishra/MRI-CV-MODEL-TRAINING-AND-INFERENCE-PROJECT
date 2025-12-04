@@ -1,5 +1,5 @@
 {
-  "start_time": "2025-12-04T02:21:35.092300",
+  "start_time": "2025-12-04T02:28:14.400288",
   "phases": {
     "Phase 1": {
       "tests": [
@@ -119,16 +119,16 @@
         ],
         [
           "/segment",
-          false
+          true
         ]
       ],
-      "passed": 3,
-      "failed": 1
+      "passed": 4,
+      "failed": 0
     }
   },
   "total_tests": 21,
-  "passed_tests": 20,
-  "failed_tests": 1,
+  "passed_tests": 21,
+  "failed_tests": 0,
   "warnings": 1,
-  "end_time": "2025-12-04T02:21:44.640836"
+  "end_time": "2025-12-04T02:28:24.169894"
 }
