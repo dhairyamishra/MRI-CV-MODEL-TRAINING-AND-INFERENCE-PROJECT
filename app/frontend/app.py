@@ -52,8 +52,8 @@ st.markdown("""
         margin: 0.5rem 0;
     }
     .warning-box {
-        background-color: #fff3cd;
-        border-left: 4px solid #ffc107;
+        background-color: #000000;
+        border-left: 4px solid #000000;
         padding: 1rem;
         margin: 1rem 0;
     }

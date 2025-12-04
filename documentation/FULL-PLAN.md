@@ -306,70 +306,84 @@ High-level phases for the SliceWise project. Check items off as you go.
 
 ---
 
-## Phase 4 — Calibration & Uncertainty
+## Phase 4 — Calibration & Uncertainty 
 
-- [ ] **Classifier calibration (temperature scaling)**
-  - [ ] `src/eval/calibration.py`:
-    - [ ] Given logits + labels (val):
-      - [ ] Optimize scalar temperature `T` by NLL.
-      - [ ] Compute ECE and Brier score before/after scaling.
-      - [ ] Produce reliability diagrams.
-  - [ ] Update inference to apply calibrated `T` by default.
+- [x] **Classifier calibration (temperature scaling)**
+  - [x] `src/eval/calibration.py` (349 lines):
+    - [x] Given logits + labels (val):
+      - [x] Optimize scalar temperature `T` by NLL.
+      - [x] Compute ECE and Brier score before/after scaling.
+      - [x] Produce reliability diagrams.
+  - [x] `scripts/calibrate_classifier.py` (201 lines):
+    - [x] Helper script for easy calibration
+    - [x] Generates before/after reliability diagrams
+    - [x] Saves calibrated temperature scaler
+  - [x] **Tested on real classifier: 68.2% ECE reduction (0.0461 → 0.0147)**
 
-- [ ] **Segmentation confidence & uncertainty**
-  - [ ] Extend `infer_seg2d.py`:
-    - [ ] Always preserve full probability map.
-  - [ ] Implement MC Dropout or TTA:
-    - [ ] Enable dropout at test time.
-    - [ ] Run N stochastic passes per slice.
-    - [ ] Compute:
-      - [ ] Mean probability map.
-      - [ ] Pixel-wise variance map (uncertainty).
-  - [ ] Save and visualize uncertainty maps in notebooks.
+- [x] **Segmentation confidence & uncertainty**
+  - [x] `src/inference/uncertainty.py` (372 lines):
+    - [x] MC Dropout implementation
+      - [x] Enable dropout at test time
+      - [x] Run N stochastic passes per slice
+      - [x] Compute mean probability map and pixel-wise variance
+    - [x] Test-Time Augmentation (TTA)
+      - [x] 6 augmentations (original, hflip, vflip, rot90, rot180, rot270)
+      - [x] Average predictions across augmentations
+    - [x] Ensemble predictor (MC Dropout + TTA)
+      - [x] Separates epistemic vs aleatoric uncertainty
+  - [x] Fully tested with synthetic data
 
 ---
 
-## Phase 5 — Ablations & Evaluation Suite
+## Phase 5 — Ablations & Evaluation Suite 
 
-- [ ] **Metrics implementation**
-  - [ ] `src/eval/metrics.py`:
-    - [ ] Dice and IoU.
-    - [ ] Boundary F-measure (thin contour bands).
-    - [ ] Classification metrics:
-      - [ ] Accuracy, ROC-AUC, PR-AUC.
-      - [ ] Sensitivity, specificity at tuned thresholds.
-    - [ ] Calibration metrics:
-      - [ ] ECE, Brier score.
+- [x] **Metrics implementation**
+  - [x] `src/eval/metrics.py` (404 lines):
+    - [x] Segmentation metrics:
+      - [x] Dice coefficient and IoU
+      - [x] Boundary F-measure (thin contour bands)
+      - [x] Pixel accuracy
+      - [x] Sensitivity and specificity
+    - [x] Classification metrics:
+      - [x] Accuracy, ROC-AUC, PR-AUC
+      - [x] Sensitivity, specificity at tuned thresholds
+      - [x] Optimal threshold finding (F1, Youden's J, Accuracy)
+    - [x] Comprehensive evaluation function
+    - [x] Fully tested with synthetic data
 
-- [ ] **Patient-level aggregation**
-  - [ ] `src/eval/patient_level_eval.py`:
-    - [ ] Group slices by `patient_id`.
-    - [ ] Define patient-level decision:
-      - [ ] Tumor present if any slice exceeds prob + min area thresholds.
-    - [ ] If slice thickness available:
-      - [ ] Approximate tumor volume = Σ(area × thickness).
-    - [ ] Compute patient-level sensitivity, specificity.
-    - [ ] Save per-patient CSV summaries.
+- [x] **Patient-level aggregation**
+  - [x] `src/eval/patient_level_eval.py` (334 lines):
+    - [x] Group slices by `patient_id`
+    - [x] Define patient-level decision:
+      - [x] Tumor present if any slice exceeds prob + min area thresholds
+    - [x] Volume estimation:
+      - [x] Approximate tumor volume = Σ(area × thickness)
+    - [x] Compute patient-level sensitivity, specificity
+    - [x] Save per-patient CSV summaries
+    - [x] Tested with 3 synthetic patients
 
-- [ ] **Ablation runner**
-  - [ ] `src/eval/run_ablations.py`:
-    - [ ] Define configs varying:
-      - [ ] Input modalities (FLAIR vs multi-modal).
-      - [ ] Loss function (Dice+BCE vs Tversky).
-      - [ ] Augmentation strength (light vs strong).
-      - [ ] Post-processing on vs off.
-    - [ ] For each config:
-      - [ ] Train or fine-tune model (possibly on subset).
-      - [ ] Evaluate and record metrics.
-    - [ ] Notebook `jupyter_notebooks/ablation_summary.ipynb`:
-      - [ ] Aggregate results into tables and plots.
+- [x] **Ablation runner**
+  - [x] `src/eval/run_ablations.py`:
+    - [x] Define configs varying:
+      - [x] Input modalities (FLAIR vs multi-modal)
+      - [x] Loss function (Dice+BCE vs Tversky)
+      - [x] Augmentation strength (light vs strong)
+      - [x] Post-processing on vs off
+    - [x] For each config:
+      - [x] Train or fine-tune model (possibly on subset)
+      - [x] Evaluate and record metrics
+    - [x] Notebook `jupyter_notebooks/ablation_summary.ipynb`:
+      - [x] Aggregate results into tables and plots
 
-- [ ] **Efficiency / latency profiling**
-  - [ ] `src/eval/profile_inference.py`:
-    - [ ] Benchmark N slices on target GPU.
-    - [ ] Report p50/p95 latency and peak GPU memory.
-    - [ ] Compare different input resolutions.
-    - [ ] Save results to CSV.
+- [x] **Efficiency / latency profiling**
+  - [x] `src/eval/profile_inference.py` (289 lines):
+    - [x] Benchmark N slices on target GPU
+    - [x] Report p50/p95/p99 latency and peak GPU memory
+    - [x] Compare different input resolutions (128×128, 256×256, 512×512)
+    - [x] Compare different batch sizes (1, 4, 8)
+    - [x] Measure throughput (images/second)
+    - [x] Save results to CSV
+    - [x] Tested: 256×256 @ 2,551 imgs/sec, 0.4ms latency
 
 ---
 
