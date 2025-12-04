@@ -74,12 +74,16 @@ High-level phases for the SliceWise project. Check items off as you go.
   - [x] Kaggle Brain MRI (yes/no):
     - [x] Download dataset.
     - [x] Store under `data/raw/kaggle_brain_mri/`.
+    - [x] Created `scripts/download_kaggle_data.py` for automated download
+    - [x] Verified download (245 images: 154 tumor, 91 no tumor)
 
 - [x] **Define unified data layout**
   - [x] Decide on processed structure, e.g.:
     - [x] `data/processed/brats2d/{split}/{patient_id}_{slice_idx}.npz`
     - [x] `data/processed/kaggle/{split}/{id}.npz`
   - [x] Ensure `.npz` contains `image`, `mask` (if any), and metadata.
+  - [x] Created `src/data/preprocess_kaggle.py` for Kaggle preprocessing
+  - [x] Preprocessed all 245 images to .npz format (256×256, normalized)
 
 - [ ] **Implement BraTS 3D → 2D slice extraction**
   - [ ] Create `src/data/preprocess_brats_2d.py`:
@@ -93,31 +97,36 @@ High-level phases for the SliceWise project. Check items off as you go.
       - [ ] `mask`: `(1,H,W)`
       - [ ] metadata: `patient_id`, `slice_idx`, spacing, etc.
 
-- [ ] **Implement patient-level train/val/test split**
-  - [ ] `src/data/split_patients.py`:
-    - [ ] Read list of patient IDs.
-    - [ ] Randomly assign to train/val/test (e.g., 70/15/15) with fixed seed.
-    - [ ] Save:
-      - [ ] `splits/train_patients.csv`
-      - [ ] `splits/val_patients.csv`
-      - [ ] `splits/test_patients.csv`
-  - [ ] Use these splits when generating processed slices.
+- [x] **Implement patient-level train/val/test split**
+  - [x] `src/data/split_kaggle.py`:
+    - [x] Read list of image files.
+    - [x] Randomly assign to train/val/test (70/15/15) with fixed seed.
+    - [x] Save splits to directories:
+      - [x] `data/processed/kaggle/train/` (171 files)
+      - [x] `data/processed/kaggle/val/` (37 files)
+      - [x] `data/processed/kaggle/test/` (37 files)
+    - [x] Stratified splitting maintains class balance
+  - [x] Use these splits when generating processed slices.
 
 - [x] **Implement PyTorch dataset classes**
   - [ ] `src/data/brats2d_dataset.py`:
     - [ ] Implement `BraTS2DSliceDataset` returning `image`, `mask`, IDs.
   - [x] `src/data/kaggle_mri_dataset.py`:
     - [x] Implement `KaggleBrainMRIDataset` returning `image`, `label`, ID.
+    - [x] Added `get_class_distribution()` method
+    - [x] Added `get_sample_metadata()` method
+    - [x] Created `create_dataloaders()` helper function
 
 - [x] **Define augmentations / transforms**
   - [x] Create `src/data/transforms.py`:
     - [x] Train transforms:
-      - [x] Random rotations/flips.
+      - [x] Random rotations/flips (90°, 180°, 270°).
       - [x] Intensity shifts/scaling.
-      - [x] Optional elastic deformations.
+      - [x] Optional Gaussian noise (elastic deformations alternative).
     - [x] Val/test transforms:
-      - [x] Resize/center-crop to target size (e.g., 256×256 or 320×320).
+      - [x] No augmentation (images already preprocessed to 256×256).
     - [x] Ensure masks use nearest-neighbor interpolation.
+    - [x] Created three presets: standard, strong, light augmentation
 
 - [ ] **Sanity checks on preprocessed data**
   - [ ] Notebook `jupyter_notebooks/01_visualize_brats_slices.ipynb`:
