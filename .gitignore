@@ -10,6 +10,10 @@ datasets/
 *.tiff
 *.tif
 
+# But allow Python source files in src/
+!src/**/*.py
+!src/**/__init__.py
+
 # Model checkpoints and weights
 *.pth
 *.pt

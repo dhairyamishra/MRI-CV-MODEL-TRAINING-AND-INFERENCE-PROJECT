@@ -1,0 +1,102 @@
+# Local Configuration for Development
+# Optimized for local machine (CPU or single GPU)
+
+environment:
+  name: "local"
+  compute: "auto"  # auto-detect GPU or use CPU
+  gpu_type: "auto"
+
+# Data paths (relative to project root)
+paths:
+  # Root data directory
+  data_root: "./data"
+  
+  # Dataset locations
+  datasets:
+    brats2020: "./data/raw/brats2020"
+    brats2021: "./data/raw/brats2021"
+    kaggle_brain_mri: "./data/raw/kaggle_brain_mri"
+  
+  # Processed data
+  processed:
+    brats2d: "./data/processed/brats2d"
+    kaggle: "./data/processed/kaggle"
+  
+  # Splits
+  splits: "./splits"
+  
+  # Model checkpoints
+  checkpoints: "./checkpoints"
+  
+  # Logs and experiment tracking
+  logs: "./logs"
+  wandb_cache: "./wandb"
+
+# Compute settings
+compute:
+  # Number of GPUs (0 for CPU)
+  num_gpus: 1
+  
+  # DataLoader workers (lower for local dev)
+  num_workers: 2
+  
+  # Pin memory
+  pin_memory: false
+  
+  # Mixed precision training
+  mixed_precision: false
+  amp_backend: "native"
+
+# Training hyperparameters (smaller for local testing)
+training:
+  # Batch sizes (smaller for local GPU/CPU)
+  batch_size:
+    train: 8
+    val: 16
+    test: 16
+  
+  # Number of epochs (fewer for quick testing)
+  epochs: 20
+  
+  # Learning rate
+  learning_rate: 1e-4
+  
+  # Optimizer
+  optimizer: "adamw"
+  weight_decay: 1e-5
+  
+  # Scheduler
+  scheduler: "cosine"
+  warmup_epochs: 2
+  
+  # Gradient clipping
+  grad_clip: 1.0
+  
+  # Early stopping
+  early_stopping:
+    enabled: true
+    patience: 5
+    min_delta: 1e-4
+
+# Logging and checkpointing
+logging:
+  # Log frequency (iterations)
+  log_every_n_steps: 10
+  
+  # Validation frequency (epochs)
+  val_every_n_epochs: 1
+  
+  # Save checkpoint frequency (epochs)
+  save_every_n_epochs: 2
+  
+  # Keep only best N checkpoints
+  keep_top_k: 2
+  
+  # Experiment tracking
+  use_wandb: false  # Disable for local dev
+  wandb_project: "slicewise-local"
+  wandb_entity: null
+
+# Reproducibility
+seed: 42
+deterministic: false  # Can be slower on CPU

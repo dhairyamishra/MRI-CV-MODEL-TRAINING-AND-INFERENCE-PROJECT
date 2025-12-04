@@ -1,0 +1,102 @@
+# HPC Configuration for NYU HPC (or similar)
+# Optimized for A100/T4/L4 GPUs
+
+environment:
+  name: "hpc"
+  compute: "gpu"
+  gpu_type: "A100"  # or T4, L4
+
+# Data paths
+paths:
+  # Root data directory on HPC scratch space
+  data_root: "/scratch/$USER/slicewise"
+  
+  # Dataset locations
+  datasets:
+    brats2020: "/scratch/$USER/datasets/brats2020"
+    brats2021: "/scratch/$USER/datasets/brats2021"
+    kaggle_brain_mri: "/scratch/$USER/datasets/kaggle_brain_mri"
+  
+  # Processed data
+  processed:
+    brats2d: "/scratch/$USER/slicewise/data/processed/brats2d"
+    kaggle: "/scratch/$USER/slicewise/data/processed/kaggle"
+  
+  # Splits
+  splits: "/scratch/$USER/slicewise/splits"
+  
+  # Model checkpoints
+  checkpoints: "/scratch/$USER/slicewise/checkpoints"
+  
+  # Logs and experiment tracking
+  logs: "/scratch/$USER/slicewise/logs"
+  wandb_cache: "/scratch/$USER/slicewise/wandb"
+
+# Compute settings
+compute:
+  # Number of GPUs
+  num_gpus: 1
+  
+  # DataLoader workers (set to number of CPU cores available)
+  num_workers: 8
+  
+  # Pin memory for faster GPU transfer
+  pin_memory: true
+  
+  # Mixed precision training
+  mixed_precision: true
+  amp_backend: "native"  # PyTorch native AMP
+
+# Training hyperparameters (defaults)
+training:
+  # Batch sizes (adjust based on GPU memory)
+  batch_size:
+    train: 32
+    val: 64
+    test: 64
+  
+  # Number of epochs
+  epochs: 100
+  
+  # Learning rate
+  learning_rate: 1e-4
+  
+  # Optimizer
+  optimizer: "adamw"
+  weight_decay: 1e-5
+  
+  # Scheduler
+  scheduler: "cosine"
+  warmup_epochs: 5
+  
+  # Gradient clipping
+  grad_clip: 1.0
+  
+  # Early stopping
+  early_stopping:
+    enabled: true
+    patience: 15
+    min_delta: 1e-4
+
+# Logging and checkpointing
+logging:
+  # Log frequency (iterations)
+  log_every_n_steps: 50
+  
+  # Validation frequency (epochs)
+  val_every_n_epochs: 1
+  
+  # Save checkpoint frequency (epochs)
+  save_every_n_epochs: 5
+  
+  # Keep only best N checkpoints
+  keep_top_k: 3
+  
+  # Experiment tracking
+  use_wandb: true
+  wandb_project: "slicewise"
+  wandb_entity: null  # Set to your wandb username/team
+
+# Reproducibility
+seed: 42
+deterministic: true
