@@ -103,7 +103,7 @@ class GradCAM:
         weights = gradients.mean(dim=(1, 2))  # (C,)
         
         # Weighted combination of activation maps
-        cam = torch.zeros(activations.shape[1:], dtype=torch.float32)
+        cam = torch.zeros(activations.shape[1:], dtype=torch.float32, device=activations.device)
         for i, w in enumerate(weights):
             cam += w * activations[i]
         
