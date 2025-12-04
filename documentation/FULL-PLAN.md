@@ -136,39 +136,60 @@ High-level phases for the SliceWise project. Check items off as you go.
 
 ---
 
-## Phase 2 — Classification MVP (Kaggle Yes/No)
+## Phase 2 — Classification MVP (Kaggle Yes/No) ✅ COMPLETE
 
-- [ ] **Implement classifier model**
-  - [ ] `src/models/classifier.py`:
-    - [ ] Wrap EfficientNet-B0 or ConvNeXt-Tiny.
-    - [ ] Adapt for single-channel input.
-    - [ ] Output 2-class logits.
+- [x] **Implement classifier model**
+  - [x] `src/models/classifier.py`:
+    - [x] Wrap EfficientNet-B0 and ConvNeXt-Tiny.
+    - [x] Adapt for single-channel input with weight averaging.
+    - [x] Output 2-class logits.
+    - [x] Built-in Grad-CAM support.
 
-- [ ] **Training loop for classification**
-  - [ ] `src/training/train_cls.py`:
-    - [ ] Load config `configs/config_cls.yaml`.
-    - [ ] Build train/val DataLoaders.
-    - [ ] Use `CrossEntropyLoss`, Adam/AdamW, optional scheduler.
-    - [ ] Log loss and ROC-AUC to W&B/MLflow.
-    - [ ] Save checkpoints `checkpoints/cls/` with best val metric.
-    - [ ] (Optional) early stopping.
+- [x] **Training loop for classification**
+  - [x] `src/training/train_cls.py`:
+    - [x] Load config `configs/config_cls.yaml`.
+    - [x] Build train/val DataLoaders with augmentation.
+    - [x] CrossEntropyLoss + Focal Loss options.
+    - [x] Adam/AdamW/SGD optimizers.
+    - [x] Cosine/Step/Plateau schedulers.
+    - [x] Log to W&B with comprehensive metrics.
+    - [x] Save checkpoints to `checkpoints/cls/`.
+    - [x] Early stopping with configurable patience.
+    - [x] Mixed precision training (AMP).
+    - [x] Gradient clipping.
 
-- [ ] **Basic evaluation + Grad-CAM**
-  - [ ] `src/eval/eval_cls.py`:
-    - [ ] Compute accuracy, ROC-AUC, PR-AUC.
-    - [ ] Save ROC/PR plots.
-  - [ ] `src/eval/grad_cam.py`:
-    - [ ] Implement Grad-CAM for final conv layer.
-    - [ ] Generate Grad-CAM overlays for sample slices.
-    - [ ] Save visuals to `assets/grad_cam_examples/`.
+- [x] **Comprehensive evaluation + Grad-CAM**
+  - [x] `src/eval/eval_cls.py`:
+    - [x] Compute accuracy, ROC-AUC, PR-AUC, F1, precision, recall.
+    - [x] Save ROC/PR/confusion matrix plots.
+    - [x] Export predictions CSV and metrics JSON.
+  - [x] `src/eval/grad_cam.py`:
+    - [x] Full Grad-CAM implementation.
+    - [x] Generate overlays with OpenCV.
+    - [x] Batch visualization support.
+    - [x] Save to `assets/grad_cam_examples/`.
 
-- [ ] **Demo wiring for classification**
-  - [ ] Minimal FastAPI endpoint `/classify_slice`:
-    - [ ] Accept uploaded image.
-    - [ ] Preprocess, run classifier, return probabilities.
-  - [ ] Simple Streamlit/Gradio page:
-    - [ ] Upload slice.
-    - [ ] Display original + Grad-CAM overlay + probability.
+- [x] **Production-ready API + UI**
+  - [x] FastAPI backend (`app/backend/main.py`):
+    - [x] `/healthz` - Health check
+    - [x] `/model/info` - Model information
+    - [x] `/classify_slice` - Single image classification
+    - [x] `/classify_batch` - Batch classification
+    - [x] `/classify_with_gradcam` - Classification + Grad-CAM
+  - [x] Streamlit frontend (`app/frontend/app.py`):
+    - [x] Beautiful UI with medical disclaimers.
+    - [x] Drag-and-drop upload.
+    - [x] Real-time predictions.
+    - [x] Grad-CAM visualization.
+    - [x] Probability charts.
+    - [x] Interpretation guidance.
+
+- [x] **Helper scripts**
+  - [x] `scripts/train_classifier.py`
+  - [x] `scripts/evaluate_classifier.py`
+  - [x] `scripts/generate_gradcam.py`
+  - [x] `scripts/run_backend.py`
+  - [x] `scripts/run_frontend.py`
 
 ---
 

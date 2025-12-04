@@ -22,9 +22,13 @@ datasets/
 *.pb
 *.onnx
 checkpoints/
-models/
 saved_models/
 weights/
+model_weights/
+
+# Allow src/models/ directory (source code)
+!src/models/
+!src/models/**/*.py
 
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints/

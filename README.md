@@ -6,7 +6,8 @@
 
 - ✅ **Phase 0**: Project Scaffolding & Environment (Complete)
 - ✅ **Phase 1**: Data Acquisition & 2D Preprocessing (Complete - Kaggle dataset)
-- 🚧 **Phase 2**: Classification MVP (Next)
+- ✅ **Phase 2**: Classification MVP (Complete - EfficientNet + API + UI)
+- 🚧 **Phase 3**: Segmentation Pipeline (Next)
 
 ## Overview
 
@@ -178,13 +179,20 @@ ruff check src/ tests/
 
 ## 📚 Documentation
 
+### Getting Started
 - **[SETUP.md](documentation/SETUP.md)** - Detailed installation guide
-- **[DATA_README.md](documentation/DATA_README.md)** - Dataset documentation
-- **[PROJECT_STRUCTURE.md](documentation/PROJECT_STRUCTURE.md)** - Codebase organization
 - **[QUICKSTART.md](documentation/QUICKSTART.md)** - Quick start guide
-- **[FULL-PLAN.md](documentation/FULL-PLAN.md)** - Complete 8-phase roadmap
+- **[PHASE2_QUICKSTART.md](PHASE2_QUICKSTART.md)** - ⭐ Phase 2 quick start (NEW!)
+
+### Phase Summaries
 - **[PHASE0_COMPLETE.md](documentation/PHASE0_COMPLETE.md)** - Phase 0 summary
 - **[PHASE1_PROGRESS.md](documentation/PHASE1_PROGRESS.md)** - Phase 1 summary
+- **[PHASE2_COMPLETE.md](documentation/PHASE2_COMPLETE.md)** - ⭐ Phase 2 summary (NEW!)
+
+### Technical Documentation
+- **[DATA_README.md](documentation/DATA_README.md)** - Dataset documentation
+- **[PROJECT_STRUCTURE.md](documentation/PROJECT_STRUCTURE.md)** - Codebase organization
+- **[FULL-PLAN.md](documentation/FULL-PLAN.md)** - Complete 8-phase roadmap
 - **[KAGGLE_DATASET_QUICKSTART.md](KAGGLE_DATASET_QUICKSTART.md)** - Dataset pipeline guide
 
 {{ ... }}
@@ -198,18 +206,22 @@ ruff check src/ tests/
 - [x] PyTorch dataset classes
 - [x] Comprehensive documentation
 
+### ✅ Completed
+- [x] Phase 2: Classification MVP
+  - [x] EfficientNet-B0 and ConvNeXt classifiers
+  - [x] Training loop with W&B logging, mixed precision, early stopping
+  - [x] Grad-CAM for explainability
+  - [x] Comprehensive evaluation metrics (ROC-AUC, PR-AUC, etc.)
+  - [x] FastAPI backend with 5 endpoints
+  - [x] Beautiful Streamlit frontend UI
+  - [x] Helper scripts for all workflows
+
 ### 🚧 In Progress
-- [ ] Phase 2: Classification MVP
-  - [ ] Implement classifier (EfficientNet/ConvNeXt)
-  - [ ] Training loop with W&B logging
-  - [ ] Grad-CAM for explainability
-  - [ ] Evaluation metrics
+- [ ] Phase 3: Segmentation pipeline (U-Net)
 
 ### 📋 Planned
-- [ ] Phase 3: Segmentation pipeline (U-Net)
 - [ ] Phase 4: Calibration & uncertainty
 - [ ] Phase 5: Ablation studies
-- [ ] Phase 6: FastAPI backend + Streamlit UI
 - [ ] Phase 7: Documentation & LaTeX report
 - [ ] Phase 8: Packaging & deployment
 
