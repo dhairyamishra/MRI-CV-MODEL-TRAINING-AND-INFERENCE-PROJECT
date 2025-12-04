@@ -65,7 +65,7 @@ High-level phases for the SliceWise project. Check items off as you go.
 
 ---
 
-## Phase 1 — Data Acquisition & 2D Preprocessing
+## Phase 1 — Data Acquisition & 2D Preprocessing 
 
 - [x] **Download + organize datasets**
   - [x] BraTS 2020–2021:
@@ -82,17 +82,26 @@ High-level phases for the SliceWise project. Check items off as you go.
     - [x] Created `scripts/download_kaggle_data.py` for automated download
     - [x] Verified download (245 images: 154 tumor, 91 no tumor)
 
-- [ ] **Implement BraTS 3D → 2D slice extraction**
-  - [ ] Create `src/data/preprocess_brats_2d.py`:
-    - [ ] Load NIfTI volumes with `nibabel`.
-    - [ ] Select modalities (start: FLAIR only).
-    - [ ] Normalize intensities (per-volume z-score or [0,1] with clipping).
-    - [ ] Ensure correct alignment between images and masks.
-    - [ ] Filter out trivially empty slices if needed.
-    - [ ] Save slices as `.npz` with:
-      - [ ] `image`: `(C,H,W)`
-      - [ ] `mask`: `(1,H,W)`
-      - [ ] metadata: `patient_id`, `slice_idx`, spacing, etc.
+- [x] **Define unified data layout**
+  - [x] Decide on processed structure:
+    - [x] `data/processed/brats2d/{split}/{patient_id}_{slice_idx}.npz`
+    - [x] `data/processed/kaggle/{split}/{id}.npz`
+  - [x] Ensure `.npz` contains `image`, `mask` (if any), and metadata.
+  - [x] Created `src/data/preprocess_kaggle.py` for Kaggle preprocessing
+  - [x] Preprocessed all 245 images to .npz format (256×256, normalized)
+
+- [x] **Implement BraTS 3D → 2D slice extraction**
+  - [x] Create `src/data/preprocess_brats_2d.py` (452 lines):
+    - [x] Load NIfTI volumes with `nibabel`.
+    - [x] Select modalities (FLAIR, T1, T1ce, T2).
+    - [x] Normalize intensities (z-score, min-max, percentile methods).
+    - [x] Ensure correct alignment between images and masks.
+    - [x] Filter out trivially empty slices (configurable threshold).
+    - [x] Save slices as `.npz` with:
+      - [x] `image`: `(1,H,W)` - normalized float32
+      - [x] `mask`: `(1,H,W)` - binary uint8
+      - [x] metadata: `patient_id`, `slice_idx`, modality, tumor info, pixdim
+    - [x] Tested with 10 patients (569 slices extracted)
 
 - [x] **Implement patient-level train/val/test split**
   - [x] `src/data/split_kaggle.py`:
@@ -103,11 +112,20 @@ High-level phases for the SliceWise project. Check items off as you go.
       - [x] `data/processed/kaggle/val/` (37 files)
       - [x] `data/processed/kaggle/test/` (37 files)
     - [x] Stratified splitting maintains class balance
-  - [x] Use these splits when generating processed slices.
+  - [x] `src/data/split_brats.py` (245 lines):
+    - [x] Patient-level splitting to avoid data leakage
+    - [x] Configurable train/val/test ratios (default: 70/15/15)
+    - [x] Random seed for reproducibility
+    - [x] Tested: 7 train / 1 val / 2 test patients
 
 - [x] **Implement PyTorch dataset classes**
-  - [ ] `src/data/brats2d_dataset.py`:
-    - [ ] Implement `BraTS2DSliceDataset` returning `image`, `mask`, IDs.
+  - [x] `src/data/brats2d_dataset.py` (234 lines):
+    - [x] Implement `BraTS2DSliceDataset` returning `image`, `mask`, metadata
+    - [x] Support for optional transforms
+    - [x] `get_statistics()` method for dataset analysis
+    - [x] `get_sample_metadata()` for individual samples
+    - [x] `create_dataloaders()` helper function
+    - [x] Tested: Successfully loads 569 slices from 10 patients
   - [x] `src/data/kaggle_mri_dataset.py`:
     - [x] Implement `KaggleBrainMRIDataset` returning `image`, `label`, ID.
     - [x] Added `get_class_distribution()` method
@@ -193,8 +211,8 @@ High-level phases for the SliceWise project. Check items off as you go.
 ## Phase 3 — Baseline 2D Segmentation Pipeline (U-Net) 
 
 - [x] **Implement U-Net architecture**
-  - [x] `src/models/unet2d.py`:
-    - [x] Implement configurable 2D U-Net (352 lines)
+  - [x] `src/models/unet2d.py` (352 lines):
+    - [x] Implement configurable 2D U-Net
     - [x] Parameters: `in_channels`, `out_channels`, `base_filters`, `depth`
     - [x] Encoder-decoder with skip connections
     - [x] Bilinear or transposed conv upsampling
@@ -205,23 +223,38 @@ High-level phases for the SliceWise project. Check items off as you go.
 
 - [x] **Implement loss functions**
   - [x] `src/training/losses.py` (396 lines):
-    - [x] Dice loss
-    - [x] BCE with logits
-    - [x] Combined Dice + BCE
+    - [x] Dice loss (primary segmentation metric)
+    - [x] BCE with logits (pixel-wise classification)
+    - [x] Combined Dice + BCE (best of both worlds)
     - [x] Tversky loss (configurable α, β for FP/FN weighting)
     - [x] Focal loss (focuses on hard examples)
     - [x] Factory function `get_loss_function()` for easy selection
     - [x] All losses tested with backward pass
-  - [ ] Make loss type selectable via YAML config
+  - [x] Loss type selectable via YAML config
 
-- [ ] **Segmentation training script**
-  - [ ] `src/training/train_seg2d.py`:
-    - [ ] Config `configs/seg2d_baseline.yaml`:
-      - [ ] Model params, loss, optimizer, lr, batch size, epochs, augmentations.
-    - [ ] Train on `BraTS2DSliceDataset` (train/val).
-    - [ ] Log train/val loss, Dice, IoU to W&B/MLflow.
-    - [ ] Save best checkpoint to `checkpoints/seg/`.
-    - [ ] Periodically log example predictions with overlays.
+- [x] **Segmentation training script**
+  - [x] `src/training/train_seg2d.py` (462 lines):
+    - [x] Load config from `configs/seg2d_baseline.yaml`
+    - [x] Train on `BraTS2DSliceDataset` (train/val)
+    - [x] Calculate Dice and IoU metrics per batch
+    - [x] Log train/val loss, Dice, IoU to W&B
+    - [x] Save best checkpoint to `checkpoints/seg/`
+    - [x] Mixed precision training (AMP)
+    - [x] Gradient clipping
+    - [x] Early stopping with configurable patience
+    - [x] Learning rate scheduling (Cosine, Step, Plateau)
+    - [x] Multiple optimizers (Adam, AdamW, SGD)
+  - [x] `configs/seg2d_baseline.yaml` (143 lines):
+    - [x] Model params (U-Net config)
+    - [x] Loss function selection and parameters
+    - [x] Optimizer and scheduler settings
+    - [x] Training hyperparameters (batch size, epochs, AMP)
+    - [x] Early stopping configuration
+    - [x] Checkpoint management
+    - [x] W&B logging settings
+  - [x] `scripts/train_segmentation.py` (21 lines):
+    - [x] Simple wrapper script for easy execution
+  - [x] **Currently training on 10 patients (417 train / 45 val slices)**
 
 - [ ] **Segmentation inference utility**
   - [ ] `src/inference/infer_seg2d.py`:
