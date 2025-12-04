@@ -11,91 +11,208 @@ import cv2
 from typing import Union, Optional
 
 
-class BrainRegionCrop:
+class SkullBoundaryMask:
     """
-    Automatically crops out the blank background around the head in MRI slices.
-    
-    Works for brain MRI images which have a dark background around the skull.
-    Uses Otsu thresholding to find the brain region and crops to the tight
-    bounding box (plus optional margin).
-    
-    This SOLVES the border artifact problem by removing borders before training!
+    Pre-processing transform that keeps only the central skull/brain region
+    and zeros everything outside it.
+
+    - Finds the largest connected component (the head).
+    - Keeps the original image size (no cropping).
+    - Removes background and corner artifacts outside the skull.
     """
-    
-    def __init__(self, margin: int = 10):
+
+    def __init__(self, threshold_percentile: float = 1.0, kernel_size: int = 5):
         """
         Args:
-            margin: Extra pixels to keep around the detected brain bbox.
+            threshold_percentile: Very low percentile to find non-background pixels
+            kernel_size: size of morphological kernel to smooth the mask.
         """
-        self.margin = margin
-    
+        self.threshold_percentile = threshold_percentile
+        self.kernel_size = kernel_size
+
+    def _to_gray_and_shape(self, x_np: np.ndarray):
+        """
+        Convert different input shapes to a 2D gray image and remember
+        how to broadcast the mask back.
+        """
+        if x_np.ndim == 2:  # (H, W)
+            gray = x_np
+            shape_type = "HW"
+        elif x_np.ndim == 3:
+            # Either (C, H, W) or (H, W, C)
+            if x_np.shape[0] <= 3:  # (C, H, W)
+                gray = x_np[0]  # first channel
+                shape_type = "CHW"
+            else:  # (H, W, C)
+                gray = x_np.mean(axis=2)
+                shape_type = "HWC"
+        else:
+            raise ValueError(f"Unsupported image shape: {x_np.shape}")
+        return gray, shape_type
+
+    def _apply_mask_back(self, x_np: np.ndarray, mask: np.ndarray, shape_type: str):
+        """
+        Apply 2D mask to image, respecting original channel layout.
+        """
+        if shape_type == "HW":
+            return x_np * mask
+        elif shape_type == "CHW":
+            return x_np * mask[None, ...]
+        elif shape_type == "HWC":
+            return x_np * mask[..., None]
+        else:
+            return x_np
+
     def __call__(self, x: Union[np.ndarray, torch.Tensor]) -> Union[np.ndarray, torch.Tensor]:
-        """
-        Crop image to brain region.
-        
-        Args:
-            x: Image as numpy array (H, W) or (C, H, W) or torch.Tensor
-            
-        Returns:
-            Cropped image in same format as input
-        """
         is_torch = isinstance(x, torch.Tensor)
-        
-        # Convert to numpy if needed
+
+        # Move to numpy
         if is_torch:
-            x_np = x.cpu().numpy()
+            x_np = x.detach().cpu().numpy()
         else:
             x_np = x
+
+        try:
+            gray, shape_type = self._to_gray_and_shape(x_np)
+        except ValueError:
+            # Unsupported shape -> return as is
+            return x
+
+        H, W = gray.shape
+
+        # Use a very low threshold to find any non-background pixels
+        # This is much more conservative than the original
+        threshold = np.percentile(gray, self.threshold_percentile)
+        mask = (gray > threshold).astype(np.uint8)
+
+        # Morphological smoothing to clean up the mask
+        kernel = np.ones((self.kernel_size, self.kernel_size), np.uint8)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel, iterations=2)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel, iterations=1)
+
+        # Find connected components and keep the largest one (the head)
+        num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(mask, connectivity=8)
         
-        # Handle different input shapes
-        if x_np.ndim == 2:  # (H, W)
-            gray = x_np.astype(np.uint8)
-            original_shape = x_np.shape
-        elif x_np.ndim == 3:  # (C, H, W) or (H, W, C)
-            # Assume (C, H, W) for torch-style, (H, W, C) for numpy-style
-            if x_np.shape[0] <= 3:  # (C, H, W)
-                gray = x_np[0].astype(np.uint8)  # Take first channel
-                original_shape = x_np.shape[1:]
-            else:  # (H, W, C)
-                gray = x_np.mean(axis=2).astype(np.uint8)
-                original_shape = x_np.shape[:2]
+        if num_labels <= 1:
+            # Only background, keep everything
+            final_mask = np.ones_like(mask, dtype=np.float32)
         else:
-            # Unsupported shape, return original
-            return x
-        
-        # Normalize to 0-255 range for Otsu
-        if gray.max() <= 1.0:
-            gray = (gray * 255).astype(np.uint8)
-        
-        # Otsu threshold to separate brain from background
-        _, mask = cv2.threshold(
-            gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU
-        )
-        
-        # Find bounding box of brain region
-        ys, xs = np.where(mask > 0)
-        
-        if ys.size == 0 or xs.size == 0:
-            # Nothing detected, return original
-            return x
-        
-        # Calculate crop coordinates with margin
-        y1 = max(int(ys.min()) - self.margin, 0)
-        y2 = min(int(ys.max()) + self.margin, original_shape[0] - 1)
-        x1 = max(int(xs.min()) - self.margin, 0)
-        x2 = min(int(xs.max()) + self.margin, original_shape[1] - 1)
-        
-        # Crop based on original format
-        if x_np.ndim == 2:
-            cropped = x_np[y1:y2+1, x1:x2+1]
-        elif x_np.shape[0] <= 3:  # (C, H, W)
-            cropped = x_np[:, y1:y2+1, x1:x2+1]
-        else:  # (H, W, C)
-            cropped = x_np[y1:y2+1, x1:x2+1, :]
-        
-        # Convert back to torch if needed
+            # Find the largest component (excluding background at label 0)
+            # The largest component is almost always the head
+            areas = stats[1:, cv2.CC_STAT_AREA]  # Skip background
+            largest_label = np.argmax(areas) + 1  # +1 because we skipped background
+            
+            final_mask = (labels == largest_label).astype(np.float32)
+
+        # Apply mask to original data
+        x_masked = self._apply_mask_back(x_np, final_mask, shape_type)
+
         if is_torch:
-            return torch.from_numpy(cropped.copy())
+            return torch.from_numpy(x_masked).to(x.dtype)
+        else:
+            return x_masked.astype(x_np.dtype)
+
+
+class BrainRegionCrop:
+    """
+    Automatically crops out the blank background around the skull in MRI slices.
+
+    Finds the head (skull + brain) via Otsu thresholding and connected components,
+    then crops tightly around it with a small margin.
+    """
+
+    def __init__(self, margin: int = 4):
+        """
+        Args:
+            margin: extra pixels to keep around the detected head bbox.
+        """
+        self.margin = margin
+
+    def __call__(self, x: Union[np.ndarray, torch.Tensor]) -> Union[np.ndarray, torch.Tensor]:
+        is_torch = isinstance(x, torch.Tensor)
+        x_np = x.detach().cpu().numpy() if is_torch else x
+
+        # ---- get grayscale & remember layout ----
+        if x_np.ndim == 2:          # (H, W)
+            gray = x_np
+            layout = "HW"
+        elif x_np.ndim == 3:
+            if x_np.shape[0] <= 3:  # (C, H, W)
+                gray = x_np[0]
+                layout = "CHW"
+            else:                   # (H, W, C)
+                gray = x_np.mean(axis=2)
+                layout = "HWC"
+        else:
+            # unsupported shape, just return as-is
+            return x
+
+        H, W = gray.shape
+
+        # ---- normalize to uint8 for Otsu ----
+        g_min, g_max = float(gray.min()), float(gray.max())
+        if g_max <= g_min + 1e-8:
+            # constant image -> nothing to crop
+            return x
+
+        norm = (gray - g_min) / (g_max - g_min + 1e-8)
+        gray_u8 = (norm * 255).astype(np.uint8)
+
+        # ---- Otsu threshold to separate head vs background ----
+        _, mask = cv2.threshold(
+            gray_u8, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU
+        )
+
+        # ensure head is the white part; if most of image is 0, invert
+        if mask.mean() < 127:  # mostly black
+            mask = 255 - mask
+
+        # ---- morphological cleanup ----
+        kernel = np.ones((5, 5), np.uint8)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel, iterations=2)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel, iterations=1)
+
+        # ---- pick largest central component as the head ----
+        num_labels, labels = cv2.connectedComponents(mask)
+        if num_labels <= 1:
+            # no foreground found, return original
+            return x
+
+        center = np.array([H / 2.0, W / 2.0])
+        best_label, best_score = None, -1.0
+
+        for label in range(1, num_labels):
+            ys, xs = np.where(labels == label)
+            if ys.size == 0:
+                continue
+            area = float(ys.size)
+            centroid = np.array([ys.mean(), xs.mean()])
+            dist2 = np.sum((centroid - center) ** 2)
+            score = area - 0.5 * dist2  # prefer large & central
+
+            if score > best_score:
+                best_score = score
+                best_label = label
+
+        ys, xs = np.where(labels == best_label)
+        if ys.size == 0 or xs.size == 0:
+            return x
+
+        # ---- tight bbox around head + small margin ----
+        y1 = max(int(ys.min()) - self.margin, 0)
+        y2 = min(int(ys.max()) + self.margin, H - 1)
+        x1 = max(int(xs.min()) - self.margin, 0)
+        x2 = min(int(xs.max()) + self.margin, W - 1)
+
+        if layout == "HW":
+            cropped = x_np[y1:y2+1, x1:x2+1]
+        elif layout == "CHW":
+            cropped = x_np[:, y1:y2+1, x1:x2+1]
+        else:  # HWC
+            cropped = x_np[y1:y2+1, x1:x2+1, :]
+
+        if is_torch:
+            return torch.from_numpy(cropped.copy()).to(x.dtype)
         else:
             return cropped.copy()
 
@@ -219,6 +336,7 @@ def get_train_transforms(
 ):
     """
     Get training transforms with data augmentation.
+    NOW INCLUDES SKULL BOUNDARY MASK to remove border artifacts!
     
     Args:
         rotation_p: Probability of random rotation
@@ -228,9 +346,12 @@ def get_train_transforms(
         noise_p: Probability of adding Gaussian noise
         
     Returns:
-        Composed transform
+        Composed transform with skull masking + augmentation
     """
     return Compose([
+        # CRITICAL: Mask skull boundary FIRST (removes borders, keeps size!)
+        SkullBoundaryMask(threshold_percentile=1.0, kernel_size=5),
+        
         # Geometric augmentations
         RandomHorizontalFlip(p=flip_p),
         RandomVerticalFlip(p=flip_p),
@@ -246,13 +367,15 @@ def get_train_transforms(
 def get_val_transforms():
     """
     Get validation/test transforms (no augmentation).
+    NOW INCLUDES SKULL BOUNDARY MASK for consistent border removal!
     
     Returns:
-        Transform (identity function)
+        Transform with skull masking only (no augmentation)
     """
-    # No augmentation for validation/test
-    # Images are already normalized and resized during preprocessing
-    return lambda x: x
+    # Apply skull boundary mask to remove borders during validation too
+    return Compose([
+        SkullBoundaryMask(threshold_percentile=1.0, kernel_size=5),
+    ])
 
 
 def get_strong_train_transforms(
@@ -264,6 +387,7 @@ def get_strong_train_transforms(
 ):
     """
     Get strong training transforms for ablation studies.
+    NOW INCLUDES SKULL BOUNDARY MASK!
     
     Args:
         rotation_p: Probability of random rotation
@@ -273,9 +397,12 @@ def get_strong_train_transforms(
         noise_p: Probability of adding Gaussian noise
         
     Returns:
-        Composed transform with stronger augmentation
+        Composed transform with skull masking + stronger augmentation
     """
     return Compose([
+        # CRITICAL: Mask skull boundary FIRST
+        SkullBoundaryMask(threshold_percentile=1.0, kernel_size=5),
+        
         # Geometric augmentations (higher probability)
         RandomHorizontalFlip(p=flip_p),
         RandomVerticalFlip(p=flip_p),

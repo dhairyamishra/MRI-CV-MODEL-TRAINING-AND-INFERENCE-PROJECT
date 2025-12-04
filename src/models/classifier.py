@@ -115,6 +115,18 @@ class BrainTumorClassifier(nn.Module):
         x = self.features(x)
         return x
     
+    def get_features(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Alias for extract_features() - used by CAM regularization loss.
+        
+        Args:
+            x: Input tensor of shape (B, 1, H, W)
+        
+        Returns:
+            features: Feature maps from the last conv layer
+        """
+        return self.extract_features(x)
+    
     def get_cam_target_layer(self):
         """
         Get the target layer for Grad-CAM visualization.
@@ -217,6 +229,31 @@ class ConvNeXtClassifier(nn.Module):
         """Forward pass through the classifier."""
         return self.backbone(x)
     
+    def extract_features(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Extract features from the backbone (useful for Grad-CAM).
+        
+        Args:
+            x: Input tensor of shape (B, 1, H, W)
+        
+        Returns:
+            features: Feature maps from the last conv layer
+        """
+        x = self.backbone.features(x)
+        return x
+    
+    def get_features(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Alias for extract_features() - used by CAM regularization loss.
+        
+        Args:
+            x: Input tensor of shape (B, 1, H, W)
+        
+        Returns:
+            features: Feature maps from the last conv layer
+        """
+        return self.extract_features(x)
+    
     def get_cam_target_layer(self):
         """Get the target layer for Grad-CAM."""
         return self.backbone.features[-1]
@@ -284,4 +321,4 @@ if __name__ == "__main__":
     features = model.extract_features(x)
     print(f"Feature map shape: {features.shape}")
     
-    print("\nAll tests passed! ✓")
+    print("\nAll tests passed! ")

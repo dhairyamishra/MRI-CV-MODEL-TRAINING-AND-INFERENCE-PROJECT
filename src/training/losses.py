@@ -263,6 +263,124 @@ class FocalLoss(nn.Module):
             return focal_loss
 
 
+class CAMRegularizationLoss(nn.Module):
+    """
+    Regularization loss that penalizes high activations near image borders.
+    Encourages the model to focus on central brain regions instead of border artifacts.
+    
+    This improves Grad-CAM interpretability by discouraging the model from
+    learning spurious correlations with image borders.
+    """
+    
+    def __init__(self, border_weight: float = 2.0, border_size: int = 20):
+        """
+        Args:
+            border_weight: Weight for penalizing border activations (higher = stronger penalty)
+            border_size: Number of pixels from edge to consider as "border"
+        """
+        super().__init__()
+        self.border_weight = border_weight
+        self.border_size = border_size
+        self._border_mask = None
+    
+    def _get_border_mask(self, h: int, w: int, device: torch.device) -> torch.Tensor:
+        """Create a mask that is higher at borders and lower at center."""
+        if self._border_mask is not None and self._border_mask.shape == (h, w):
+            return self._border_mask.to(device)
+        
+        # Create distance from center
+        y = torch.linspace(-1, 1, h)
+        x = torch.linspace(-1, 1, w)
+        yy, xx = torch.meshgrid(y, x, indexing='ij')
+        
+        # Distance from center (0 at center, 1 at corners)
+        dist = torch.sqrt(xx**2 + yy**2)
+        dist = dist / dist.max()  # Normalize to [0, 1]
+        
+        # Create border mask (high at borders, low at center)
+        border_mask = torch.pow(dist, 2)  # Quadratic falloff
+        
+        self._border_mask = border_mask
+        return border_mask.to(device)
+    
+    def forward(self, features: torch.Tensor) -> torch.Tensor:
+        """
+        Compute regularization loss on feature maps.
+        
+        Args:
+            features: Feature maps from last conv layer, shape (B, C, H, W)
+            
+        Returns:
+            Scalar loss value
+        """
+        B, C, H, W = features.shape
+        
+        # Get border mask
+        border_mask = self._get_border_mask(H, W, features.device)
+        border_mask = border_mask.unsqueeze(0).unsqueeze(0)  # (1, 1, H, W)
+        
+        # Compute spatial activations (average across channels)
+        spatial_activations = features.abs().mean(dim=1, keepdim=True)  # (B, 1, H, W)
+        
+        # Penalize activations at borders
+        border_penalty = (spatial_activations * border_mask * self.border_weight).mean()
+        
+        return border_penalty
+
+
+class CombinedLossWithCAMReg(nn.Module):
+    """
+    Combines classification loss with CAM regularization.
+    """
+    
+    def __init__(
+        self,
+        classification_loss: nn.Module,
+        cam_reg_weight: float = 0.01,
+        border_weight: float = 2.0,
+        border_size: int = 20
+    ):
+        """
+        Args:
+            classification_loss: Base classification loss (e.g., CrossEntropyLoss)
+            cam_reg_weight: Weight for CAM regularization term
+            border_weight: Weight for penalizing border activations
+            border_size: Number of pixels from edge to consider as "border"
+        """
+        super().__init__()
+        self.classification_loss = classification_loss
+        self.cam_reg = CAMRegularizationLoss(border_weight, border_size)
+        self.cam_reg_weight = cam_reg_weight
+    
+    def forward(
+        self,
+        logits: torch.Tensor,
+        targets: torch.Tensor,
+        features: Optional[torch.Tensor] = None
+    ) -> torch.Tensor:
+        """
+        Compute combined loss.
+        
+        Args:
+            logits: Model predictions, shape (B, num_classes)
+            targets: Ground truth labels, shape (B,)
+            features: Feature maps from last conv layer, shape (B, C, H, W)
+            
+        Returns:
+            Combined loss value
+        """
+        # Classification loss
+        cls_loss = self.classification_loss(logits, targets)
+        
+        # CAM regularization (if features provided)
+        if features is not None and self.cam_reg_weight > 0:
+            reg_loss = self.cam_reg(features)
+            total_loss = cls_loss + self.cam_reg_weight * reg_loss
+            return total_loss
+        
+        return cls_loss
+
+
 def get_loss_function(
     loss_name: str,
     **kwargs
@@ -304,10 +422,14 @@ def get_loss_function(
         return TverskyLoss(**kwargs)
     elif loss_name == 'focal':
         return FocalLoss(**kwargs)
+    elif loss_name == 'cam_reg':
+        return CAMRegularizationLoss(**kwargs)
+    elif loss_name == 'combined_cam_reg':
+        return CombinedLossWithCAMReg(**kwargs)
     else:
         raise ValueError(
             f"Unknown loss function: {loss_name}. "
-            f"Choose from: dice, bce, dice_bce, tversky, focal"
+            f"Choose from: dice, bce, dice_bce, tversky, focal, cam_reg, combined_cam_reg"
         )
 
 
@@ -383,7 +505,7 @@ if __name__ == "__main__":
     
     # Test 8: Factory function
     print("\n8. Testing Factory Function")
-    loss_names = ['dice', 'bce', 'dice_bce', 'tversky', 'focal']
+    loss_names = ['dice', 'bce', 'dice_bce', 'tversky', 'focal', 'cam_reg', 'combined_cam_reg']
     
     for name in loss_names:
         loss_fn = get_loss_function(name)

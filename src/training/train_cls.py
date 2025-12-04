@@ -234,6 +234,27 @@ class ClassificationTrainer:
                 alpha=loss_config['alpha'],
                 gamma=loss_config['gamma']
             )
+        elif loss_config['name'] == 'combined_cam_reg':
+            # Combined loss with CAM regularization for better Grad-CAM
+            # First create base classification loss
+            if self.config['training']['use_class_weights']:
+                # Calculate class weights from training data
+                class_counts = np.bincount([label for _, label in self.train_loader.dataset])
+                class_weights = 1.0 / class_counts
+                class_weights = class_weights / class_weights.sum()
+                class_weights = torch.FloatTensor(class_weights).to(self.device)
+                base_loss = nn.CrossEntropyLoss(weight=class_weights)
+            else:
+                base_loss = nn.CrossEntropyLoss()
+            
+            # Wrap with CAM regularization
+            from src.training.losses import CombinedLossWithCAMReg
+            criterion = CombinedLossWithCAMReg(
+                classification_loss=base_loss,
+                cam_reg_weight=loss_config.get('cam_reg_weight', 0.01),
+                border_weight=loss_config.get('border_weight', 2.0),
+                border_size=loss_config.get('border_size', 20)
+            )
         else:
             # Cross entropy with optional class weights
             if self.config['training']['use_class_weights']:
@@ -328,7 +349,14 @@ class ClassificationTrainer:
             if self.use_amp:
                 with autocast():
                     outputs = self.model(images)
-                    loss = self.criterion(outputs, labels)
+                    
+                    # For CAM regularization, extract features if needed
+                    if hasattr(self.criterion, 'cam_reg_weight') and self.criterion.cam_reg_weight > 0:
+                        # Get features from last conv layer
+                        features = self.model.get_features(images)
+                        loss = self.criterion(outputs, labels, features)
+                    else:
+                        loss = self.criterion(outputs, labels)
                 
                 self.scaler.scale(loss).backward()
                 
@@ -343,8 +371,17 @@ class ClassificationTrainer:
                 self.scaler.step(self.optimizer)
                 self.scaler.update()
             else:
+                # Non-AMP path
                 outputs = self.model(images)
-                loss = self.criterion(outputs, labels)
+                
+                # For CAM regularization, extract features if needed
+                if hasattr(self.criterion, 'cam_reg_weight') and self.criterion.cam_reg_weight > 0:
+                    # Get features from last conv layer
+                    features = self.model.get_features(images)
+                    loss = self.criterion(outputs, labels, features)
+                else:
+                    loss = self.criterion(outputs, labels)
+                
                 loss.backward()
                 
                 # Gradient clipping
@@ -394,7 +431,13 @@ class ClassificationTrainer:
             labels = labels.to(self.device)
             
             outputs = self.model(images)
-            loss = self.criterion(outputs, labels)
+            
+            # For CAM regularization, extract features if needed (validation doesn't update weights)
+            if hasattr(self.criterion, 'cam_reg_weight') and self.criterion.cam_reg_weight > 0:
+                features = self.model.get_features(images)
+                loss = self.criterion(outputs, labels, features)
+            else:
+                loss = self.criterion(outputs, labels)
             
             running_loss += loss.item()
             
