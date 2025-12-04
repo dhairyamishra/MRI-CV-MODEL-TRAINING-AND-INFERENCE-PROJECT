@@ -1,0 +1,180 @@
+# ============================================================================
+# SliceWise - Production Classification Training Configuration
+# ============================================================================
+# Optimized configuration for training highly accurate brain tumor classifier
+# Target: 100+ epochs with advanced training techniques
+
+# Experiment metadata
+experiment:
+  name: "efficientnet_production_v1"
+  description: "Production EfficientNet-B0 with 100 epochs, warmup, and advanced augmentation"
+  tags: ["classification", "efficientnet", "production", "100epochs"]
+  notes: "Full training run with all optimizations enabled"
+
+# Model configuration
+model:
+  name: "efficientnet"  # Options: 'efficientnet', 'convnext'
+  pretrained: true
+  num_classes: 2
+  dropout: 0.3
+  freeze_backbone: false
+  # Progressive unfreezing (optional)
+  progressive_unfreezing:
+    enabled: false
+    unfreeze_schedule: [0, 10, 20]  # Epochs to unfreeze layers
+
+# Data configuration
+data:
+  data_dir: "data/processed/kaggle"
+  train_dir: "data/processed/kaggle/train"
+  val_dir: "data/processed/kaggle/val"
+  test_dir: "data/processed/kaggle/test"
+  batch_size: 32
+  num_workers: 0  # Set to 0 on Windows to avoid multiprocessing pickle errors
+  pin_memory: true
+  prefetch_factor: 2  # Prefetch batches per worker
+  persistent_workers: true  # Keep workers alive between epochs
+  
+  # Augmentation settings
+  augmentation:
+    use_augmentation: true
+    augmentation_strength: "strong"  # Options: 'light', 'standard', 'strong'
+    mixup_alpha: 0.2  # Mixup augmentation (0 to disable)
+    cutmix_alpha: 0.0  # CutMix augmentation (0 to disable)
+
+# Training configuration
+training:
+  epochs: 100
+  early_stopping_patience: 20  # More patience for long training
+  
+  # Gradient accumulation (simulate larger batch size)
+  gradient_accumulation_steps: 1  # Effective batch = batch_size * this
+  
+  # Optimizer
+  optimizer:
+    name: "adamw"  # Options: 'adam', 'adamw', 'sgd'
+    lr: 0.0003  # Higher initial LR with warmup
+    weight_decay: 0.01
+    betas: [0.9, 0.999]
+    eps: 1.0e-8
+  
+  # Learning rate warmup
+  warmup:
+    enabled: true
+    warmup_epochs: 5  # Gradually increase LR for first N epochs
+    warmup_start_lr: 0.00001  # Starting LR for warmup
+  
+  # Learning rate scheduler
+  scheduler:
+    use_scheduler: true
+    name: "cosine"  # Options: 'cosine', 'step', 'plateau', 'onecycle'
+    # For cosine annealing with restarts
+    T_max: 100
+    eta_min: 0.000001
+    # For step scheduler
+    step_size: 30
+    gamma: 0.1
+    # For plateau scheduler
+    patience: 8
+    factor: 0.5
+    min_lr: 0.000001
+  
+  # Loss function
+  loss:
+    name: "cross_entropy"  # Options: 'cross_entropy', 'focal'
+    label_smoothing: 0.1  # Label smoothing (0 to disable)
+    # For focal loss
+    alpha: 0.25
+    gamma: 2.0
+    
+  # Class weights (for imbalanced dataset)
+  use_class_weights: true
+  
+  # Mixed precision training
+  use_amp: true
+  
+  # Gradient clipping
+  grad_clip: 1.0
+  
+  # Stochastic Weight Averaging (SWA)
+  swa:
+    enabled: false
+    swa_start: 75  # Start SWA at epoch N
+    swa_lr: 0.00005
+
+# Validation configuration
+validation:
+  val_frequency: 1  # Validate every N epochs
+  save_best_only: false  # Save all checkpoints for analysis
+  metric: "roc_auc"  # Options: 'roc_auc', 'accuracy', 'loss', 'f1'
+  compute_test_metrics: true  # Compute test metrics at end
+
+# Checkpointing
+checkpoint:
+  save_dir: "checkpoints/cls_production"
+  save_frequency: 5  # Save checkpoint every N epochs
+  keep_last_n: 5  # Keep more checkpoints for production
+  save_optimizer: true  # Save optimizer state for resuming
+  save_scheduler: true  # Save scheduler state
+
+# Logging configuration
+logging:
+  use_wandb: true
+  wandb_project: "slicewise-classification-production"
+  wandb_entity: null  # Set to your W&B username/team
+  wandb_run_name: null  # Auto-generated if null
+  log_frequency: 10  # Log every N batches
+  log_images: true
+  num_images_to_log: 16
+  log_gradients: true  # Log gradient norms
+  log_learning_rate: true
+  log_model_architecture: true
+  
+  # TensorBoard (alternative/additional to W&B)
+  use_tensorboard: true
+  tensorboard_dir: "runs/cls_production"
+
+# Evaluation configuration
+evaluation:
+  compute_metrics: true
+  save_predictions: true
+  save_confusion_matrix: true
+  save_roc_curve: true
+  save_pr_curve: true
+  threshold: 0.5  # Classification threshold
+  compute_per_class_metrics: true
+  save_misclassified_samples: true
+  num_misclassified_to_save: 50
+
+# Grad-CAM configuration
+gradcam:
+  generate_gradcam: true
+  num_samples: 32
+  save_dir: "assets/grad_cam_production"
+  generate_frequency: 10  # Generate every N epochs
+
+# Hardware configuration
+hardware:
+  device: "cuda"  # Options: 'cuda', 'cpu', 'auto'
+  gpu_id: 0
+  deterministic: false  # Set true for reproducibility (slower)
+  benchmark: true  # Enable cudnn benchmark for speed
+  compile_model: false  # Use torch.compile (PyTorch 2.0+)
+
+# Reproducibility
+seed: 42
+
+# Paths
+paths:
+  output_dir: "outputs/classification_production"
+  log_dir: "logs/classification_production"
+  results_dir: "results/classification_production"
+  visualization_dir: "visualizations/classification_production"
+
+# Resume training
+resume:
+  enabled: false
+  checkpoint_path: null  # Path to checkpoint to resume from
+  resume_optimizer: true
+  resume_scheduler: true
+  resume_epoch: true

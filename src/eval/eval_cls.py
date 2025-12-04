@@ -84,7 +84,7 @@ class ClassifierEvaluator:
         )
         
         # Load checkpoint
-        checkpoint = torch.load(checkpoint_path, map_location=self.device)
+        checkpoint = torch.load(checkpoint_path, map_location=self.device, weights_only=False)
         model.load_state_dict(checkpoint['model_state_dict'])
         model = model.to(self.device)
         model.eval()
@@ -111,7 +111,8 @@ class ClassifierEvaluator:
         all_ids = []
         
         print("\nRunning predictions...")
-        for images, labels, ids in tqdm(self.test_loader):
+        sample_idx = 0
+        for images, labels in tqdm(self.test_loader):
             images = images.to(self.device)
             
             outputs = self.model(images)
@@ -121,7 +122,10 @@ class ClassifierEvaluator:
             all_labels.extend(labels.cpu().numpy())
             all_preds.extend(preds.cpu().numpy())
             all_probs.extend(probs[:, 1].cpu().numpy())  # Probability of tumor class
-            all_ids.extend(ids)
+            # Generate IDs since dataset doesn't return them
+            batch_ids = [f"sample_{sample_idx + i}" for i in range(len(labels))]
+            all_ids.extend(batch_ids)
+            sample_idx += len(labels)
         
         return (
             np.array(all_labels),

@@ -451,7 +451,7 @@ class FullE2ETest:
             # Check for calibrated model
             calib_path = project_root / "checkpoints" / "cls" / "temperature_scaler.pth"
             if calib_path.exists():
-                checkpoint = torch.load(calib_path, map_location=self.device)
+                checkpoint = torch.load(calib_path, map_location=self.device, weights_only=False)
                 temp_scaler.temperature.data = checkpoint['temperature']
                 print_success(f"Calibration loaded: T={temp_scaler.temperature.item():.4f}")
                 phase_results['tests'].append(('Temperature scaling', True))

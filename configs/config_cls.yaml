@@ -16,7 +16,7 @@ data:
   val_dir: "data/processed/kaggle/val"
   test_dir: "data/processed/kaggle/test"
   batch_size: 32
-  num_workers: 4
+  num_workers: 0
   pin_memory: true
   
   # Augmentation settings

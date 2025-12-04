@@ -76,7 +76,7 @@ def main():
     
     # Load checkpoint
     print(f"\nLoading checkpoint from {args.checkpoint}...")
-    checkpoint = torch.load(args.checkpoint, map_location='cpu')
+    checkpoint = torch.load(args.checkpoint, map_location='cpu', weights_only=False)
     
     # Get model config
     config = checkpoint.get('config', {})

@@ -33,6 +33,12 @@ if __name__ == "__main__":
         default='checkpoints/cls/best_model.pth',
         help='Path to model checkpoint'
     )
+    parser.add_argument(
+        '--output-dir',
+        type=str,
+        default='outputs/classification/evaluation',
+        help='Directory to save evaluation results'
+    )
     
     args = parser.parse_args()
     

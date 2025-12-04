@@ -99,6 +99,10 @@ class ClassificationTrainer:
         # Create model
         self.model = self._create_model()
         
+        # Watch model with wandb if enabled
+        if self.use_wandb:
+            wandb.watch(self.model, log='all', log_freq=100)
+        
         # Setup loss function
         self.criterion = self._setup_loss()
         
@@ -170,7 +174,6 @@ class ClassificationTrainer:
             config=self.config,
             name=f"cls_{self.config['model']['name']}_{self.config['seed']}"
         )
-        wandb.watch(self.model, log='all', log_freq=100)
     
     def _create_dataloaders(self) -> Tuple[DataLoader, DataLoader, DataLoader]:
         """Create train, validation, and test data loaders."""
@@ -195,8 +198,7 @@ class ClassificationTrainer:
             batch_size=self.config['data']['batch_size'],
             num_workers=self.config['data']['num_workers'],
             train_transform=train_transform,
-            val_transform=val_transform,
-            pin_memory=self.config['data']['pin_memory']
+            val_transform=val_transform
         )
         
         print(f"Train batches: {len(train_loader)}")
@@ -236,7 +238,7 @@ class ClassificationTrainer:
             # Cross entropy with optional class weights
             if self.config['training']['use_class_weights']:
                 # Calculate class weights from training data
-                class_counts = np.bincount([label for _, label, _ in self.train_loader.dataset])
+                class_counts = np.bincount([label for _, label in self.train_loader.dataset])
                 class_weights = 1.0 / class_counts
                 class_weights = class_weights / class_weights.sum()
                 class_weights = torch.FloatTensor(class_weights).to(self.device)
@@ -316,7 +318,7 @@ class ClassificationTrainer:
         
         pbar = tqdm(self.train_loader, desc=f"Epoch {self.current_epoch+1} [Train]")
         
-        for batch_idx, (images, labels, _) in enumerate(pbar):
+        for batch_idx, (images, labels) in enumerate(pbar):
             images = images.to(self.device)
             labels = labels.to(self.device)
             
@@ -387,7 +389,7 @@ class ClassificationTrainer:
         
         pbar = tqdm(self.val_loader, desc=f"Epoch {self.current_epoch+1} [Val]")
         
-        for images, labels, _ in pbar:
+        for images, labels in pbar:
             images = images.to(self.device)
             labels = labels.to(self.device)
             

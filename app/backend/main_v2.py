@@ -167,7 +167,7 @@ async def startup_event():
         calibration_path = project_root / "checkpoints" / "cls" / "temperature_scaler.pth"
         if calibration_path.exists() and CLASSIFIER_LOADED:
             temperature_scaler = TemperatureScaling()
-            checkpoint = torch.load(calibration_path, map_location=classifier_predictor.device)
+            checkpoint = torch.load(calibration_path, map_location=classifier_predictor.device, weights_only=False)
             temperature_scaler.temperature.data = checkpoint['temperature']
             CALIBRATION_LOADED = True
             print(f"✓ Calibration loaded (T={temperature_scaler.temperature.item():.4f})")

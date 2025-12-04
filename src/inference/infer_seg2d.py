@@ -40,7 +40,7 @@ class SegmentationPredictor:
         self.threshold = threshold
         
         # Load checkpoint
-        checkpoint = torch.load(checkpoint_path, map_location=self.device)
+        checkpoint = torch.load(checkpoint_path, map_location=self.device, weights_only=False)
         
         # Extract config
         config = checkpoint.get('config', {})

@@ -206,7 +206,7 @@ def generate_gradcam_visualizations(
         dropout=config['model']['dropout']
     )
     
-    checkpoint = torch.load(checkpoint_path, map_location=device)
+    checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
     model.load_state_dict(checkpoint['model_state_dict'])
     model = model.to(device)
     model.eval()
@@ -233,7 +233,8 @@ def generate_gradcam_visualizations(
     correct_samples = 0
     incorrect_samples = 0
     
-    for images, labels, ids in tqdm(test_loader):
+    sample_idx = 0
+    for images, labels in tqdm(test_loader):
         if samples_processed >= num_samples:
             break
         
@@ -289,12 +290,13 @@ def generate_gradcam_visualizations(
         )
         
         # Save figure
+        sample_id = f"sample_{sample_idx}"
         status = 'correct' if is_correct else 'incorrect'
         if is_correct:
-            filename = f'gradcam_correct_{correct_samples:03d}_{ids[0]}.png'
+            filename = f'gradcam_correct_{correct_samples:03d}_{sample_id}.png'
             correct_samples += 1
         else:
-            filename = f'gradcam_incorrect_{incorrect_samples:03d}_{ids[0]}.png'
+            filename = f'gradcam_incorrect_{incorrect_samples:03d}_{sample_id}.png'
             incorrect_samples += 1
         
         plt.tight_layout()
@@ -302,6 +304,7 @@ def generate_gradcam_visualizations(
         plt.close()
         
         samples_processed += 1
+        sample_idx += 1
     
     print(f"\n✓ Generated {samples_processed} Grad-CAM visualizations")
     print(f"  - Correct predictions: {correct_samples}")

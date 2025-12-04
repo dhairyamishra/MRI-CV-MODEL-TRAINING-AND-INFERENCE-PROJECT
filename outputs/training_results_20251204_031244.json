@@ -1,0 +1,12 @@
+{
+  "start_time": "2025-12-04T03:12:44.491639",
+  "task": "both",
+  "epochs": 100,
+  "steps_completed": [],
+  "errors": [
+    "Failed: Train classification model (100 epochs) (exit code 1)"
+  ],
+  "end_time": "2025-12-04T03:13:15.387877",
+  "duration_seconds": 30.896243,
+  "duration_human": "0:00:30.896246"
+}

@@ -34,15 +34,17 @@ if __name__ == "__main__":
         help='Path to model checkpoint'
     )
     parser.add_argument(
-        '--num_samples',
+        '--num-samples',
         type=int,
         default=16,
+        dest='num_samples',
         help='Number of samples to visualize'
     )
     parser.add_argument(
-        '--save_dir',
+        '--output-dir',
         type=str,
         default=None,
+        dest='save_dir',
         help='Directory to save visualizations'
     )
     

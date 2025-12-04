@@ -1,0 +1,19 @@
+{
+  "start_time": "2025-12-04T03:14:40.540557",
+  "task": "both",
+  "epochs": 100,
+  "steps_completed": [
+    "Train classification model (100 epochs)",
+    "Train segmentation model (100 epochs)",
+    "Evaluate segmentation model",
+    "Calibrate classification model"
+  ],
+  "errors": [
+    "Failed: Evaluate classification model (exit code 2)",
+    "Failed: Generate Grad-CAM visualizations (exit code 2)",
+    "Failed: Generate segmentation visualizations (exit code 2)"
+  ],
+  "end_time": "2025-12-04T03:36:29.015696",
+  "duration_seconds": 1308.475147,
+  "duration_human": "0:21:48.475153"
+}
