@@ -254,29 +254,55 @@ High-level phases for the SliceWise project. Check items off as you go.
     - [x] W&B logging settings
   - [x] `scripts/train_segmentation.py` (21 lines):
     - [x] Simple wrapper script for easy execution
-  - [x] **Currently training on 10 patients (417 train / 45 val slices)**
+  - [x] **Baseline model trained (10 patients): Train Dice 0.860, Val Dice 0.743**
 
-- [ ] **Segmentation inference utility**
-  - [ ] `src/inference/infer_seg2d.py`:
-    - [ ] Implement `predict_slice(image)`:
-      - [ ] Returns probability map and binary mask.
-    - [ ] Optional batch/stack inference function.
+- [x] **Segmentation inference utility**
+  - [x] `src/inference/infer_seg2d.py` (329 lines):
+    - [x] Implement `SegmentationPredictor` class
+    - [x] `predict_slice(image)` - Returns probability map and binary mask
+    - [x] `predict_batch()` - Batch inference
+    - [x] `predict_dataloader()` - Full dataset inference
+    - [x] Convenience functions for easy usage
 
-- [ ] **Post-processing functions**
-  - [ ] `src/inference/postprocess.py`:
-    - [ ] Thresholding (configurable; Otsu fallback option).
-    - [ ] Connected components:
-      - [ ] Remove tiny blobs (min area).
-      - [ ] Fill small holes.
-      - [ ] Optionally keep largest component.
-    - [ ] Return cleaned mask.
+- [x] **Post-processing functions**
+  - [x] `src/inference/postprocess.py` (301 lines):
+    - [x] Thresholding (fixed and Otsu methods)
+    - [x] Connected components analysis
+    - [x] Remove tiny blobs (min area filtering)
+    - [x] Fill small holes
+    - [x] Keep largest component option
+    - [x] Morphological operations (open, close, dilate, erode)
+    - [x] Complete pipeline with statistics
 
-- [ ] **Visualization + quick evaluation**
-  - [ ] `src/eval/eval_seg2d.py`:
-    - [ ] Iterate over validation set.
-    - [ ] Compute Dice and IoU per slice.
-    - [ ] Save summary metrics.
-    - [ ] Save example overlays: image + GT mask + predicted mask.
+- [x] **Visualization + comprehensive evaluation**
+  - [x] `src/eval/eval_seg2d.py` (378 lines):
+    - [x] Iterate over validation/test set
+    - [x] Compute Dice, IoU, Precision, Recall, F1, Specificity per slice
+    - [x] Save summary metrics (mean, std, min, max, median)
+    - [x] Save example overlays: Input | GT | Pred | TP/FP/FN
+    - [x] Generate metrics distribution plots
+    - [x] Export detailed JSON results
+  - [x] **Evaluation results: Dice 0.708 ± 0.182 (45 val slices)**
+
+- [x] **Helper scripts**
+  - [x] `scripts/evaluate_segmentation.py` (199 lines):
+    - [x] Easy evaluation with sensible defaults
+    - [x] Automatic split detection (train/val/test)
+    - [x] Error checking and helpful messages
+  - [x] `scripts/preprocess_all_brats.py` (304 lines):
+    - [x] Automated preprocessing pipeline
+    - [x] Progress tracking and time estimation
+    - [x] Confirmation prompts
+
+- [x] **Documentation**
+  - [x] `PHASE3_COMPLETE.md` (494 lines):
+    - [x] Complete component overview
+    - [x] Training results and metrics
+    - [x] Usage guide with examples
+  - [x] `PHASE3_QUICKSTART.md` (221 lines):
+    - [x] 5-minute quick start
+    - [x] Common commands
+    - [x] Troubleshooting guide
 
 ---
 
