@@ -1,0 +1,42 @@
+{
+  "start_time": "2025-12-04T19:41:07.708831",
+  "config": {
+    "brats_raw_dir": "data\\raw\\brats2020",
+    "brats_processed_dir": "data\\processed\\brats2d_full",
+    "config_path": "configs\\seg2d_production.yaml",
+    "num_patients": 5
+  },
+  "steps": {
+    "check_data": {
+      "status": "success",
+      "num_patients_found": 369
+    },
+    "preprocess": {
+      "status": "success",
+      "elapsed_seconds": 2.5330421924591064,
+      "elapsed_formatted": "0.0 minutes"
+    },
+    "split": {
+      "status": "success",
+      "elapsed_seconds": 0.41108179092407227,
+      "elapsed_formatted": "0.0 minutes"
+    },
+    "train": {
+      "status": "success",
+      "elapsed_seconds": 1278.236201286316,
+      "elapsed_formatted": "21.3 minutes"
+    },
+    "evaluate": {
+      "status": "success",
+      "elapsed_seconds": 36.096604347229004,
+      "elapsed_formatted": "0.6 minutes"
+    }
+  },
+  "end_time": "2025-12-04T20:03:04.990733",
+  "total_time": {
+    "seconds": 1317.281902,
+    "minutes": 21.954698366666666,
+    "hours": 0.36591163944444444,
+    "formatted": "0.37 hours"
+  }
+}

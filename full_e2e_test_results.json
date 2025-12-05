@@ -1,5 +1,5 @@
 {
-  "start_time": "2025-12-04T06:00:16.170903",
+  "start_time": "2025-12-04T23:01:40.010412",
   "phases": {
     "Phase 1": {
       "tests": [
@@ -107,16 +107,28 @@
       "tests": [
         [
           "Backend API running",
-          null
+          true
+        ],
+        [
+          "/model/info",
+          true
+        ],
+        [
+          "/classify",
+          true
+        ],
+        [
+          "/segment",
+          true
         ]
       ],
-      "passed": 0,
+      "passed": 4,
       "failed": 0
     }
   },
-  "total_tests": 17,
-  "passed_tests": 17,
+  "total_tests": 21,
+  "passed_tests": 21,
   "failed_tests": 0,
-  "warnings": 2,
-  "end_time": "2025-12-04T06:00:21.464813"
+  "warnings": 1,
+  "end_time": "2025-12-04T23:01:49.980571"
 }

@@ -1,0 +1,122 @@
+# ============================================================================
+# SliceWise - Quick Test Configuration for Segmentation
+# ============================================================================
+# Fast E2E testing with small dataset (10 patients)
+
+# Experiment metadata
+experiment:
+  name: "unet_quick_test"
+  description: "Quick test of U-Net segmentation pipeline"
+  tags: ["unet", "segmentation", "test", "e2e"]
+
+# Paths
+paths:
+  train_dir: "data/processed/brats2d/train"
+  val_dir: "data/processed/brats2d/val"
+  test_dir: "data/processed/brats2d/test"
+  checkpoint_dir: "checkpoints/seg_test"
+  log_dir: "logs/seg_test"
+  output_dir: "outputs/seg_test"
+
+# Model architecture (smaller for quick test)
+model:
+  name: "unet2d"
+  in_channels: 1
+  out_channels: 1
+  base_filters: 32        # Reduced from 64
+  depth: 3                # Reduced from 4
+  use_bilinear: true
+
+# Loss function
+loss:
+  name: "dice_bce"
+  dice_weight: 0.5
+  bce_weight: 0.5
+  smooth: 1.0
+
+# Optimizer
+optimizer:
+  name: "adam"
+  lr: 0.001
+  weight_decay: 0.0001
+  betas: [0.9, 0.999]
+  eps: 1.0e-8
+
+# Learning rate scheduler
+scheduler:
+  name: "cosine"
+  T_max: 5                # Match epochs
+  eta_min: 1.0e-6
+
+# Training hyperparameters (QUICK TEST)
+training:
+  epochs: 5               # Quick test
+  batch_size: 4           # Small batch for quick test
+  num_workers: 0          # Windows compatibility
+  pin_memory: false
+  
+  # Mixed precision training
+  use_amp: true
+  
+  # Gradient clipping
+  grad_clip: 1.0
+  
+  # Early stopping (disabled for quick test)
+  early_stopping:
+    enabled: false
+    patience: 5
+    min_delta: 0.001
+    monitor: "val_dice"
+    mode: "max"
+  
+  # Checkpoint saving
+  save_best: true
+  save_last: true
+  save_frequency: 2       # Save every 2 epochs
+  keep_last_n: 2
+
+# Validation
+validation:
+  frequency: 1
+  metric: "dice"
+
+# Data augmentation (minimal for quick test)
+augmentation:
+  train:
+    enabled: true
+    random_flip_h: 0.5
+    random_flip_v: 0.5
+    random_rotate: 10     # Reduced
+    random_scale: 0.0     # Disabled
+    elastic_deform: false
+    gaussian_noise: 0.0   # Disabled
+  val:
+    enabled: false
+
+# Logging (W&B disabled for quick test)
+logging:
+  use_wandb: false        # Disabled for quick test
+  wandb_project: "slicewise-test"
+  wandb_entity: null
+  log_frequency: 5        # More frequent
+  log_images: true
+  log_images_frequency: 2
+  num_images_to_log: 2    # Fewer images
+
+# Evaluation metrics
+metrics:
+  - "dice"
+  - "iou"
+  - "precision"
+  - "recall"
+
+# Reproducibility
+seed: 42
+
+# Device
+device: "cuda"
+
+# Resume training
+resume:
+  enabled: false
+  checkpoint_path: null

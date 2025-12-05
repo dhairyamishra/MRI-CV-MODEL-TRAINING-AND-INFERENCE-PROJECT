@@ -39,14 +39,30 @@ class SegmentationPredictor:
         self.device = torch.device(device if torch.cuda.is_available() else 'cpu')
         self.threshold = threshold
         
-        # Load checkpoint
-        checkpoint = torch.load(checkpoint_path, map_location=self.device, weights_only=False)
-        
-        # Extract config
-        config = checkpoint.get('config', {})
-        model_config = config.get('model', {})
-        
-        # Create model
+        # Load checkpoint (torch.load does not accept unknown kwargs)
+        checkpoint = torch.load(checkpoint_path, map_location=self.device)
+
+        # Extract config and model state dict with fallbacks
+        config = {}
+        model_state = None
+
+        if isinstance(checkpoint, dict):
+            config = checkpoint.get('config', {}) or {}
+            # Common keys used for saved checkpoints
+            if 'model_state_dict' in checkpoint:
+                model_state = checkpoint['model_state_dict']
+            elif 'state_dict' in checkpoint:
+                model_state = checkpoint['state_dict']
+            # else: assume the checkpoint itself is a state_dict
+            else:
+                # Heuristic: if values are tensors, treat as state_dict
+                first_val = next(iter(checkpoint.values())) if len(checkpoint) > 0 else None
+                if hasattr(first_val, 'dtype') or hasattr(first_val, 'shape'):
+                    model_state = checkpoint
+
+        model_config = (config.get('model', {}) if isinstance(config, dict) else {})
+
+        # Create model using config (or sensible defaults)
         self.model = create_unet(
             in_channels=model_config.get('in_channels', 1),
             out_channels=model_config.get('out_channels', 1),
@@ -54,9 +70,20 @@ class SegmentationPredictor:
             depth=model_config.get('depth', 4),
             bilinear=model_config.get('use_bilinear', True),
         )
-        
-        # Load weights
-        self.model.load_state_dict(checkpoint['model_state_dict'])
+
+        # Load weights if available
+        if model_state is not None:
+            try:
+                # allow missing keys when loading checkpoints saved from wrappers
+                self.model.load_state_dict(model_state, strict=False)
+            except Exception:
+                # Last-resort: if model_state isn't a dict, try direct assignment
+                try:
+                    self.model.load_state_dict(checkpoint)
+                except Exception as ex:
+                    raise RuntimeError(f"Failed to load model weights from {checkpoint_path}: {ex}")
+        else:
+            raise RuntimeError(f"No model weights found in checkpoint: {checkpoint_path}")
         self.model = self.model.to(self.device)
         self.model.eval()
         

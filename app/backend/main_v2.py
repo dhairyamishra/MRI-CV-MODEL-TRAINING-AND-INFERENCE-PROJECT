@@ -251,6 +251,41 @@ def create_overlay(image: np.ndarray, mask: np.ndarray, alpha: float = 0.4) -> n
     return overlay
 
 
+def preprocess_image_for_segmentation(image_array: np.ndarray) -> np.ndarray:
+    """
+    Preprocess image for segmentation model.
+    
+    CRITICAL: Must match training preprocessing (z-score normalization)!
+    
+    Args:
+        image_array: Input image array
+    
+    Returns:
+        Preprocessed image array
+    """
+    # Ensure grayscale
+    if len(image_array.shape) == 3:
+        image_array = image_array[:, :, 0]
+    
+    # Convert to float32
+    image_array = image_array.astype(np.float32)
+    
+    # Normalize to [0, 1] first if needed
+    if image_array.max() > 1.0:
+        image_array = image_array / 255.0
+    
+    # CRITICAL: Apply z-score normalization (same as training!)
+    # The model was trained on z-score normalized images
+    mean = np.mean(image_array)
+    std = np.std(image_array)
+    if std > 0:
+        image_array = (image_array - mean) / std
+    else:
+        image_array = image_array - mean
+    
+    return image_array
+
+
 # ============================================================================
 # API Endpoints
 # ============================================================================
@@ -484,13 +519,17 @@ async def segment_slice(
         image = Image.open(io.BytesIO(contents))
         image_array = np.array(image)
         
-        # Ensure grayscale
+        # Save original image for visualization (before z-score normalization)
         if len(image_array.shape) == 3:
-            image_array = image_array[:, :, 0]
+            image_original = image_array[:, :, 0].astype(np.float32)
+        else:
+            image_original = image_array.astype(np.float32)
         
-        # Normalize to [0, 1]
-        if image_array.max() > 1.0:
-            image_array = image_array.astype(np.float32) / 255.0
+        if image_original.max() > 1.0:
+            image_original = image_original / 255.0
+        
+        # Preprocess image for segmentation (applies z-score normalization)
+        image_array = preprocess_image_for_segmentation(image_array)
         
         # Run segmentation
         result = segmentation_predictor.predict_slice(image_array)
@@ -518,13 +557,13 @@ async def segment_slice(
         has_tumor = stats.get('final_pixels', stats.get('total_area', 0)) > 0
         tumor_probability = float(prob_map.max()) if has_tumor else 0.0
         
-        # Create visualizations
+        # Create visualizations using ORIGINAL image (not z-score normalized)
         mask_base64 = numpy_to_base64_png(binary_mask * 255)
         prob_map_base64 = numpy_to_base64_png(prob_map)
         
         overlay_base64 = None
         if return_overlay:
-            overlay = create_overlay(image_array, binary_mask)
+            overlay = create_overlay(image_original, binary_mask)
             overlay_base64 = numpy_to_base64_png(overlay)
         
         return SegmentationResponse(
@@ -565,10 +604,17 @@ async def segment_with_uncertainty(
         image = Image.open(io.BytesIO(contents))
         image_array = np.array(image)
         
+        # Save original image for visualization (before z-score normalization)
         if len(image_array.shape) == 3:
-            image_array = image_array[:, :, 0]
-        if image_array.max() > 1.0:
-            image_array = image_array.astype(np.float32) / 255.0
+            image_original = image_array[:, :, 0].astype(np.float32)
+        else:
+            image_original = image_array.astype(np.float32)
+        
+        if image_original.max() > 1.0:
+            image_original = image_original / 255.0
+        
+        # Preprocess image for segmentation (applies z-score normalization)
+        image_array = preprocess_image_for_segmentation(image_array)
         
         # Run uncertainty estimation
         image_tensor = torch.from_numpy(image_array).unsqueeze(0).unsqueeze(0).float()
@@ -581,11 +627,11 @@ async def segment_with_uncertainty(
             min_object_size=min_object_size
         )
         
-        # Create visualizations
+        # Create visualizations using ORIGINAL image (not z-score normalized)
         mask_base64 = numpy_to_base64_png(binary_mask * 255)
         prob_map_base64 = numpy_to_base64_png((result['mean'] * 255).astype(np.uint8))
         uncertainty_base64 = numpy_to_base64_png((result['epistemic'] * 255).astype(np.uint8))
-        overlay_base64 = numpy_to_base64_png(create_overlay(image_array, binary_mask))
+        overlay_base64 = numpy_to_base64_png(create_overlay(image_original, binary_mask))
         
         return SegmentationResponse(
             has_tumor=stats['total_area'] > 0,
@@ -633,10 +679,8 @@ async def segment_batch(
             image = Image.open(io.BytesIO(contents))
             image_array = np.array(image)
             
-            if len(image_array.shape) == 3:
-                image_array = image_array[:, :, 0]
-            if image_array.max() > 1.0:
-                image_array = image_array.astype(np.float32) / 255.0
+            # Preprocess image for segmentation
+            image_array = preprocess_image_for_segmentation(image_array)
             
             result = segmentation_predictor.predict_slice(image_array)
             prob_map = result.get('prob', result['mask'])
@@ -701,10 +745,8 @@ async def analyze_patient_stack(
             image = Image.open(io.BytesIO(contents))
             image_array = np.array(image)
             
-            if len(image_array.shape) == 3:
-                image_array = image_array[:, :, 0]
-            if image_array.max() > 1.0:
-                image_array = image_array.astype(np.float32) / 255.0
+            # Preprocess image for segmentation
+            image_array = preprocess_image_for_segmentation(image_array)
             
             result = segmentation_predictor.predict_slice(image_array)
             prob_map = result.get('prob', result['mask'])

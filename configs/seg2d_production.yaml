@@ -13,9 +13,9 @@ experiment:
 
 # Paths
 paths:
-  train_dir: "data/processed/brats2d/train"
-  val_dir: "data/processed/brats2d/val"
-  test_dir: "data/processed/brats2d/test"
+  train_dir: "data/processed/brats2d_full/train"
+  val_dir: "data/processed/brats2d_full/val"
+  test_dir: "data/processed/brats2d_full/test"
   checkpoint_dir: "checkpoints/seg_production"
   log_dir: "logs/seg_production"
   output_dir: "outputs/seg_production"
