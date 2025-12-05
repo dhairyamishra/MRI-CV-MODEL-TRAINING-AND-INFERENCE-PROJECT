@@ -1,0 +1,114 @@
+# Configuration for BraTS Classification Training
+# SliceWise - BraTS-only Pipeline (Classification + Segmentation + Grad-CAM)
+
+# Model configuration
+model:
+  name: "efficientnet"  # Options: 'efficientnet', 'convnext'
+  pretrained: true
+  num_classes: 2
+  dropout: 0.3
+  freeze_backbone: false
+
+# Data configuration
+data:
+  data_dir: "data/processed/brats2d"
+  train_dir: "data/processed/brats2d/train"
+  val_dir: "data/processed/brats2d/val"
+  test_dir: "data/processed/brats2d/test"
+  batch_size: 16
+  num_workers: 0
+  pin_memory: false
+  min_tumor_pixels: 10  # Minimum pixels to consider as "has tumor"
+  
+  # Augmentation settings
+  augmentation:
+    use_augmentation: true
+    augmentation_strength: "standard"  # Options: 'light', 'standard', 'strong'
+
+# Training configuration
+training:
+  epochs: 5  # Quick test
+  early_stopping_patience: 10
+  
+  # Optimizer
+  optimizer:
+    name: "adamw"  # Options: 'adam', 'adamw', 'sgd'
+    lr: 0.0001
+    weight_decay: 0.01
+    betas: [0.9, 0.999]
+  
+  # Learning rate scheduler
+  scheduler:
+    use_scheduler: true
+    name: "cosine"  # Options: 'cosine', 'step', 'plateau'
+    T_max: 5
+    eta_min: 0.000001
+  
+  # Loss function
+  loss:
+    name: "combined_cam_reg"  # Options: 'cross_entropy', 'focal', 'combined_cam_reg'
+    # For CAM regularization (improves Grad-CAM interpretability)
+    cam_reg_weight: 0.01      # Weight for CAM regularization term
+    border_weight: 2.0        # Penalty for border activations
+    border_size: 20           # Number of pixels from edge to consider as "border"
+    
+  # Class weights (for imbalanced dataset)
+  use_class_weights: true
+  
+  # Mixed precision training
+  use_amp: true
+  
+  # Gradient clipping
+  grad_clip: 1.0
+
+# Validation configuration
+validation:
+  val_frequency: 1  # Validate every N epochs
+  save_best_only: false  # Save all checkpoints (not just best)
+  metric: "accuracy"  # Options: 'roc_auc', 'accuracy', 'loss' - Use accuracy for imbalanced data
+
+# Checkpointing
+checkpoint:
+  save_dir: "checkpoints/cls_brats"
+  save_frequency: 1  # Save checkpoint every epoch
+  keep_last_n: 5  # Keep last 5 checkpoints
+
+# Logging configuration
+logging:
+  use_wandb: false  # Disabled for quick test
+  wandb_project: "slicewise-brats-classification"
+  wandb_entity: null
+  log_frequency: 10  # Log every N batches
+  log_images: true
+  num_images_to_log: 8
+
+# Evaluation configuration
+evaluation:
+  compute_metrics: true
+  save_predictions: true
+  save_confusion_matrix: true
+  save_roc_curve: true
+  save_pr_curve: true
+  threshold: 0.5  # Classification threshold
+
+# Grad-CAM configuration
+gradcam:
+  generate_gradcam: true
+  num_samples: 16
+  save_dir: "assets/grad_cam_brats"
+
+# Hardware configuration
+hardware:
+  device: "cuda"  # Options: 'cuda', 'cpu', 'auto'
+  gpu_id: 0
+  deterministic: true
+  benchmark: true
+
+# Reproducibility
+seed: 42
+
+# Paths
+paths:
+  output_dir: "outputs/classification_brats"
+  log_dir: "logs/classification_brats"
+  results_dir: "results/classification_brats"
