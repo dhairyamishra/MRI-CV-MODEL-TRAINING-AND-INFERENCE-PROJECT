@@ -29,8 +29,8 @@ model:
   name: "multitask"
   in_channels: 1          # Single-channel MRI
   out_channels: 1         # Binary segmentation (not used in this phase)
-  base_filters: 32        # Must match Phase 2.1
-  depth: 3                # Must match Phase 2.1
+  base_filters: 64        # Must match Phase 2.1
+  depth: 4                # Must match Phase 2.1
 
 # Loss function (classification)
 loss:

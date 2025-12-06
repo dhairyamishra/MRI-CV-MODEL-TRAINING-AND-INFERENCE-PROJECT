@@ -170,8 +170,6 @@ async def startup_event():
         if multitask_path.exists():
             multitask_predictor = MultiTaskPredictor(
                 checkpoint_path=str(multitask_path),
-                base_filters=32,
-                depth=3,
                 classification_threshold=0.3,
                 segmentation_threshold=0.5
             )

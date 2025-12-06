@@ -84,8 +84,6 @@ def test_predictor_creation():
     try:
         predictor = create_multi_task_predictor(
             checkpoint_path=str(CHECKPOINT_PATH),
-            base_filters=32,
-            depth=3,
             classification_threshold=0.3,
             segmentation_threshold=0.5
         )

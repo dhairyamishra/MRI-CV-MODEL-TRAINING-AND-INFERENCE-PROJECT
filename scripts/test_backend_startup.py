@@ -25,8 +25,6 @@ try:
     
     predictor = MultiTaskPredictor(
         checkpoint_path=str(checkpoint_path),
-        base_filters=32,
-        depth=3,
         classification_threshold=0.3,
         segmentation_threshold=0.5
     )

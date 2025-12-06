@@ -26,6 +26,7 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from src.models.multi_task_model import create_multi_task_model
+from src.models.model_config import ModelConfig
 from src.eval.grad_cam import GradCAM
 
 
@@ -48,8 +49,8 @@ class MultiTaskPredictor:
     def __init__(
         self,
         checkpoint_path: str,
-        base_filters: int = 32,
-        depth: int = 3,
+        base_filters: Optional[int] = None,
+        depth: Optional[int] = None,
         device: Optional[str] = None,
         classification_threshold: float = 0.3,
         segmentation_threshold: float = 0.5,
@@ -82,10 +83,34 @@ class MultiTaskPredictor:
     def _load_model(
         self,
         checkpoint_path: str,
-        base_filters: int,
-        depth: int
+        base_filters: Optional[int],
+        depth: Optional[int]
     ) -> nn.Module:
         """Load multi-task model from checkpoint."""
+        checkpoint_path = Path(checkpoint_path)
+        
+        # Try to load config from checkpoint directory
+        try:
+            config = ModelConfig.from_checkpoint_dir(checkpoint_path.parent)
+            print(f"✓ Loaded model config from: {checkpoint_path.parent / 'model_config.json'}")
+            
+            # Use config values if not overridden
+            if base_filters is None:
+                base_filters = config.base_filters
+            if depth is None:
+                depth = config.depth
+                
+            print(f"  Using architecture: base_filters={base_filters}, depth={depth}")
+            
+        except FileNotFoundError:
+            # Fallback to provided values or defaults
+            if base_filters is None:
+                base_filters = 64
+                print(f"⚠ No model config found, using default base_filters={base_filters}")
+            if depth is None:
+                depth = 4
+                print(f"⚠ No model config found, using default depth={depth}")
+        
         # Create model
         model = create_multi_task_model(
             in_channels=1,
@@ -484,8 +509,8 @@ class MultiTaskPredictor:
 
 def create_multi_task_predictor(
     checkpoint_path: str,
-    base_filters: int = 32,
-    depth: int = 3,
+    base_filters: Optional[int] = None,
+    depth: Optional[int] = None,
     device: Optional[str] = None,
     classification_threshold: float = 0.3,
     segmentation_threshold: float = 0.5,

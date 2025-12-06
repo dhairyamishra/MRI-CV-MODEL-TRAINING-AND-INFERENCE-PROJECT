@@ -15,8 +15,8 @@ data:
 model:
   in_channels: 1  # Single modality (FLAIR)
   num_classes: 2  # Binary classification (no tumor / tumor)
-  base_filters: 32  # Smaller for quick test
-  depth: 3  # Shallow network for quick test
+  base_filters: 64  # Must match Phase 2.1 and 2.2
+  depth: 4  # Must match Phase 2.1 and 2.2
 
 # Training hyperparameters
 training:
