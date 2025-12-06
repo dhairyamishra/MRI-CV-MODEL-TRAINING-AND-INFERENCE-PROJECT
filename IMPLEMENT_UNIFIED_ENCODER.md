@@ -1,9 +1,9 @@
 # 📋 Multi-Task Learning Implementation Progress
 
-**PROGRESS: 20/28 tasks complete (71%)** ✅
+**PROGRESS: 25/32 tasks complete (78%)** ✅
 
 **Last Updated**: December 6, 2025  
-**Current Phase**: 2.3 (Joint Fine-Tuning - COMPLETE) ✅
+**Current Phase**: 4.0 (Integration - IN PROGRESS) 🚧
 
 ---
 
@@ -32,7 +32,7 @@ Goal: Make BraTS and Kaggle datasets produce identical tensor formats
 
 ---
 
-## PHASE 1: Model Refactoring ✅ 4/5 COMPLETE (80%)
+## PHASE 1: Model Refactoring ✅ 5/5 COMPLETE (100%)
 
 Goal: Split U-Net into modular encoder + decoder + classification head
 
@@ -61,9 +61,11 @@ Goal: Split U-Net into modular encoder + decoder + classification head
   - ✅ Total: 31.7M parameters (9.4% reduction vs separate models)
   - ✅ Component-level freeze/unfreeze for staged training
   
-- [ ] **Add Grad-CAM support**
-  - ⏳ TODO: Hook into encoder's bottleneck layer
-  - ⏳ Ensure compatibility with existing `grad_cam.py`
+- [x] **Add Grad-CAM support**
+  - ✅ File: `scripts/generate_multitask_gradcam.py` (316 lines)
+  - ✅ Hooks into encoder's bottleneck layer
+  - ✅ Compatible with multi-task model
+  - ✅ Generated 16 visualizations successfully
 
 ---
 
@@ -137,7 +139,7 @@ Goal: Staged curriculum learning
 
 ---
 
-## PHASE 3: Evaluation ✅ 1/4 COMPLETE (25%)
+## PHASE 3: Evaluation ✅ 4/4 COMPLETE (100%)
 
 Goal: Validate that multi-task learning helps
 
@@ -151,130 +153,195 @@ Goal: Validate that multi-task learning helps
   - ✅ **Combined Metric**: 0.8390 (83.90%)
   - ✅ Results saved to: `results/multitask_evaluation.json`
   
-- [ ] **Create segmentation comparison script**
-  - ⏳ Compare baseline (stage 2.1) vs multi-task (stage 2.3)
-  - ⏳ Side-by-side metrics comparison
+- [x] **Create phase comparison script**
+  - ✅ File: `scripts/compare_all_phases.py` (376 lines)
+  - ✅ Compares all 3 phases (2.1, 2.2, 2.3) side-by-side
+  - ✅ **Phase 2.1 (Seg)**: Dice 86.35% ± 6.92%
+  - ✅ **Phase 2.2 (Cls)**: Acc 87.58%, Recall 96.43%, ROC-AUC 89.63%
+  - ✅ **Phase 2.3 (Multi-Task)**: Dice 76.50%, Acc 91.30%, Recall 97.14%
+  - ✅ **Key Finding**: Classification improved +4.3%, Segmentation -11.4%
+  - ✅ Results saved to: `results/phase_comparison.json`
+
+- [x] **Create comprehensive evaluation report**
+  - ✅ File: `documentation/MULTITASK_EVALUATION_REPORT.md` (503 lines)
+  - ✅ Executive summary with key results table
+  - ✅ Detailed analysis of why classification improved
+  - ✅ Statistical significance testing
+  - ✅ Ablation studies (differential LR, loss weighting, training stages)
+  - ✅ Clinical implications and recommendations
+  - ✅ Comparison with literature
+  - ✅ Limitations and future work
   
-- [ ] **Generate Grad-CAM visualizations**
-  - ⏳ Modify existing `scripts/generate_gradcam.py`
-  - ⏳ Support multi-task model
-  - ⏳ Visualize both BraTS and Kaggle samples
-  
-- [ ] **Create comparison report**
-  - ⏳ `documentation/MULTITASK_EVALUATION_REPORT.md`
-  - ⏳ Tables comparing all metrics
-  - ⏳ Visualizations (Grad-CAM overlays, confusion matrices)
-  - ⏳ Ablation study results
+- [x] **Generate Grad-CAM visualizations**
+  - ✅ File: `scripts/generate_multitask_gradcam.py` (316 lines)
+  - ✅ Adapted for multi-task model architecture
+  - ✅ Generated 16 balanced visualizations
+  - ✅ Saved to: `visualizations/multitask_gradcam/`
+  - ✅ Shows attention maps for correct and incorrect predictions
 
 ---
 
-## PHASE 4: Integration ⏳ TODO (0/4)
+## PHASE 4: Integration 🚧 IN PROGRESS (0/7)
 
 Goal: Deploy multi-task model in production app
 
-- [ ] **Create unified inference wrapper**
-  - ⏳ `src/inference/multi_task_predictor.py`
-  - ⏳ Single forward pass returns both tumor_prob and mask
-  - ⏳ Handle preprocessing (z-score normalization)
+### 4.1: Create Unified Inference Wrapper ⏳ TODO
+
+- [ ] **Create MultiTaskPredictor class**
+  - ⏳ File: `src/inference/multi_task_predictor.py` (~300 lines)
+  - ⏳ Load multi-task model from checkpoint
+  - ⏳ Single forward pass returns both outputs: `{"tumor_prob": float, "mask": np.ndarray, "cls_logits": tensor, "seg_logits": tensor}`
+  - ⏳ Handle preprocessing (z-score normalization for segmentation, min-max for classification)
+  - ⏳ Support both tasks or individual tasks (do_seg, do_cls flags)
+  - ⏳ Post-processing: sigmoid for classification, threshold for segmentation
+  - ⏳ Methods:
+    - `predict_single(image)` - Single image inference
+    - `predict_batch(images)` - Batch inference
+    - `predict_with_gradcam(image)` - Classification + Grad-CAM
+    - `predict_full(image)` - Both tasks + uncertainty + Grad-CAM
+
+### 4.2: Create Configuration File ⏳ TODO
+
+- [ ] **Create multi-task production config**
+  - ⏳ File: `configs/multi_task_production.yaml`
+  - ⏳ Model architecture params:
+    - `base_filters: 32` (matches trained model)
+    - `depth: 3` (matches trained model)
+    - `in_channels: 1` (FLAIR only)
+    - `seg_out_channels: 1` (binary mask)
+    - `cls_num_classes: 2` (tumor/no tumor)
+  - ⏳ Inference settings:
+    - `checkpoint_path: checkpoints/multitask_joint/best_model.pth`
+    - `device: cuda` (auto-detect)
+    - `classification_threshold: 0.3` (show segmentation if prob >= 0.3)
+    - `segmentation_threshold: 0.5` (binary mask threshold)
+  - ⏳ Preprocessing params:
+    - `input_size: [256, 256]`
+    - `normalization: z_score` (for segmentation)
+    - `mean: 0.0, std: 1.0`
+
+### 4.3: Update FastAPI Backend ⏳ TODO
+
+- [ ] **Integrate multi-task model into API**
+  - ⏳ File: `app/backend/main_v2.py`
+  - ⏳ Add global variable: `multitask_predictor: Optional[MultiTaskPredictor] = None`
+  - ⏳ Load model on startup in `@app.on_event("startup")`
+  - ⏳ Update health check to include `multitask_loaded: bool`
   
-- [ ] **Update FastAPI backend**
-  - ⏳ Modify: `app/backend/main_v2.py`
-  - ⏳ Replace separate models with multi-task model
-  - ⏳ New endpoint: `/predict_multitask` (returns both outputs)
+- [ ] **Create new endpoint: `/predict_multitask`**
+  - ⏳ POST endpoint accepting single image
+  - ⏳ Returns comprehensive response:
+    ```json
+    {
+      "classification": {
+        "predicted_class": 1,
+        "predicted_label": "tumor",
+        "confidence": 0.92,
+        "tumor_probability": 0.92
+      },
+      "segmentation": {
+        "mask_available": true,
+        "tumor_area_pixels": 1234,
+        "tumor_percentage": 1.88,
+        "mask_base64": "..."
+      },
+      "gradcam_overlay": "base64_image",
+      "recommendation": "Tumor detected with high confidence. Segmentation mask generated."
+    }
+    ```
+  - ⏳ Conditional logic:
+    - If `tumor_prob < 0.3`: Return classification only, `mask_available: false`
+    - If `tumor_prob >= 0.3`: Return both classification + segmentation + Grad-CAM
   
-- [ ] **Update Streamlit UI**
-  - ⏳ Modify: `app/frontend/app_v2.py`
-  - ⏳ Conditional display logic:
-    - If tumor_prob < 0.3: Show "No tumor detected"
-    - If tumor_prob ≥ 0.3: Show segmentation + Grad-CAM
+- [ ] **Add model info endpoint**
+  - ⏳ Update `/model/info` to include multi-task model stats
+  - ⏳ Show: total params (2.0M), encoder params, decoder params, cls_head params
+  - ⏳ Show performance metrics from evaluation
+
+### 4.4: Update Streamlit UI ⏳ TODO
+
+- [ ] **Add Multi-Task tab**
+  - ⏳ File: `app/frontend/app_v2.py`
+  - ⏳ New tab: "🎯 Multi-Task Prediction"
+  - ⏳ Upload single MRI slice
+  - ⏳ Call `/predict_multitask` endpoint
   
-- [ ] **Create model config file**
-  - ⏳ `configs/multi_task_model_config.yaml`
-  - ⏳ Store: modality, input_size, normalization params, thresholds
-
----
-
-## PHASE 5: Stretch Goals (Optional)
-
-- 🔮 **Multi-modal support**: 4-channel encoder for BraTS (FLAIR, T1, T1ce, T2)
-- 🔮 **Domain adaptation**: Style augmentation (blur, noise, contrast)
-- 🔮 **Uncertainty estimation**: Integrate MC-dropout from `src/inference/uncertainty.py`
-
----
-
-## 📊 Results Summary
-
-### Phase 2.1: Segmentation Warm-Up ✅
-- **Best Val Dice**: 0.7120 (71.20%)
-- **Training Time**: ~20 seconds (5 epochs)
-- **Model Size**: 2.0M parameters
-- **Status**: ✅ Encoder successfully initialized
-
-### Phase 2.2: Classification Head ✅
-- **Best Val Acc**: 83.65%
-- **Train Acc**: 89.53%
-- **Trainable**: 841K parameters (42%)
-- **Frozen**: 1.17M parameters (58%)
-- **Training Time**: ~2 minutes (10 epochs)
-- **Status**: ✅ Classification head trained successfully
-
-### Phase 2.3: Joint Fine-Tuning ✅ COMPLETE
-
-**Validation Results (10 epochs):**
-- **Best Val Dice**: 0.7448 (improved from 0.7120, +4.6%)
-- **Best Val Acc**: 0.8750 (improved from 0.8365, +4.6%)
-- **Combined Metric**: 0.8273
-- **Training Time**: ~5 minutes
-
-**Test Set Results (161 samples):**
-- **Segmentation Dice**: 0.7650 ± 0.1397 ⭐
-- **Segmentation IoU**: 0.6401 ± 0.1837
-- **Classification Acc**: 91.30% ⭐
-- **Classification Precision**: 93.15%
-- **Classification Recall**: 97.14% (excellent sensitivity!)
-- **F1 Score**: 95.10%
-- **ROC-AUC**: 0.9184 (91.84%)
-- **Combined Metric**: 0.8390 (83.90%)
-
-**Confusion Matrix:**
-- True Positives: 136 (tumors correctly detected)
-- True Negatives: 11 (healthy correctly identified)
-- False Positives: 10 (false alarms)
-- False Negatives: 4 (missed tumors)
-- **Sensitivity**: 97.14% (only 4 missed tumors!)
-- **Specificity**: 52.38%
-
-**Key Achievements:**
-- ✅ Both tasks improved simultaneously
-- ✅ Excellent sensitivity (97.14%) - critical for medical screening
-- ✅ Strong ROC-AUC (0.9184) - good discriminative ability
-- ✅ Single unified model handles both tasks
+- [ ] **Implement conditional display logic**
+  - ⏳ Show classification results always (tumor probability, confidence)
+  - ⏳ If `tumor_prob < 0.3`:
+    - Display: "✅ No tumor detected (confidence: XX%)"
+    - Show: Grad-CAM attention map
+    - Hide: Segmentation mask
+  - ⏳ If `tumor_prob >= 0.3`:
+    - Display: "⚠️ Tumor detected (confidence: XX%)"
+    - Show: Grad-CAM attention map
+    - Show: Segmentation mask overlay
+    - Show: Tumor statistics (area, percentage)
+    - Show: Side-by-side comparison (original, Grad-CAM, segmentation)
   
+- [ ] **Add comparison section**
+  - ⏳ Show performance metrics from Phase 3 evaluation
+  - ⏳ Display: "This unified model achieves 91.3% classification accuracy and 76.5% segmentation Dice score"
+  - ⏳ Add medical disclaimer
+
+### 4.5: Create Helper Scripts ⏳ TODO
+
+- [ ] **Create demo launcher**
+  - ⏳ File: `scripts/run_multitask_demo.py` (~150 lines)
+  - ⏳ Check if checkpoint exists
+  - ⏳ Start backend with multi-task model
+  - ⏳ Start frontend
+  - ⏳ Health check and open browser
+
+### 4.6: Documentation ⏳ TODO
+
+- [ ] **Create integration guide**
+  - ⏳ File: `documentation/PHASE4_INTEGRATION_GUIDE.md` (~400 lines)
+  - ⏳ Architecture overview
+  - ⏳ Quick start guide
+  - ⏳ API endpoint documentation
+  - ⏳ UI usage guide
+  - ⏳ Performance metrics
+  - ⏳ Troubleshooting
+
+### 4.7: Testing ⏳ TODO
+
+- [ ] **End-to-end testing**
+  - ⏳ Test multi-task inference on sample images
+  - ⏳ Verify conditional logic (low prob vs high prob)
+  - ⏳ Test API endpoints
+  - ⏳ Test UI interactions
+  - ⏳ Performance benchmarking (latency, throughput)
+
 ---
 
 ## 🎯 Current Task
 
-**Phase 3: Evaluation** - In Progress 🔄
+**Phase 4: Integration** - READY TO START! 🚀
 
-**What's Next:**
-1. ✅ Phase 2.3 Joint Fine-Tuning - COMPLETE!
-2. 🔄 Complete Phase 3 evaluation (comparison & visualization)
-3. ⏳ Deploy multi-task model in production app (Phase 4)
+**Implementation Plan:**
+1. ✅ Phase 0-3 Complete (Multi-task model trained and evaluated)
+2. 🚧 **NEXT**: Create MultiTaskPredictor class (Task 4.1)
+3. ⏳ Create production config file (Task 4.2)
+4. ⏳ Update FastAPI backend with /predict_multitask endpoint (Task 4.3)
+5. ⏳ Update Streamlit UI with Multi-Task tab (Task 4.4)
+6. ⏳ Create helper scripts and documentation (Tasks 4.5-4.6)
+7. ⏳ End-to-end testing (Task 4.7)
 
----
+**Key Features to Implement:**
+- 🎯 Single forward pass for both classification and segmentation
+- 🎯 Conditional segmentation display (only if tumor_prob >= 0.3)
+- 🎯 Unified preprocessing and post-processing
+- 🎯 Grad-CAM visualization for interpretability
+- 🎯 Performance metrics display from Phase 3 evaluation
+- 🎯 Medical disclaimers and clinical recommendations
 
-## 🎉 Major Achievements
-
-1. ✅ **Multi-task architecture** working perfectly
-2. ✅ **Staged training** pipeline validated (2.1 ✅, 2.2 ✅, 2.3 ✅)
-3. ✅ **Mixed dataset** handling (BraTS + Kaggle)
-4. ✅ **Encoder freezing** working correctly
-5. ✅ **Parameter efficiency**: 2.0M params, 9.4% reduction vs separate models
-6. ✅ **Custom collate function** handles None masks
-7. ✅ **Differential learning rates** for fine-tuning
-8. ✅ **Joint training improves both tasks** (+4.6% each!)
-9. ✅ **Excellent test performance**: 91.30% accuracy, 97.14% sensitivity
-10. ✅ **Production-ready model** with comprehensive evaluation
+**Expected Outcomes:**
+- ✅ Production-ready multi-task inference API
+- ✅ User-friendly UI with conditional display logic
+- ✅ ~40% faster inference (single forward pass vs two separate models)
+- ✅ 9.4% parameter reduction (2.0M vs 2.2M separate models)
+- ✅ Excellent performance: 91.3% accuracy, 97.1% sensitivity, 76.5% Dice
 
 ---
 
@@ -297,11 +364,15 @@ Goal: Deploy multi-task model in production app
 - ✅ `src/training/train_multitask_joint.py` - Stage 2.3 training
 - ✅ `src/training/multi_task_losses.py` - Combined loss functions
 
+### Evaluation (2 files)
+- ✅ `scripts/evaluate_multitask.py` - Evaluation script
+- ✅ `scripts/compare_all_phases.py` - Phase comparison
+- ✅ `scripts/generate_multitask_gradcam.py` - Grad-CAM visualization
+
 ### Scripts (5 files)
 - ✅ `scripts/train_multitask_seg_warmup.py` - Stage 2.1 launcher
 - ✅ `scripts/train_multitask_cls_head.py` - Stage 2.2 launcher
 - ✅ `scripts/train_multitask_joint.py` - Stage 2.3 launcher
-- ✅ `scripts/evaluate_multitask.py` - Evaluation script
 - ✅ `scripts/debug_multitask_data.py` - Dataset validation tool
 
 ### Configs (3 files)
@@ -309,16 +380,24 @@ Goal: Deploy multi-task model in production app
 - ✅ `configs/multitask_cls_head_quick_test.yaml` - Stage 2.2 config
 - ✅ `configs/multitask_joint_quick_test.yaml` - Stage 2.3 config
 
-### Documentation (4 files)
+### Documentation (5 files)
 - ✅ `documentation/PHASE1_COMPLETE.md` - Phase 1 summary
 - ✅ `documentation/PHASE2_QUICK_TEST_GUIDE.md` - Phase 2.1 guide
 - ✅ `documentation/PHASE2.2_QUICK_START.md` - Phase 2.2 guide
 - ✅ `documentation/PHASE2.3_QUICK_START.md` - Phase 2.3 guide
+- ✅ `documentation/MULTITASK_EVALUATION_REPORT.md` - Complete evaluation
 
-**Total New Code**: ~4,800 lines across 23 files
+### Phase 4 (TO BE CREATED):
+- ⏳ `src/inference/multi_task_predictor.py` - Unified inference wrapper
+- ⏳ `configs/multi_task_production.yaml` - Production config
+- ⏳ `scripts/run_multitask_demo.py` - Demo launcher
+- ⏳ `documentation/PHASE4_INTEGRATION_GUIDE.md` - Integration guide
+
+**Total New Code**: ~5,700 lines across 26 files (Phases 0-3)
+**Phase 4 Target**: +800 lines across 4 new files + updates to 2 existing files
 
 ---
 
-**Overall Progress**: 20/28 tasks (71%) ✅  
-**Current Focus**: Phase 3 Evaluation (comparison & visualization) 🔄  
-**Next Milestone**: Phase 4 Integration ⏳
+**Overall Progress**: 25/32 tasks (78%) ✅  
+**Current Focus**: Phase 4 Integration 🚧  
+**Next Milestone**: Deploy multi-task model in production app with conditional display logic
