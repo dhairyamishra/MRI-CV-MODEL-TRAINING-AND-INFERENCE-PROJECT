@@ -137,6 +137,14 @@ class MultiSourceDataset(Dataset):
             # Kaggle: Has classification label only
             cls_label = int(data['label'])
             
+            # Ensure label is 0 or 1 (remap if necessary)
+            if cls_label not in [0, 1]:
+                # If labels are 1 and 2, remap to 0 and 1
+                cls_label = cls_label - 1 if cls_label > 0 else 0
+            
+            # Validate label is in valid range
+            assert cls_label in [0, 1], f"Invalid label {cls_label} in {file_path}"
+            
             output['mask'] = None
             output['cls'] = cls_label
             output['has_mask'] = False

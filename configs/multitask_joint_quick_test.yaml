@@ -1,0 +1,51 @@
+# Phase 2.3: Joint Fine-Tuning Configuration
+# Quick test with 10 epochs for validation
+
+# Random seed for reproducibility
+seed: 42
+
+# Data paths
+data:
+  brats_train_dir: "data/processed/brats2d/train"
+  brats_val_dir: "data/processed/brats2d/val"
+  kaggle_train_dir: "data/processed/kaggle/train"
+  kaggle_val_dir: "data/processed/kaggle/val"
+
+# Model architecture
+model:
+  in_channels: 1  # Single modality (FLAIR)
+  num_classes: 2  # Binary classification (no tumor / tumor)
+  base_filters: 32  # Smaller for quick test
+  depth: 3  # Shallow network for quick test
+
+# Training hyperparameters
+training:
+  epochs: 10  # Quick test (use 20-30 for full training)
+  batch_size: 8
+  
+  # Differential learning rates
+  encoder_lr: 0.0001  # 1e-4 (lower for fine-tuning)
+  decoder_cls_lr: 0.0003  # 3e-4 (higher for task heads)
+  
+  weight_decay: 0.0001
+  grad_clip: 1.0
+  mixed_precision: true
+
+# Loss function configuration
+loss:
+  # Segmentation loss
+  seg_loss_type: "dice_bce"  # Options: 'dice', 'bce', 'dice_bce'
+  dice_weight: 0.5
+  bce_weight: 0.5
+  
+  # Classification loss
+  cls_loss_type: "ce"  # Options: 'ce', 'focal'
+  lambda_cls: 1.0  # Weight for classification loss
+  
+  # Optional class weights for imbalanced data
+  # class_weights: [1.0, 1.0]  # [no_tumor, tumor]
+
+# Checkpoint settings
+checkpoint:
+  save_every: 1  # Save every N epochs
+  keep_last_n: 3  # Keep last N checkpoints
