@@ -1,0 +1,110 @@
+{
+  "timestamp": "2025-12-06 18:48:10",
+  "tests": {
+    "checkpoint_exists": {
+      "passed": true,
+      "path": "C:\\--DPM-MAIN-DIR--\\windsurf_projects\\MRI-CV-MODEL-TRAINING-AND-INFERENCE-PROJECT\\checkpoints\\multitask_joint\\best_model.pth",
+      "size_mb": 362.3060646057129
+    },
+    "predictor_creation": {
+      "passed": true,
+      "model_info": {
+        "architecture": "Multi-Task U-Net",
+        "parameters": {
+          "encoder": 18846016,
+          "seg_decoder": 12537665,
+          "cls_head": 262914,
+          "total": 31646595
+        },
+        "device": "cuda",
+        "classification_threshold": 0.3,
+        "segmentation_threshold": 0.5,
+        "input_size": [
+          256,
+          256
+        ],
+        "input_channels": 1,
+        "output_classes": 2,
+        "tasks": [
+          "classification",
+          "segmentation"
+        ]
+      }
+    },
+    "single_inference": {
+      "passed": true,
+      "inference_time_ms": 203.57275009155273,
+      "has_classification": true,
+      "has_segmentation": true,
+      "tumor_probability": 1.0
+    },
+    "conditional_inference": {
+      "passed": true,
+      "tumor_probability": 1.0,
+      "segmentation_computed": true,
+      "logic_correct": true
+    },
+    "batch_inference": {
+      "passed": true,
+      "batch_size": 4,
+      "total_time_ms": 53.16781997680664,
+      "avg_time_per_image_ms": 13.29195499420166,
+      "all_have_classification": true,
+      "all_have_segmentation": true
+    },
+    "gradcam": {
+      "passed": true,
+      "time_ms": 83.29510688781738,
+      "has_heatmap": true,
+      "heatmap_shape": [
+        16,
+        16
+      ]
+    },
+    "performance_benchmark": {
+      "passed": true,
+      "num_iterations": 10,
+      "avg_time_ms": 12.634491920471191,
+      "std_time_ms": 0.13430799981303293,
+      "min_time_ms": 12.498140335083008,
+      "max_time_ms": 12.940645217895508,
+      "times_ms": [
+        12.706279754638672,
+        12.940645217895508,
+        12.562990188598633,
+        12.586832046508789,
+        12.706995010375977,
+        12.498140335083008,
+        12.558460235595703,
+        12.507200241088867,
+        12.51983642578125,
+        12.757539749145508
+      ]
+    },
+    "api_health": {
+      "passed": true,
+      "response": {
+        "status": "healthy",
+        "classifier_loaded": true,
+        "segmentation_loaded": true,
+        "calibration_loaded": false,
+        "multitask_loaded": true,
+        "device": "cuda",
+        "timestamp": "2025-12-06T18:48:13.424199"
+      }
+    },
+    "api_predict": {
+      "passed": true,
+      "api_time_ms": 2338.439464569092,
+      "processing_time_ms": 304.93,
+      "tumor_probability": 0.664422333240509,
+      "segmentation_computed": true
+    }
+  },
+  "summary": {
+    "total_tests": 9,
+    "passed_tests": 9,
+    "failed_tests": 0,
+    "success_rate": 100.0
+  }
+}

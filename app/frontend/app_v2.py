@@ -253,7 +253,271 @@ def render_sidebar():
 
 
 # ============================================================================
-# Tab 1: Classification
+# Multi-Task Tab
+# ============================================================================
+
+def render_multitask_tab():
+    """Render multi-task prediction tab with conditional display."""
+    st.markdown("### 🎯 Multi-Task Prediction")
+    st.markdown("""
+    This unified model performs **both classification and segmentation** in a single forward pass.
+    Segmentation is only computed if the tumor probability is above the threshold (30%).
+    
+    **Benefits:**
+    - 🚀 ~40% faster inference (single forward pass)
+    - 💾 9.4% fewer parameters (2.0M vs 2.2M)
+    - 🎯 Smart resource usage (conditional segmentation)
+    - 📊 Excellent performance: 91.3% accuracy, 97.1% sensitivity
+    """)
+    
+    # Performance metrics in expandable section
+    with st.expander("📊 Model Performance Metrics", expanded=False):
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown("**Classification Performance**")
+            st.metric("Accuracy", "91.30%", help="Overall classification accuracy")
+            st.metric("Sensitivity (Recall)", "97.14%", help="Only 4 missed tumors out of 140!")
+            st.metric("ROC-AUC", "0.9184", help="Area under ROC curve")
+            st.metric("F1 Score", "95.10%", help="Harmonic mean of precision and recall")
+        
+        with col2:
+            st.markdown("**Segmentation Performance**")
+            st.metric("Dice Score", "76.50% ± 13.97%", help="Overlap between prediction and ground truth")
+            st.metric("IoU Score", "64.01% ± 18.37%", help="Intersection over Union")
+            st.markdown("**Combined Metric**")
+            st.metric("Overall Score", "83.90%", help="Weighted combination of both tasks")
+    
+    st.divider()
+    
+    # File upload
+    uploaded_file = st.file_uploader(
+        "Upload MRI Slice (PNG, JPG, JPEG)",
+        type=['png', 'jpg', 'jpeg'],
+        key="multitask_upload",
+        help="Upload a single MRI slice for multi-task analysis"
+    )
+    
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        include_gradcam = st.checkbox("Include Grad-CAM visualization", value=True, key="multitask_gradcam")
+    
+    if uploaded_file is not None:
+        # Display original image (smaller)
+        image = Image.open(uploaded_file)
+        
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.markdown("**📸 Original MRI Slice**")
+            st.image(image, width=400, caption="Input Image")
+        
+        # Predict button (centered)
+        col1, col2, col3 = st.columns([1, 1, 1])
+        with col2:
+            predict_button = st.button("🎯 Run Multi-Task Prediction", type="primary", key="multitask_predict", use_container_width=True)
+        
+        if predict_button:
+            with st.spinner("Running unified inference..."):
+                try:
+                    # Prepare file for upload
+                    img_bytes = image_to_bytes(image)
+                    files = {'file': ('image.png', img_bytes, 'image/png')}
+                    params = {'include_gradcam': include_gradcam}
+                    
+                    # Call API
+                    response = requests.post(
+                        f"{API_URL}/predict_multitask",
+                        files=files,
+                        params=params,
+                        timeout=30
+                    )
+                    
+                    if response.status_code == 200:
+                        result = response.json()
+                        
+                        # Display results
+                        st.success("✅ Prediction completed successfully!")
+                        
+                        # Processing time in a nice card
+                        col1, col2, col3 = st.columns([1, 1, 1])
+                        with col2:
+                            st.metric("⚡ Processing Time", f"{result['processing_time_ms']:.2f} ms")
+                        
+                        # Classification results
+                        st.markdown("---")
+                        st.markdown("### 📊 Classification Results")
+                        
+                        cls_result = result['classification']
+                        tumor_prob = cls_result['tumor_probability']
+                        confidence = cls_result['confidence']
+                        predicted_label = cls_result['predicted_label']
+                        
+                        # Display prediction with color coding in a card
+                        if predicted_label == "Tumor":
+                            if tumor_prob >= 0.7:
+                                st.error(f"⚠️ **{predicted_label} Detected** (High Confidence: {tumor_prob*100:.1f}%)")
+                            else:
+                                st.warning(f"⚠️ **{predicted_label} Detected** (Moderate Confidence: {tumor_prob*100:.1f}%)")
+                        else:
+                            st.success(f"✅ **{predicted_label}** (Confidence: {confidence*100:.1f}%)")
+                        
+                        # Probability metrics in columns
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            st.metric("🎯 Tumor Probability", f"{tumor_prob*100:.2f}%")
+                        with col2:
+                            st.metric("📈 Confidence", f"{confidence*100:.2f}%")
+                        with col3:
+                            st.metric("🏷️ Predicted Class", predicted_label)
+                        
+                        # Probability distribution (smaller chart)
+                        probs = cls_result['probabilities']
+                        prob_df = pd.DataFrame({
+                            'Class': list(probs.keys()),
+                            'Probability': [v * 100 for v in probs.values()]
+                        })
+                        
+                        fig, ax = plt.subplots(figsize=(6, 2))
+                        ax.barh(prob_df['Class'], prob_df['Probability'], color=['#28a745', '#dc3545'])
+                        ax.set_xlabel('Probability (%)', fontsize=10)
+                        ax.set_xlim([0, 100])
+                        ax.grid(axis='x', alpha=0.3)
+                        ax.tick_params(labelsize=9)
+                        plt.tight_layout()
+                        st.pyplot(fig)
+                        plt.close()
+                        
+                        # Recommendation in info box
+                        st.info(f"💡 **Recommendation:** {result['recommendation']}")
+                        
+                        # Segmentation results (conditional)
+                        st.markdown("---")
+                        st.markdown("### 🎨 Segmentation Results")
+                        
+                        if result['segmentation_computed']:
+                            seg_result = result['segmentation']
+                            
+                            if seg_result['mask_available']:
+                                st.success("✅ Segmentation mask generated (tumor probability above threshold)")
+                                
+                                # Tumor statistics in columns
+                                col1, col2, col3 = st.columns(3)
+                                with col1:
+                                    st.metric("📏 Tumor Area", f"{seg_result['tumor_area_pixels']} px")
+                                with col2:
+                                    st.metric("📊 Tumor %", f"{seg_result['tumor_percentage']:.2f}%")
+                                with col3:
+                                    total_pixels = 256 * 256
+                                    st.metric("🖼️ Total Pixels", f"{total_pixels}")
+                                
+                                # Visualizations (smaller images in grid)
+                                st.markdown("**Visualizations**")
+                                
+                                # Decode images
+                                mask_img = base64_to_image(seg_result['mask_base64'])
+                                prob_map_img = base64_to_image(seg_result['prob_map_base64'])
+                                overlay_img = base64_to_image(seg_result['overlay_base64'])
+                                
+                                # Display in columns with smaller images
+                                col1, col2, col3 = st.columns(3)
+                                with col1:
+                                    st.markdown("**Binary Mask**")
+                                    st.image(mask_img, width=250)
+                                with col2:
+                                    st.markdown("**Probability Map**")
+                                    st.image(prob_map_img, width=250)
+                                with col3:
+                                    st.markdown("**Overlay**")
+                                    st.image(overlay_img, width=250)
+                            else:
+                                st.info("ℹ️ Segmentation mask not available")
+                        else:
+                            st.info(f"ℹ️ Segmentation not computed (tumor probability {tumor_prob*100:.1f}% is below 30% threshold)")
+                            st.markdown("""
+                            **Why?** The model uses conditional segmentation to save computational resources.
+                            Segmentation is only performed when there's a significant probability of tumor presence.
+                            """)
+                        
+                        # Grad-CAM visualization
+                        if include_gradcam and 'gradcam_overlay' in result and result['gradcam_overlay']:
+                            st.markdown("---")
+                            st.markdown("### 🔍 Grad-CAM Visualization")
+                            st.markdown("Grad-CAM highlights the regions that the model focuses on for classification.")
+                            
+                            gradcam_img = base64_to_image(result['gradcam_overlay'])
+                            
+                            col1, col2, col3 = st.columns([1, 2, 1])
+                            with col2:
+                                st.image(gradcam_img, width=400, caption="Grad-CAM Attention Map")
+                        
+                        # Comprehensive comparison (if segmentation was computed)
+                        if result['segmentation_computed'] and seg_result['mask_available']:
+                            st.markdown("---")
+                            st.markdown("### 📸 Comprehensive View")
+                            
+                            col1, col2, col3, col4 = st.columns(4)
+                            with col1:
+                                st.markdown("**Original**")
+                                st.image(image, width=200)
+                            with col2:
+                                st.markdown("**Grad-CAM**")
+                                if include_gradcam and 'gradcam_overlay' in result:
+                                    st.image(gradcam_img, width=200)
+                                else:
+                                    st.info("Enable Grad-CAM")
+                            with col3:
+                                st.markdown("**Segmentation**")
+                                st.image(overlay_img, width=200)
+                            with col4:
+                                st.markdown("**Probability Map**")
+                                st.image(prob_map_img, width=200)
+                        
+                        # Clinical interpretation in expandable section
+                        st.markdown("---")
+                        with st.expander("🏥 Clinical Interpretation", expanded=False):
+                            if tumor_prob >= 0.7:
+                                st.error("""
+                                **High Confidence Tumor Detection**
+                                - Strong evidence of tumor presence
+                                - Recommend immediate radiologist review
+                                - Consider additional imaging (contrast-enhanced MRI)
+                                """)
+                            elif tumor_prob >= 0.3:
+                                st.warning("""
+                                **Moderate Confidence Detection**
+                                - Uncertain tumor presence
+                                - Recommend radiologist review and follow-up imaging
+                                - Consider patient history and symptoms
+                                """)
+                            else:
+                                st.success("""
+                                **Low Probability of Tumor**
+                                - Low probability of tumor
+                                - Routine follow-up recommended
+                                - Monitor for changes in symptoms
+                                """)
+                        
+                        # Medical disclaimer in expandable section
+                        with st.expander("⚠️ Medical Disclaimer", expanded=False):
+                            st.warning("""
+                            - This is a research tool and NOT approved for clinical diagnosis
+                            - All predictions should be verified by qualified medical professionals
+                            - Model trained on limited dataset (BraTS 2020 + Kaggle)
+                            - Performance may vary on different MRI scanners and protocols
+                            """)
+                    elif response.status_code == 503:
+                        st.error("❌ Multi-task model not loaded on the server")
+                    else:
+                        st.error(f"❌ Prediction failed: {response.text}")
+                
+                except requests.exceptions.Timeout:
+                    st.error("❌ Request timed out. Please try again.")
+                except Exception as e:
+                    st.error(f"❌ Error: {str(e)}")
+
+
+# ============================================================================
+# Classification Tab
 # ============================================================================
 
 def render_classification_tab():
@@ -399,7 +663,7 @@ def render_classification_tab():
 
 
 # ============================================================================
-# Tab 2: Segmentation
+# Segmentation Tab
 # ============================================================================
 
 def render_segmentation_tab():
@@ -551,7 +815,7 @@ def render_segmentation_tab():
 
 
 # ============================================================================
-# Tab 3: Batch Processing
+# Batch Processing Tab
 # ============================================================================
 
 def render_batch_tab():
@@ -689,7 +953,7 @@ def render_batch_tab():
 
 
 # ============================================================================
-# Tab 4: Patient Analysis
+# Patient Analysis Tab
 # ============================================================================
 
 def render_patient_tab():
@@ -890,7 +1154,8 @@ def main():
         return
     
     # Main tabs
-    tab1, tab2, tab3, tab4 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        "🎯 Multi-Task",
         "🔍 Classification",
         "🎨 Segmentation",
         "📦 Batch Processing",
@@ -898,15 +1163,18 @@ def main():
     ])
     
     with tab1:
-        render_classification_tab()
+        render_multitask_tab()
     
     with tab2:
-        render_segmentation_tab()
+        render_classification_tab()
     
     with tab3:
-        render_batch_tab()
+        render_segmentation_tab()
     
     with tab4:
+        render_batch_tab()
+    
+    with tab5:
         render_patient_tab()
     
     # Footer

@@ -1,0 +1,91 @@
+# ============================================================================
+# Phase 2.2: Classification Head Training - Quick Test Configuration
+# ============================================================================
+# Train classification head with FROZEN encoder on BraTS + Kaggle data
+# This is Stage 2 of 3-stage multi-task training strategy
+
+# Experiment metadata
+experiment:
+  name: "multitask_cls_head_test"
+  description: "Phase 2.2 - Classification head training with frozen encoder (quick test)"
+  tags: ["multitask", "classification", "frozen_encoder", "test"]
+
+# Paths
+paths:
+  # BraTS data (for derived classification labels)
+  brats_train_dir: "data/processed/brats2d/train"
+  brats_val_dir: "data/processed/brats2d/val"
+  
+  # Kaggle data (for classification labels)
+  kaggle_train_dir: "data/processed/kaggle/train"
+  kaggle_val_dir: "data/processed/kaggle/val"
+  
+  checkpoint_dir: "checkpoints/multitask_cls_head_test"
+  log_dir: "logs/multitask_cls_head_test"
+  output_dir: "outputs/multitask_cls_head_test"
+
+# Model architecture (same as Phase 2.1)
+model:
+  name: "multitask"
+  in_channels: 1          # Single-channel MRI
+  out_channels: 1         # Binary segmentation (not used in this phase)
+  base_filters: 64        # Must match Phase 2.1
+  depth: 4                # Must match Phase 2.1
+
+# Loss function (classification)
+loss:
+  name: "cross_entropy"   # CrossEntropyLoss for classification
+  class_weights: [1.0, 1.0]  # Balanced classes (adjust if needed)
+
+# Optimizer (only for classification head)
+optimizer:
+  name: "adam"            # Adam for quick test
+  lr: 0.001               # Higher LR since only training small head
+  weight_decay: 0.0001
+  betas: [0.9, 0.999]
+  eps: 1.0e-8
+  momentum: 0.9           # For SGD (not used)
+
+# Learning rate scheduler
+scheduler:
+  name: "cosine"          # Cosine annealing
+  T_max: 10               # Match epochs
+  eta_min: 1.0e-6
+  mode: "max"             # For ReduceLROnPlateau
+  factor: 0.5
+  patience: 5
+  threshold: 0.001
+  min_lr: 1.0e-7
+
+# Training hyperparameters (QUICK TEST)
+training:
+  epochs: 10              # Quick test
+  batch_size: 8           # Larger batch for classification
+  num_workers: 0          # Windows compatibility
+  pin_memory: false
+  
+  # Mixed precision training
+  use_amp: true           # Automatic Mixed Precision
+  
+  # Gradient clipping
+  grad_clip: 1.0          # Max gradient norm
+  
+  # Early stopping
+  early_stopping:
+    enabled: false        # Disabled for quick test
+    patience: 5
+    min_delta: 0.001
+    monitor: "val_acc"
+    mode: "max"
+  
+  # Checkpoint saving
+  save_best: true         # Save best model
+  save_last: true         # Save last checkpoint
+  save_frequency: 0       # Save every N epochs (0 to disable)
+  keep_last_n: 2
+
+# Reproducibility
+seed: 42
+
+# Device
+device: "cuda"            # cuda or cpu

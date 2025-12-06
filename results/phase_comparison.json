@@ -1,0 +1,43 @@
+[
+  {
+    "phase": "Phase 2.1 (Seg Only)",
+    "segmentation": {
+      "dice": 0.863532977444785,
+      "dice_std": 0.06920113835660106,
+      "iou": 0.7663911240441459,
+      "iou_std": 0.10766936629410886,
+      "n_samples": 7
+    },
+    "classification": null
+  },
+  {
+    "phase": "Phase 2.2 (Cls Only)",
+    "segmentation": null,
+    "classification": {
+      "accuracy": 0.8757763975155279,
+      "precision": 0.9,
+      "recall": 0.9642857142857143,
+      "f1": 0.9310344827586207,
+      "roc_auc": 0.8962585034013605,
+      "n_samples": 161
+    }
+  },
+  {
+    "phase": "Phase 2.3 (Multi-Task)",
+    "segmentation": {
+      "dice": 0.7649795583316258,
+      "dice_std": 0.139718640377835,
+      "iou": 0.6401469366891044,
+      "iou_std": 0.18365106691622612,
+      "n_samples": 7
+    },
+    "classification": {
+      "accuracy": 0.9130434782608695,
+      "precision": 0.9315068493150684,
+      "recall": 0.9714285714285714,
+      "f1": 0.951048951048951,
+      "roc_auc": 0.9183673469387755,
+      "n_samples": 161
+    }
+  }
+]

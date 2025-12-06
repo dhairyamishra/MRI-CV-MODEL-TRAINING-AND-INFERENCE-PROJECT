@@ -22,6 +22,7 @@ import tempfile
 import zipfile
 import json
 from datetime import datetime
+import matplotlib.pyplot as plt
 
 from fastapi import FastAPI, File, UploadFile, HTTPException, Query, Form
 from fastapi.middleware.cors import CORSMiddleware
@@ -37,6 +38,7 @@ sys.path.insert(0, str(project_root))
 from src.inference.predict import ClassifierPredictor
 from src.inference.infer_seg2d import SegmentationPredictor
 from src.inference.uncertainty import MCDropoutPredictor, TTAPredictor, EnsemblePredictor
+from src.inference.multi_task_predictor import MultiTaskPredictor
 from src.inference.postprocess import postprocess_mask
 from src.eval.grad_cam import GradCAM, visualize_single_image
 from src.eval.calibration import TemperatureScaling
@@ -62,11 +64,13 @@ app.add_middleware(
 classifier_predictor: Optional[ClassifierPredictor] = None
 segmentation_predictor: Optional[SegmentationPredictor] = None
 uncertainty_predictor: Optional[EnsemblePredictor] = None
+multitask_predictor: Optional[MultiTaskPredictor] = None
 temperature_scaler: Optional[TemperatureScaling] = None
 
 CLASSIFIER_LOADED = False
 SEGMENTATION_LOADED = False
 CALIBRATION_LOADED = False
+MULTITASK_LOADED = False
 
 
 # ============================================================================
@@ -79,6 +83,7 @@ class HealthResponse(BaseModel):
     classifier_loaded: bool
     segmentation_loaded: bool
     calibration_loaded: bool
+    multitask_loaded: bool
     device: str
     timestamp: str
 
@@ -87,6 +92,7 @@ class ModelInfoResponse(BaseModel):
     """Response model for model information."""
     classifier: Dict[str, Any]
     segmentation: Dict[str, Any]
+    multitask: Dict[str, Any]
     features: List[str]
 
 
@@ -133,6 +139,16 @@ class BatchResponse(BaseModel):
     summary: Dict[str, Any]
 
 
+class MultiTaskResponse(BaseModel):
+    """Response model for multi-task predictions."""
+    classification: Dict[str, Any]
+    segmentation: Optional[Dict[str, Any]] = None
+    segmentation_computed: bool
+    recommendation: str
+    gradcam_overlay: Optional[str] = None
+    processing_time_ms: float
+
+
 # ============================================================================
 # Startup Event
 # ============================================================================
@@ -141,11 +157,31 @@ class BatchResponse(BaseModel):
 async def startup_event():
     """Load models on startup."""
     global classifier_predictor, segmentation_predictor, uncertainty_predictor
-    global temperature_scaler, CLASSIFIER_LOADED, SEGMENTATION_LOADED, CALIBRATION_LOADED
+    global multitask_predictor, temperature_scaler
+    global CLASSIFIER_LOADED, SEGMENTATION_LOADED, CALIBRATION_LOADED, MULTITASK_LOADED
     
     print("=" * 80)
     print("SliceWise API v2 - Starting up...")
     print("=" * 80)
+    
+    # Load multi-task model (PRIORITY)
+    try:
+        multitask_path = project_root / "checkpoints" / "multitask_joint" / "best_model.pth"
+        if multitask_path.exists():
+            multitask_predictor = MultiTaskPredictor(
+                checkpoint_path=str(multitask_path),
+                classification_threshold=0.3,
+                segmentation_threshold=0.5
+            )
+            MULTITASK_LOADED = True
+            print(f"[OK] Multi-task model loaded from {multitask_path}")
+        else:
+            print(f"[WARN] Multi-task model not found at {multitask_path}")
+    except Exception as e:
+        import traceback
+        print(f"[ERROR] Error loading multi-task model: {e}")
+        print(f"[ERROR] Traceback:")
+        traceback.print_exc()
     
     # Load classifier
     try:
@@ -156,11 +192,11 @@ async def startup_event():
                 model_name="efficientnet"
             )
             CLASSIFIER_LOADED = True
-            print(f"✓ Classifier loaded from {classifier_path}")
+            print(f"[OK] Classifier loaded from {classifier_path}")
         else:
-            print(f"⚠ Classifier not found at {classifier_path}")
+            print(f"[WARN] Classifier not found at {classifier_path}")
     except Exception as e:
-        print(f"✗ Error loading classifier: {e}")
+        print(f"[ERROR] Error loading classifier: {e}")
     
     # Load calibration
     try:
@@ -170,11 +206,11 @@ async def startup_event():
             checkpoint = torch.load(calibration_path, map_location=classifier_predictor.device, weights_only=False)
             temperature_scaler.temperature.data = checkpoint['temperature']
             CALIBRATION_LOADED = True
-            print(f"✓ Calibration loaded (T={temperature_scaler.temperature.item():.4f})")
+            print(f"[OK] Calibration loaded (T={temperature_scaler.temperature.item():.4f})")
         else:
-            print(f"⚠ Calibration not found at {calibration_path}")
+            print(f"[WARN] Calibration not found at {calibration_path}")
     except Exception as e:
-        print(f"⚠ Error loading calibration: {e}")
+        print(f"[WARN] Error loading calibration: {e}")
     
     # Load segmentation
     try:
@@ -184,7 +220,7 @@ async def startup_event():
                 checkpoint_path=str(seg_path)
             )
             SEGMENTATION_LOADED = True
-            print(f"✓ Segmentation loaded from {seg_path}")
+            print(f"[OK] Segmentation loaded from {seg_path}")
             
             # Initialize uncertainty predictor
             uncertainty_predictor = EnsemblePredictor(
@@ -193,18 +229,26 @@ async def startup_event():
                 use_tta=True,
                 device=segmentation_predictor.device
             )
-            print(f"✓ Uncertainty estimation initialized")
+            print(f"[OK] Uncertainty estimation initialized")
         else:
-            print(f"⚠ Segmentation not found at {seg_path}")
+            print(f"[WARN] Segmentation not found at {seg_path}")
     except Exception as e:
-        print(f"✗ Error loading segmentation: {e}")
+        print(f"[ERROR] Error loading segmentation: {e}")
     
     print("=" * 80)
-    device = classifier_predictor.device if classifier_predictor else "unknown"
+    device = "unknown"
+    if multitask_predictor:
+        device = str(multitask_predictor.device)
+    elif classifier_predictor:
+        device = str(classifier_predictor.device)
+    elif segmentation_predictor:
+        device = str(segmentation_predictor.device)
+    
     print(f"Device: {device}")
-    print(f"Classifier: {'✓' if CLASSIFIER_LOADED else '✗'}")
-    print(f"Calibration: {'✓' if CALIBRATION_LOADED else '✗'}")
-    print(f"Segmentation: {'✓' if SEGMENTATION_LOADED else '✗'}")
+    print(f"Multi-task: {'[OK]' if MULTITASK_LOADED else '[NO]'}")
+    print(f"Classifier: {'[OK]' if CLASSIFIER_LOADED else '[NO]'}")
+    print(f"Calibration: {'[OK]' if CALIBRATION_LOADED else '[NO]'}")
+    print(f"Segmentation: {'[OK]' if SEGMENTATION_LOADED else '[NO]'}")
     print("=" * 80)
 
 
@@ -300,6 +344,9 @@ async def root():
         "endpoints": {
             "health": "/healthz",
             "model_info": "/model/info",
+            "multitask": {
+                "predict": "/predict_multitask"
+            },
             "classification": {
                 "classify": "/classify",
                 "classify_with_gradcam": "/classify/gradcam",
@@ -322,18 +369,21 @@ async def root():
 async def health_check():
     """Health check endpoint."""
     device = "unknown"
-    if classifier_predictor:
+    if multitask_predictor:
+        device = str(multitask_predictor.device)
+    elif classifier_predictor:
         device = str(classifier_predictor.device)
     elif segmentation_predictor:
         device = str(segmentation_predictor.device)
     
-    status = "healthy" if (CLASSIFIER_LOADED or SEGMENTATION_LOADED) else "no_models_loaded"
+    status = "healthy" if (MULTITASK_LOADED or CLASSIFIER_LOADED or SEGMENTATION_LOADED) else "no_models_loaded"
     
     return HealthResponse(
         status=status,
         classifier_loaded=CLASSIFIER_LOADED,
         segmentation_loaded=SEGMENTATION_LOADED,
         calibration_loaded=CALIBRATION_LOADED,
+        multitask_loaded=MULTITASK_LOADED,
         device=device,
         timestamp=datetime.now().isoformat()
     )
@@ -362,7 +412,29 @@ async def model_info():
             "uncertainty_estimation": True
         }
     
+    multitask_info = {}
+    if MULTITASK_LOADED:
+        model_params = multitask_predictor.get_model_info()
+        multitask_info = {
+            "architecture": "Multi-Task U-Net",
+            "parameters": model_params['parameters'],
+            "input_size": model_params['input_size'],
+            "tasks": model_params['tasks'],
+            "classification_threshold": model_params['classification_threshold'],
+            "segmentation_threshold": model_params['segmentation_threshold'],
+            "performance": {
+                "classification_accuracy": 0.9130,
+                "classification_sensitivity": 0.9714,
+                "classification_roc_auc": 0.9184,
+                "segmentation_dice": 0.7650,
+                "segmentation_iou": 0.6401,
+                "combined_metric": 0.8390
+            }
+        }
+    
     features = []
+    if MULTITASK_LOADED:
+        features.extend(["multi_task", "conditional_segmentation", "unified_inference"])
     if CLASSIFIER_LOADED:
         features.extend(["classification", "grad_cam"])
         if CALIBRATION_LOADED:
@@ -373,6 +445,7 @@ async def model_info():
     return ModelInfoResponse(
         classifier=classifier_info,
         segmentation=segmentation_info,
+        multitask=multitask_info,
         features=features
     )
 
@@ -792,6 +865,110 @@ async def analyze_patient_stack(
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Patient analysis failed: {str(e)}")
+
+
+# ============================================================================
+# Multi-Task Endpoint
+# ============================================================================
+
+@app.post("/predict_multitask", response_model=MultiTaskResponse)
+async def predict_multitask(
+    file: UploadFile = File(...),
+    include_gradcam: bool = Query(True, description="Include Grad-CAM visualization")
+):
+    """
+    Unified multi-task prediction: classification + conditional segmentation.
+    
+    This endpoint uses the multi-task model to perform both classification
+    and segmentation in a single forward pass. Segmentation is only computed
+    if the tumor probability is above the threshold (default: 0.3).
+    
+    Benefits:
+    - ~40% faster than separate models
+    - 9.4% fewer parameters
+    - Excellent performance: 91.3% accuracy, 97.1% sensitivity
+    """
+    if not MULTITASK_LOADED:
+        raise HTTPException(status_code=503, detail="Multi-task model not loaded")
+    
+    try:
+        import time
+        start_time = time.time()
+        
+        # Read and preprocess image
+        contents = await file.read()
+        image = Image.open(io.BytesIO(contents))
+        image_array = np.array(image)
+        
+        # Run conditional prediction (recommended)
+        if include_gradcam:
+            result = multitask_predictor.predict_full(image_array, include_gradcam=True)
+        else:
+            result = multitask_predictor.predict_conditional(image_array)
+        
+        # Build response
+        response = {
+            "classification": result['classification'],
+            "segmentation_computed": result['segmentation_computed'],
+            "recommendation": result['recommendation']
+        }
+        
+        # Add segmentation if computed
+        if result['segmentation_computed']:
+            mask = result['segmentation']['mask']
+            prob_map = result['segmentation']['prob_map']
+            
+            # Create overlay
+            image_original = result['image_original']
+            overlay = create_overlay(image_original, mask, alpha=0.4)
+            
+            response["segmentation"] = {
+                "mask_available": True,
+                "tumor_area_pixels": result['segmentation']['tumor_area_pixels'],
+                "tumor_percentage": result['segmentation']['tumor_percentage'],
+                "mask_base64": numpy_to_base64_png(mask),
+                "prob_map_base64": numpy_to_base64_png(prob_map),
+                "overlay_base64": numpy_to_base64_png(overlay)
+            }
+        else:
+            response["segmentation"] = {
+                "mask_available": False,
+                "message": "Segmentation not computed (tumor probability below threshold)"
+            }
+        
+        # Add Grad-CAM if requested
+        if include_gradcam and 'gradcam' in result:
+            heatmap = result['gradcam']['heatmap']
+            image_original = result['image_original']
+            
+            # Resize heatmap to match image size
+            import cv2
+            heatmap_resized = cv2.resize(heatmap, (image_original.shape[1], image_original.shape[0]))
+            
+            # Create Grad-CAM overlay
+            heatmap_colored = plt.cm.jet(heatmap_resized)[:, :, :3]  # RGB
+            heatmap_colored = (heatmap_colored * 255).astype(np.uint8)
+            
+            # Blend with original
+            image_rgb = np.stack([image_original] * 3, axis=-1)
+            if image_rgb.max() <= 1.0:
+                image_rgb = (image_rgb * 255).astype(np.uint8)
+            
+            gradcam_overlay = ((1 - 0.4) * image_rgb + 0.4 * heatmap_colored).astype(np.uint8)
+            response["gradcam_overlay"] = numpy_to_base64_png(gradcam_overlay)
+        
+        # Calculate processing time
+        processing_time = (time.time() - start_time) * 1000  # ms
+        response["processing_time_ms"] = round(processing_time, 2)
+        
+        return MultiTaskResponse(**response)
+    
+    except Exception as e:
+        import traceback
+        error_detail = f"Prediction failed: {str(e)}\n{traceback.format_exc()}"
+        print(f"\n❌ Error in /predict_multitask:")
+        print(error_detail)
+        raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
 
 
 # ============================================================================

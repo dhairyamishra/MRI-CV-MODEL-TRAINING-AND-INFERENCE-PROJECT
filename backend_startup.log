@@ -1,0 +1,57 @@
+INFO:     Will watch for changes in these directories: ['C:\\--DPM-MAIN-DIR--\\windsurf_projects\\MRI-CV-MODEL-TRAINING-AND-INFERENCE-PROJECT']
+INFO:     Uvicorn running on http://localhost:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [33716] using WatchFiles
+INFO:     Started server process [23472]
+INFO:     Waiting for application startup.
+Traceback (most recent call last):
+  File "C:\--DPM-MAIN-DIR--\windsurf_projects\MRI-CV-MODEL-TRAINING-AND-INFERENCE-PROJECT\app\backend\main_v2.py", line 171, in startup_event
+    multitask_predictor = MultiTaskPredictor(
+        checkpoint_path=str(multitask_path),
+    ...<3 lines>...
+        segmentation_threshold=0.5
+    )
+  File "C:\--DPM-MAIN-DIR--\windsurf_projects\MRI-CV-MODEL-TRAINING-AND-INFERENCE-PROJECT\src\inference\multi_task_predictor.py", line 76, in __init__
+    print(f"\u2713 Multi-task model loaded from {checkpoint_path}")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dhair\AppData\Local\Programs\Python\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 0: character maps to <undefined>
+INFO:     Application startup complete.
+================================================================================
+SliceWise API v2 - Starting up...
+================================================================================
+[ERROR] Error loading multi-task model: 'charmap' codec can't encode character '\u2713' in position 0: character maps to <undefined>
+[ERROR] Traceback:
+[OK] Classifier loaded from C:\--DPM-MAIN-DIR--\windsurf_projects\MRI-CV-MODEL-TRAINING-AND-INFERENCE-PROJECT\checkpoints\cls\best_model.pth
+[WARN] Calibration not found at C:\--DPM-MAIN-DIR--\windsurf_projects\MRI-CV-MODEL-TRAINING-AND-INFERENCE-PROJECT\checkpoints\cls\temperature_scaler.pth
+Loaded model from C:\--DPM-MAIN-DIR--\windsurf_projects\MRI-CV-MODEL-TRAINING-AND-INFERENCE-PROJECT\checkpoints\seg\best_model.pth
+  Device: cuda
+  Threshold: 0.5
+[OK] Segmentation loaded from C:\--DPM-MAIN-DIR--\windsurf_projects\MRI-CV-MODEL-TRAINING-AND-INFERENCE-PROJECT\checkpoints\seg\best_model.pth
+[OK] Uncertainty estimation initialized
+================================================================================
+Device: cuda
+Multi-task: [NO]
+Classifier: [OK]
+Calibration: [NO]
+Segmentation: [OK]
+================================================================================
+INFO:     127.0.0.1:62593 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52114 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52118 - "GET /model/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65060 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65065 - "GET /model/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65072 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65076 - "GET /model/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65082 - "POST /predict_multitask?include_gradcam=True HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:52970 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65506 - "GET /model/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52895 - "POST /predict_multitask?include_gradcam=True HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:63332 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49772 - "GET /model/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49391 - "POST /predict_multitask?include_gradcam=True HTTP/1.1" 503 Service Unavailable
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [23472]
