@@ -4,6 +4,33 @@
 
 This directory contains all executable scripts for the **SliceWise MRI Brain Tumor Detection** project. Scripts are organized by functionality and workflow stage to improve maintainability and discoverability.
 
+## ⚡ Quick Reference
+
+**Most Common Commands** (run from project root):
+```bash
+# 🎬 Launch Demo
+python scripts/demo/run_multitask_demo.py
+
+# 🏋️ Training (3-stage pipeline)
+python scripts/training/multitask/train_multitask_seg_warmup.py
+python scripts/training/multitask/train_multitask_cls_head.py --encoder-init checkpoints/multitask_seg_warmup/best_model.pth
+python scripts/training/multitask/train_multitask_joint.py --init-from checkpoints/multitask_cls_head/best_model.pth
+
+# 📊 Evaluation
+python scripts/evaluation/multitask/evaluate_multitask.py
+python scripts/evaluation/multitask/generate_multitask_gradcam.py --num-samples 50
+
+# 🧪 Testing
+python scripts/evaluation/testing/test_multitask_e2e.py
+
+# 📦 Data Pipeline
+python scripts/data/collection/download_brats_data.py
+python scripts/data/preprocessing/preprocess_all_brats.py
+python scripts/data/splitting/split_brats_data.py
+```
+
+> **⚠️ Important**: Always run scripts from the project root directory, not from within the `scripts/` folder.
+
 ## Directory Structure
 
 ```
@@ -105,6 +132,9 @@ python scripts/training/multitask/train_multitask_joint.py
 - **Differential LR**: Encoder=1e-4, Decoder/Cls=3e-4
 - **Mixed Precision**: AMP training
 - **Early Stopping**: Validation monitoring
+- **Checkpointing**: Best model saving + resume capability
+- **Logging**: Weights & Biases integration
+- **Error Handling**: Robust exception handling
 
 #### `training/utils/`
 | Script | Description | Output |
@@ -190,6 +220,19 @@ python scripts/demo/run_demo.py
 | Script | Description | Use Case |
 |--------|-------------|----------|
 | `debug_multitask_data.py` | Data pipeline debugging | Dataset validation, batch inspection |
+
+**Usage**:
+```bash
+# Debug multi-task dataset loading
+python scripts/debug/debug_multitask_data.py
+
+# Validates:
+# - Dataset initialization
+# - Batch collation
+# - Mixed source handling (BraTS + Kaggle)
+# - Mask availability
+# - Data shapes and types
+```
 
 ## 🚀 Quick Start Workflows
 
@@ -329,16 +372,29 @@ pkill -f uvicorn
 python scripts/demo/run_multitask_demo.py --frontend-port 8502 --backend-port 8001
 ```
 
-**"Import errors"**
+**"Import errors" or "ModuleNotFoundError"**
 ```bash
-# Ensure you're in project root
-cd /path/to/project
+# Ensure you're in project root (not in scripts/ directory)
+cd /path/to/MRI-CV-MODEL-TRAINING-AND-INFERENCE-PROJECT
 
 # Install dependencies
 pip install -r requirements.txt
 
-# Check Python path
+# Verify you're running from project root
 python -c "import sys; print(sys.path)"
+
+# All scripts must be run from project root:
+# Correct:   python scripts/demo/run_multitask_demo.py
+# Incorrect: cd scripts/demo && python run_multitask_demo.py
+```
+
+**"Path calculation errors"**
+```bash
+# After reorganization (Dec 7, 2025), all scripts use correct path depth:
+# - Scripts 3 levels deep (scripts/category/subcategory/): .parent.parent.parent
+# - Scripts 2 levels deep (scripts/category/): .parent.parent
+# If you encounter path issues, ensure you've pulled the latest changes
+git pull origin master
 ```
 
 ### **Debug Mode**
