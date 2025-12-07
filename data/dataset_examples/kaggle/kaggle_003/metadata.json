@@ -1,0 +1,31 @@
+{
+  "index": 3,
+  "source": "kaggle",
+  "filename": "yes_Y101.npz",
+  "label": 1,
+  "label_name": "tumor",
+  "shape": [
+    1,
+    256,
+    256
+  ],
+  "dtype": "float32",
+  "value_range": [
+    0.0,
+    1.0
+  ],
+  "original_metadata": {
+    "image_id": "Y101",
+    "class": "yes",
+    "label": 1,
+    "original_size": [
+      336,
+      300
+    ],
+    "target_size": [
+      256,
+      256
+    ],
+    "source": "kaggle_brain_mri"
+  }
+}

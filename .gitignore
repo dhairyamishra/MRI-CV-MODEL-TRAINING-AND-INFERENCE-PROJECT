@@ -1,114 +1,263 @@
-# # Dataset directories
+# MRI Brain Tumor Detection Project - .gitignore
+# Comprehensive .gitignore for ML/DL projects with medical imaging
+
+#==============================================================================
+# Data & Datasets (Medical imaging can be very large)
+#==============================================================================
+# Raw data directories
+data/raw/
+data/processed/
 kaggle_cache/
-# data/
-/data
-# datasets/
-*.jpg
-*.jpeg
-*.png
-*.gif
-*.bmp
-*.tiff
-*.tif
+datasets/
+*.nii.gz
+*.nii
+*.dcm
+*.dicom
 
-# # But allow Python source files in src/
-# !src/**/*.py
-# !src/**/__init__.py
+# But keep dataset examples and test samples
+!data/dataset_examples/
+!data/dataset_examples/**/*.png
+!data/dataset_examples/**/*.json
 
-# # Model checkpoints and weights
-# *.pth
-# *.pt
-# *.ckpt
-# *.h5
-# *.pb
-# *.onnx
+#==============================================================================
+# Model Checkpoints & Weights (Often very large files)
+#==============================================================================
 checkpoints/
 saved_models/
 weights/
 model_weights/
+*.pth
+*.pt
+*.ckpt
+*.h5
+*.pb
+*.onnx
+*.safetensors
+*.pkl
+*.pickle
 
-# # Allow src/models/ directory (source code)
-# !src/models/
-# !src/models/**/*.py
+#==============================================================================
+# Training Outputs & Logs
+#==============================================================================
+# Weights & Biases
+wandb/
+.wandb/
 
-# # Jupyter Notebook checkpoints
-.ipynb_checkpoints/
-*/.ipynb_checkpoints/*
+# TensorBoard logs
+runs/
+logs/
+tensorboard/
+lightning_logs/
 
-# # Python cache
-# __pycache__/
-# *.py[cod]
-# *$py.class
-# *.so
-# .Python
-# build/
-# develop-eggs/
-# dist/
-# downloads/
-# eggs/
-# .eggs/
-# lib/
-# lib64/
-# parts/
-# sdist/
-# var/
-# wheels/
-# *.egg-info/
-# .installed.cfg
-# *.egg
+# Training outputs and results
+outputs/
+results/
+visualizations/
+assets/grad_cam*/
+!assets/grad_cam_examples/  # Keep some examples
 
-# # Virtual environments
+# Evaluation results
+full_e2e_test_results.json
+full_scale_brats_e2e_results.json
+multitask_e2e_test_results.json
+
+#==============================================================================
+# Python (Standard Python ignores)
+#==============================================================================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+#==============================================================================
+# Virtual Environments
+#==============================================================================
 venv/
 env/
 ENV/
-.venv
+.venv/
+.conda/
+conda_env/
 
-# # IDE settings
-# .vscode/
-# .idea/
-# *.swp
-# *.swo
-# *~
-# .DS_Store
+#==============================================================================
+# Jupyter Notebook
+#==============================================================================
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
 
-# # Logs and databases
-# *.log
-# *.sql
-# *.sqlite
-# *.db
+#==============================================================================
+# IDEs & Editors
+#==============================================================================
+# VS Code
+.vscode/
+*.code-workspace
 
-# # TensorBoard logs
-# runs/
-# logs/
-# tensorboard/
+# PyCharm
+.idea/
+*.iml
 
-# # Large files (>100MB)
-# *.zip
-# *.tar
-# *.tar.gz
-# *.rar
-# *.7z
+# Vim
+*.swp
+*.swo
+*~
 
-# # Temporary files
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+
+#==============================================================================
+# OS Generated Files
+#==============================================================================
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.stackdump
+*.lnk
+
+# Linux
+*~
+.directory
+.Trash-*
+
+#==============================================================================
+# Temporary & Cache Files
+#==============================================================================
 *.tmp
 *.temp
 *.cache
+.cache/
+.tmp/
+temp/
+*.log
+*.sqlite
+*.db
 
-# # OS generated files
-# Thumbs.db
-# .DS_Store
-# .DS_Store?
-# ._*
-# .Spotlight-V100
-# .Trashes
-# ehthumbs.db
-# Desktop.ini
+#==============================================================================
+# Archives & Large Files (>100MB)
+#==============================================================================
+*.zip
+*.tar
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.rar
+*.7z
+*.gz
+*.bz2
 
-# # PyTorch specific
-lightning_logs/
-wandb/
+#==============================================================================
+# Documentation & Build Artifacts
+#==============================================================================
+# Sphinx documentation
+docs/_build/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+.pytest_cache/
+.tox/
 
-# # Backup files
-# *.bak
-# *.backup
-# *~
+#==============================================================================
+# Security & Secrets
+#==============================================================================
+# API keys and secrets
+.env
+.env.local
+.env.*.local
+secrets.json
+config/secrets/
+*.key
+*.pem
+
+#==============================================================================
+# Backup Files
+#==============================================================================
+*.bak
+*.backup
+*~
+*.orig
+*.rej
+
+#==============================================================================
+# Project Specific (MRI/ML Medical Imaging)
+#==============================================================================
+# Backend startup logs
+backend_startup.log
+
+# CUDA/GPU cache
+.cuda/
+.nv/
+
+# Hugging Face cache (if used)
+.huggingface/
+
+# MLflow
+mlruns/
+mlartifacts/
+
+#==============================================================================
+# Allow Important Files (Explicit includes)
+#==============================================================================
+# Keep Python source code
+!src/**/*.py
+!scripts/**/*.py
+!tests/**/*.py
+
+# Keep configuration files
+!configs/**/*.yaml
+!configs/**/*.yml
+
+# Keep documentation
+!*.md
+!docs/**/*.md
+!documentation/**/*.md
+
+# Keep setup files
+!setup.py
+!pyproject.toml
+!requirements.txt
+!MANIFEST.in
+
+# Keep license and README
+!LICENSE
+!README.md
+
+# Keep CI/CD
+!.github/
+!*.yml
+!*.yaml

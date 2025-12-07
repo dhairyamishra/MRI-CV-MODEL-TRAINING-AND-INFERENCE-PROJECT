@@ -1,0 +1,15 @@
+{
+  "kaggle": {
+    "total_exported": 30,
+    "with_tumor": 10,
+    "without_tumor": 20,
+    "output_dir": "C:\\--DPM-MAIN-DIR--\\windsurf_projects\\MRI-CV-MODEL-TRAINING-AND-INFERENCE-PROJECT\\data\\dataset_examples\\kaggle"
+  },
+  "brats": {
+    "total_exported": 10,
+    "with_tumor": 10,
+    "without_tumor": 0,
+    "output_dir": "C:\\--DPM-MAIN-DIR--\\windsurf_projects\\MRI-CV-MODEL-TRAINING-AND-INFERENCE-PROJECT\\data\\dataset_examples\\brats"
+  },
+  "comparison_visualization": "C:\\--DPM-MAIN-DIR--\\windsurf_projects\\MRI-CV-MODEL-TRAINING-AND-INFERENCE-PROJECT\\data\\dataset_examples\\dataset_comparison.png"
+}
