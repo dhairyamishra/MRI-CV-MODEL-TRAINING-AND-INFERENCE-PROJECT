@@ -1,18 +1,26 @@
 INFO:     Will watch for changes in these directories: ['C:\\--DPM-MAIN-DIR--\\windsurf_projects\\MRI-CV-MODEL-TRAINING-AND-INFERENCE-PROJECT']
 INFO:     Uvicorn running on http://localhost:8000 (Press CTRL+C to quit)
-INFO:     Started reloader process [33716] using WatchFiles
-INFO:     Started server process [23472]
+INFO:     Started reloader process [20980] using WatchFiles
+INFO:     Started server process [39232]
 INFO:     Waiting for application startup.
 Traceback (most recent call last):
   File "C:\--DPM-MAIN-DIR--\windsurf_projects\MRI-CV-MODEL-TRAINING-AND-INFERENCE-PROJECT\app\backend\main_v2.py", line 171, in startup_event
     multitask_predictor = MultiTaskPredictor(
         checkpoint_path=str(multitask_path),
-    ...<3 lines>...
+        classification_threshold=0.3,
         segmentation_threshold=0.5
     )
-  File "C:\--DPM-MAIN-DIR--\windsurf_projects\MRI-CV-MODEL-TRAINING-AND-INFERENCE-PROJECT\src\inference\multi_task_predictor.py", line 76, in __init__
-    print(f"\u2713 Multi-task model loaded from {checkpoint_path}")
-    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\--DPM-MAIN-DIR--\windsurf_projects\MRI-CV-MODEL-TRAINING-AND-INFERENCE-PROJECT\src\inference\multi_task_predictor.py", line 68, in __init__
+    self.model = self._load_model(checkpoint_path, base_filters, depth)
+                 ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\--DPM-MAIN-DIR--\windsurf_projects\MRI-CV-MODEL-TRAINING-AND-INFERENCE-PROJECT\src\inference\multi_task_predictor.py", line 94, in _load_model
+    config = ModelConfig.from_checkpoint_dir(checkpoint_path.parent)
+  File "C:\--DPM-MAIN-DIR--\windsurf_projects\MRI-CV-MODEL-TRAINING-AND-INFERENCE-PROJECT\src\models\model_config.py", line 86, in from_checkpoint_dir
+    return cls.load(config_path)
+           ~~~~~~~~^^^^^^^^^^^^^
+  File "C:\--DPM-MAIN-DIR--\windsurf_projects\MRI-CV-MODEL-TRAINING-AND-INFERENCE-PROJECT\src\models\model_config.py", line 68, in load
+    print(f"\u2713 Model config loaded from: {path}")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   File "C:\Users\dhair\AppData\Local\Programs\Python\Python313\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -37,21 +45,11 @@ Classifier: [OK]
 Calibration: [NO]
 Segmentation: [OK]
 ================================================================================
-INFO:     127.0.0.1:62593 - "GET /healthz HTTP/1.1" 200 OK
-INFO:     127.0.0.1:52114 - "GET /healthz HTTP/1.1" 200 OK
-INFO:     127.0.0.1:52118 - "GET /model/info HTTP/1.1" 200 OK
-INFO:     127.0.0.1:65060 - "GET /healthz HTTP/1.1" 200 OK
-INFO:     127.0.0.1:65065 - "GET /model/info HTTP/1.1" 200 OK
-INFO:     127.0.0.1:65072 - "GET /healthz HTTP/1.1" 200 OK
-INFO:     127.0.0.1:65076 - "GET /model/info HTTP/1.1" 200 OK
-INFO:     127.0.0.1:65082 - "POST /predict_multitask?include_gradcam=True HTTP/1.1" 503 Service Unavailable
-INFO:     127.0.0.1:52970 - "GET /healthz HTTP/1.1" 200 OK
-INFO:     127.0.0.1:65506 - "GET /model/info HTTP/1.1" 200 OK
-INFO:     127.0.0.1:52895 - "POST /predict_multitask?include_gradcam=True HTTP/1.1" 503 Service Unavailable
-INFO:     127.0.0.1:63332 - "GET /healthz HTTP/1.1" 200 OK
-INFO:     127.0.0.1:49772 - "GET /model/info HTTP/1.1" 200 OK
-INFO:     127.0.0.1:49391 - "POST /predict_multitask?include_gradcam=True HTTP/1.1" 503 Service Unavailable
-INFO:     Shutting down
+INFO:     127.0.0.1:59788 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61095 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61099 - "GET /model/info HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'scripts\data\collection\download_brats_data.py', 'scripts\download_brats_data.py'. Reloading...
+ INFO:     Shutting down
 INFO:     Waiting for application shutdown.
 INFO:     Application shutdown complete.
-INFO:     Finished server process [23472]
+INFO:     Finished server process [39232]

@@ -1,0 +1,31 @@
+{
+  "index": 12,
+  "source": "kaggle",
+  "filename": "no_12 no.npz",
+  "label": 0,
+  "label_name": "no_tumor",
+  "shape": [
+    1,
+    256,
+    256
+  ],
+  "dtype": "float32",
+  "value_range": [
+    0.0,
+    0.9864457249641418
+  ],
+  "original_metadata": {
+    "image_id": "12 no",
+    "class": "no",
+    "label": 0,
+    "original_size": [
+      183,
+      275
+    ],
+    "target_size": [
+      256,
+      256
+    ],
+    "source": "kaggle_brain_mri"
+  }
+}
