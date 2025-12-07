@@ -1,0 +1,60 @@
+{
+  "start_time": "2025-12-07T07:27:48.706578",
+  "mode": "full",
+  "training_mode": "quick",
+  "steps": {
+    "download_brats": {
+      "status": "success",
+      "duration_seconds": 3.06,
+      "command": "python scripts/data/collection/download_brats_data.py --version 2020"
+    },
+    "download_kaggle": {
+      "status": "success",
+      "duration_seconds": 1.26,
+      "command": "python scripts/data/collection/download_kaggle_data.py"
+    },
+    "preprocess_brats": {
+      "status": "success",
+      "duration_seconds": 0.81,
+      "command": "python scripts/data/preprocessing/preprocess_all_brats.py --input data/raw/brats2020 --modality flair --normalization zscore --min-tumor-pixels 100 --num-patients 10"
+    },
+    "split_kaggle": {
+      "status": "success",
+      "duration_seconds": 0.26,
+      "command": "python scripts/data/splitting/split_kaggle_data.py --train 0.7 --val 0.15 --test 0.15 --seed 42"
+    },
+    "train_stage1_seg_warmup": {
+      "status": "success",
+      "duration_seconds": 13.82,
+      "command": "python scripts/training/multitask/train_multitask_seg_warmup.py --config configs/multitask_seg_warmup_quick_test.yaml"
+    },
+    "train_stage2_cls_head": {
+      "status": "success",
+      "duration_seconds": 13.33,
+      "command": "python scripts/training/multitask/train_multitask_cls_head.py --config configs/multitask_cls_head_quick_test.yaml --encoder-init C:\\--DPM-MAIN-DIR--\\windsurf_projects\\MRI-CV-MODEL-TRAINING-AND-INFERENCE-PROJECT\\checkpoints\\multitask_seg_warmup\\best_model.pth"
+    },
+    "train_stage3_joint": {
+      "status": "success",
+      "duration_seconds": 19.31,
+      "command": "python scripts/training/multitask/train_multitask_joint.py --config configs/multitask_joint_quick_test.yaml --init-from C:\\--DPM-MAIN-DIR--\\windsurf_projects\\MRI-CV-MODEL-TRAINING-AND-INFERENCE-PROJECT\\checkpoints\\multitask_cls_head\\best_model.pth"
+    },
+    "evaluate_multitask": {
+      "status": "success",
+      "duration_seconds": 4.99,
+      "command": "python scripts/evaluation/multitask/evaluate_multitask.py --checkpoint checkpoints/multitask_joint/best_model.pth --output results/multitask_evaluation.json"
+    },
+    "generate_gradcam": {
+      "status": "success",
+      "duration_seconds": 10.89,
+      "command": "python scripts/evaluation/multitask/generate_multitask_gradcam.py --checkpoint checkpoints/multitask_joint/best_model.pth --num-samples 20 --output-dir visualizations/multitask_gradcam"
+    },
+    "compare_phases": {
+      "status": "success",
+      "duration_seconds": 5.77,
+      "command": "python scripts/evaluation/multitask/compare_all_phases.py --phase-21-checkpoint checkpoints/multitask_seg_warmup/best_model.pth --phase-22-checkpoint checkpoints/multitask_cls_head/best_model.pth --phase-23-checkpoint checkpoints/multitask_joint/best_model.pth --output results/phase_comparison.json"
+    }
+  },
+  "end_time": "2025-12-07T07:31:29.659030",
+  "success": true,
+  "total_duration_seconds": 220.95246
+}

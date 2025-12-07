@@ -1,0 +1,122 @@
+# ============================================================================
+# Phase 2.2: Classification Head Training Configuration - PRODUCTION
+# ============================================================================
+# Train classification head with frozen encoder on Kaggle dataset
+# This is Stage 2 of 3-stage multi-task training strategy
+# PRODUCTION MODE: Full dataset, 50 epochs, ~2-3 hours
+
+# Experiment metadata
+experiment:
+  name: "multitask_cls_head_production"
+  description: "Phase 2.2 PRODUCTION - Classification head training with frozen encoder"
+  tags: ["multitask", "classification", "cls_head", "kaggle", "production"]
+  notes: "Train classification head on full Kaggle dataset with frozen encoder from Stage 1"
+
+# Paths
+paths:
+  kaggle_train_dir: "data/processed/kaggle/train"
+  kaggle_val_dir: "data/processed/kaggle/val"
+  kaggle_test_dir: "data/processed/kaggle/test"
+  brats_train_dir: "data/processed/brats2d_full/train"
+  brats_val_dir: "data/processed/brats2d_full/val"
+  brats_test_dir: "data/processed/brats2d_full/test"
+  checkpoint_dir: "checkpoints/multitask_cls_head_production"
+  log_dir: "logs/multitask_cls_head_production"
+  output_dir: "outputs/multitask_cls_head_production"
+
+# Model architecture
+model:
+  name: "multitask"
+  in_channels: 1          # Single-channel MRI
+  seg_out_channels: 1     # Binary segmentation
+  cls_num_classes: 2      # Tumor / No Tumor
+  base_filters: 64        # Must match Stage 1
+  depth: 4                # Must match Stage 1
+  cls_hidden_dim: 256     # Classification head hidden dimension
+  cls_dropout: 0.5        # Classification head dropout
+
+# Encoder initialization
+encoder_init:
+  path: "checkpoints/multitask_seg_warmup_production/best_model.pth"
+  freeze_encoder: true    # Freeze encoder during training
+  freeze_seg_decoder: true # Freeze segmentation decoder
+
+# Loss function
+loss:
+  name: "cross_entropy"   # Cross-entropy for classification
+  class_weights: null     # Auto-compute from dataset
+  label_smoothing: 0.1    # Label smoothing for better generalization
+
+# Optimizer (only for classification head parameters)
+optimizer:
+  name: "adamw"
+  lr: 0.001               # Higher LR for classification head
+  weight_decay: 0.0001
+  betas: [0.9, 0.999]
+  eps: 1.0e-8
+
+# Learning rate scheduler
+scheduler:
+  name: "cosine"
+  T_max: 50
+  eta_min: 1.0e-6
+
+# Training hyperparameters
+training:
+  epochs: 50              # Extended training for production
+  batch_size: 32          # Larger batch for classification
+  num_workers: 4
+  pin_memory: true
+  
+  # Mixed precision training
+  use_amp: true
+  
+  # Gradient clipping
+  grad_clip: 1.0
+  
+  # Early stopping
+  early_stopping:
+    enabled: true
+    patience: 15
+    min_delta: 0.001
+    monitor: "val_acc"    # Monitor accuracy
+    mode: "max"
+  
+  # Checkpoint saving
+  save_best: true
+  save_last: true
+  save_frequency: 5
+  keep_last_n: 5
+  save_optimizer: true
+  save_scheduler: true
+
+# Data augmentation
+augmentation:
+  train:
+    enabled: true
+    random_flip_h: 0.5
+    random_flip_v: 0.5
+    random_rotate: 15
+    random_scale: 0.1
+    gaussian_noise: 0.01
+    gaussian_blur: 0.2
+    brightness: 0.15
+    contrast: 0.15
+    gamma: 0.15
+  val:
+    enabled: false
+
+# Weights & Biases logging
+wandb:
+  enabled: true
+  project: "slicewise-multitask-production"
+  entity: null
+  name: "cls_head_production"
+  tags: ["production", "stage2", "classification", "cls_head"]
+  notes: "Production training of classification head"
+
+# Reproducibility
+seed: 42
+
+# Device
+device: "cuda"

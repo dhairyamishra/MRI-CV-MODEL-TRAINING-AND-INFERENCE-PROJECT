@@ -6,6 +6,24 @@ All scripts must be run from the project root directory. Format: `python scripts
 
 ---
 
+## 🎮 Pipeline Controller (RECOMMENDED)
+
+- `python scripts/run_full_pipeline.py [--mode {full,data-only,train-eval,demo}] [--training-mode {quick,baseline,production}] [--skip-download]` - **Complete end-to-end pipeline controller** that orchestrates data download, preprocessing, splitting, 3-stage training, evaluation, and demo launch (see `PIPELINE_CONTROLLER_GUIDE.md` for full documentation)
+
+### Quick Examples:
+```bash
+# Full pipeline with quick test (10 patients, 5 epochs, ~30 min)
+python scripts/run_full_pipeline.py --mode full --training-mode quick
+
+# Full pipeline with production training (988 patients, 100 epochs, ~8-12 hours)
+python scripts/run_full_pipeline.py --mode full --training-mode production
+
+# Skip data download if already downloaded
+python scripts/run_full_pipeline.py --mode full --training-mode baseline --skip-download
+```
+
+---
+
 ## 📦 Data Collection
 
 - `python scripts/data/collection/download_brats_data.py [--year {2020,2021}] [--output DIR]` - Downloads BraTS dataset from Kaggle (988 patients, ~15GB, 10-30 min)

@@ -88,16 +88,40 @@ pip install -e ".[dev]"
 python scripts/verify_setup.py
 ```
 
-### 🎬 Run the Demo Application
+### 🎮 Full Pipeline Controller (RECOMMENDED)
 
-The fastest way to see SliceWise in action:
+The easiest way to train and deploy the complete multi-task model:
+
+```bash
+# Quick test (10 patients, 5 epochs, ~30 minutes)
+python scripts/run_full_pipeline.py --mode full --training-mode quick
+
+# Baseline training (100 patients, 50 epochs, ~2-4 hours)
+python scripts/run_full_pipeline.py --mode full --training-mode baseline
+
+# Production training (988 patients, 100 epochs, ~8-12 hours)
+python scripts/run_full_pipeline.py --mode full --training-mode production
+```
+
+**What it does:**
+1. ✅ Downloads BraTS 2020 + Kaggle datasets
+2. ✅ Preprocesses and splits data (patient-level)
+3. ✅ Trains multi-task model (3 stages: seg warmup → cls head → joint)
+4. ✅ Evaluates on test set with comprehensive metrics
+5. ✅ Launches demo application (FastAPI + Streamlit)
+
+See `PIPELINE_CONTROLLER_GUIDE.md` for full documentation.
+
+### 🎬 Run the Demo Application (Pre-trained Model)
+
+If you already have a trained model:
 
 ```bash
 # Start both backend and frontend
-python scripts/run_demo.py
+python scripts/demo/run_multitask_demo.py
 
 # Or start them separately:
-python scripts/run_demo_backend.py  # Backend on http://localhost:8000
+python scripts/demo/run_demo_backend.py  # Backend on http://localhost:8000
 python scripts/run_demo_frontend.py # Frontend on http://localhost:8501
 ```
 

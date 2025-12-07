@@ -44,12 +44,12 @@ optimizer:
 # Learning rate scheduler
 scheduler:
   name: "cosine"          # Cosine annealing
-  T_max: 5                # Match epochs
+  T_max: 3                # Match epochs
   eta_min: 1.0e-6
 
 # Training hyperparameters (QUICK TEST)
 training:
-  epochs: 5               # Quick test
+  epochs: 3               # Quick test
   batch_size: 4           # Small batch for quick test
   num_workers: 0          # Windows compatibility
   pin_memory: false

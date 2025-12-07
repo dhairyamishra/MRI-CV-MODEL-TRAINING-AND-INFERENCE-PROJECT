@@ -1,0 +1,114 @@
+# ============================================================================
+# Phase 2.1: Segmentation Warm-Up Configuration - PRODUCTION
+# ============================================================================
+# Train encoder + decoder on BraTS segmentation to initialize shared encoder
+# This is Stage 1 of 3-stage multi-task training strategy
+# PRODUCTION MODE: Full dataset (988 patients), 100 epochs, ~4-6 hours
+
+# Experiment metadata
+experiment:
+  name: "multitask_seg_warmup_production"
+  description: "Phase 2.1 PRODUCTION - Segmentation warm-up with full dataset and extended training"
+  tags: ["multitask", "segmentation", "warmup", "brats", "encoder_init", "production"]
+  notes: "Train encoder+decoder on full BraTS dataset for robust feature learning"
+
+# Paths
+paths:
+  train_dir: "data/processed/brats2d_full/train"
+  val_dir: "data/processed/brats2d_full/val"
+  test_dir: "data/processed/brats2d_full/test"
+  checkpoint_dir: "checkpoints/multitask_seg_warmup_production"
+  log_dir: "logs/multitask_seg_warmup_production"
+  output_dir: "outputs/multitask_seg_warmup_production"
+
+# Model architecture (MultiTaskModel in seg-only mode)
+model:
+  name: "multitask"
+  in_channels: 1          # Single-channel MRI (FLAIR)
+  out_channels: 1         # Binary segmentation
+  base_filters: 64        # Base number of filters
+  depth: 4                # Number of encoder/decoder blocks
+
+# Loss function
+loss:
+  name: "dice_bce"        # Combined Dice + BCE loss
+  dice_weight: 0.6        # Weight for Dice loss
+  bce_weight: 0.4         # Weight for BCE loss
+  smooth: 1.0             # Smoothing factor for Dice loss
+
+# Optimizer
+optimizer:
+  name: "adamw"           # AdamW optimizer
+  lr: 0.0003              # Slightly lower LR for production
+  weight_decay: 0.0001    # L2 regularization
+  betas: [0.9, 0.999]
+  eps: 1.0e-8
+
+# Learning rate scheduler
+scheduler:
+  name: "cosine"          # Cosine annealing
+  T_max: 100              # Maximum number of epochs
+  eta_min: 1.0e-7         # Minimum learning rate
+
+# Training hyperparameters
+training:
+  epochs: 100             # Extended training for production
+  batch_size: 16          # Adjust based on GPU memory
+  num_workers: 4          # Increase for faster data loading
+  pin_memory: true
+  
+  # Mixed precision training
+  use_amp: true           # Automatic Mixed Precision
+  
+  # Gradient clipping
+  grad_clip: 1.0          # Max gradient norm
+  
+  # Early stopping
+  early_stopping:
+    enabled: true
+    patience: 20          # More patience for production
+    min_delta: 0.0005     # Smaller delta for fine improvements
+    monitor: "val_dice"   # Metric to monitor
+    mode: "max"           # max or min
+  
+  # Checkpoint saving
+  save_best: true         # Save best model based on val metric
+  save_last: true         # Save last checkpoint
+  save_frequency: 10      # Save every 10 epochs
+  keep_last_n: 5          # Keep last 5 checkpoints
+  save_optimizer: true
+  save_scheduler: true
+
+# Data augmentation
+augmentation:
+  train:
+    enabled: true
+    random_flip_h: 0.5    # Horizontal flip probability
+    random_flip_v: 0.5    # Vertical flip probability
+    random_rotate: 20     # Random rotation degrees
+    random_scale: 0.15    # Random scale factor
+    elastic_deform: true  # Elastic deformation
+    elastic_alpha: 50     # Elastic deformation strength
+    elastic_sigma: 5      # Elastic deformation smoothness
+    gaussian_noise: 0.02  # Gaussian noise std
+    gaussian_blur: 0.3    # Gaussian blur probability
+    brightness: 0.2       # Brightness adjustment range
+    contrast: 0.2         # Contrast adjustment range
+    gamma: 0.2            # Gamma correction range
+  val:
+    enabled: false        # No augmentation for validation
+
+# Weights & Biases logging
+wandb:
+  enabled: true
+  project: "slicewise-multitask-production"
+  entity: null            # Set to your W&B username/team
+  name: "seg_warmup_production"
+  tags: ["production", "stage1", "segmentation", "warmup"]
+  notes: "Production training with full dataset"
+
+# Reproducibility
+seed: 42
+
+# Device
+device: "cuda"            # cuda or cpu

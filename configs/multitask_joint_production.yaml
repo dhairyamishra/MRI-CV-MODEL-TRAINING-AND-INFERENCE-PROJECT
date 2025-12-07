@@ -1,0 +1,171 @@
+# ============================================================================
+# Phase 2.3: Joint Fine-Tuning Configuration - PRODUCTION
+# ============================================================================
+# Joint fine-tuning of all components with differential learning rates
+# This is Stage 3 of 3-stage multi-task training strategy
+# PRODUCTION MODE: Full dataset, 50 epochs, ~4-6 hours
+
+# Experiment metadata
+experiment:
+  name: "multitask_joint_production"
+  description: "Phase 2.3 PRODUCTION - Joint fine-tuning with differential LR on full dataset"
+  tags: ["multitask", "joint", "fine_tuning", "brats", "kaggle", "production"]
+  notes: "Fine-tune all components jointly with differential learning rates for optimal performance"
+
+# Paths
+paths:
+  kaggle_train_dir: "data/processed/kaggle/train"
+  kaggle_val_dir: "data/processed/kaggle/val"
+  kaggle_test_dir: "data/processed/kaggle/test"
+  brats_train_dir: "data/processed/brats2d_full/train"
+  brats_val_dir: "data/processed/brats2d_full/val"
+  brats_test_dir: "data/processed/brats2d_full/test"
+  checkpoint_dir: "checkpoints/multitask_joint_production"
+  log_dir: "logs/multitask_joint_production"
+  output_dir: "outputs/multitask_joint_production"
+
+# Model architecture
+model:
+  name: "multitask"
+  in_channels: 1
+  seg_out_channels: 1
+  cls_num_classes: 2
+  base_filters: 64
+  depth: 4
+  cls_hidden_dim: 256
+  cls_dropout: 0.5
+
+# Model initialization
+init:
+  path: "checkpoints/multitask_cls_head_production/best_model.pth"
+  freeze_encoder: false   # Unfreeze all components
+  freeze_seg_decoder: false
+  freeze_cls_head: false
+
+# Multi-task loss configuration
+loss:
+  # Segmentation loss
+  seg_loss:
+    name: "dice_bce"
+    dice_weight: 0.6
+    bce_weight: 0.4
+    smooth: 1.0
+  
+  # Classification loss
+  cls_loss:
+    name: "cross_entropy"
+    class_weights: null   # Auto-compute
+    label_smoothing: 0.1
+  
+  # Loss weighting
+  lambda_seg: 1.0         # Weight for segmentation loss
+  lambda_cls: 0.5         # Weight for classification loss (lower to balance)
+
+# Differential learning rates
+optimizer:
+  name: "adamw"
+  
+  # Different LR for different components
+  encoder_lr: 0.0001      # Lower LR for encoder (already trained)
+  seg_decoder_lr: 0.0003  # Medium LR for seg decoder
+  cls_head_lr: 0.0003     # Medium LR for cls head
+  
+  weight_decay: 0.0001
+  betas: [0.9, 0.999]
+  eps: 1.0e-8
+
+# Learning rate scheduler
+scheduler:
+  name: "cosine"
+  T_max: 50
+  eta_min: 1.0e-7
+
+# Training hyperparameters
+training:
+  epochs: 50              # Extended training for production
+  batch_size: 16          # Balance between seg and cls
+  num_workers: 4
+  pin_memory: true
+  
+  # Mixed precision training
+  use_amp: true
+  
+  # Gradient clipping
+  grad_clip: 1.0
+  
+  # Early stopping (monitor combined metric)
+  early_stopping:
+    enabled: true
+    patience: 20          # More patience for joint training
+    min_delta: 0.0005
+    monitor: "val_combined" # Combined metric: (dice + acc) / 2
+    mode: "max"
+  
+  # Checkpoint saving
+  save_best: true
+  save_last: true
+  save_frequency: 5
+  keep_last_n: 5
+  save_optimizer: true
+  save_scheduler: true
+
+# Data augmentation (moderate for joint training)
+augmentation:
+  train:
+    enabled: true
+    random_flip_h: 0.5
+    random_flip_v: 0.5
+    random_rotate: 15
+    random_scale: 0.1
+    elastic_deform: true
+    elastic_alpha: 40
+    elastic_sigma: 4
+    gaussian_noise: 0.015
+    gaussian_blur: 0.25
+    brightness: 0.15
+    contrast: 0.15
+    gamma: 0.15
+  val:
+    enabled: false
+
+# Dataset mixing strategy
+dataset:
+  # Mix BraTS (with masks) and Kaggle (without masks)
+  mix_datasets: true
+  brats_ratio: 0.3        # 30% BraTS samples per batch
+  kaggle_ratio: 0.7       # 70% Kaggle samples per batch
+  
+  # Sampling strategy
+  sampling: "balanced"    # 'balanced' or 'weighted'
+
+# Weights & Biases logging
+wandb:
+  enabled: true
+  project: "slicewise-multitask-production"
+  entity: null
+  name: "joint_production"
+  tags: ["production", "stage3", "joint", "fine_tuning"]
+  notes: "Production joint fine-tuning with full dataset"
+  
+  # Log additional metrics
+  log_gradients: true     # Log gradient norms
+  log_weights: false      # Don't log weights (too large)
+  log_frequency: 100      # Log every 100 batches
+
+# Reproducibility
+seed: 42
+
+# Device
+device: "cuda"
+
+# Performance optimization
+performance:
+  # Gradient accumulation (if GPU memory limited)
+  gradient_accumulation_steps: 1
+  
+  # Compile model (PyTorch 2.0+)
+  compile_model: false    # Set to true if using PyTorch 2.0+
+  
+  # Benchmark mode
+  cudnn_benchmark: true
+  cudnn_deterministic: false

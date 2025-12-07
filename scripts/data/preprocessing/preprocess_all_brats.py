@@ -239,9 +239,9 @@ Estimated Time:
         "--input", args.input,
         "--output", args.output,
         "--modality", args.modality,
-        "--normalization", args.normalization,
+        "--normalize", args.normalization,  # Fixed: use --normalize
         "--min-tumor-pixels", str(args.min_tumor_pixels),
-        "--num-patients", str(args.num_patients),
+        "--max-patients", str(args.num_patients),  # Fixed: use --max-patients
     ]
     
     if not run_command(preprocess_cmd, "Step 1: Preprocessing 3D → 2D slices"):
