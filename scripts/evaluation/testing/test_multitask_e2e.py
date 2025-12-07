@@ -22,7 +22,7 @@ import json
 import requests
 
 # Add project root to path
-project_root = Path(__file__).parent.parent
+project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from src.inference.multi_task_predictor import create_multi_task_predictor

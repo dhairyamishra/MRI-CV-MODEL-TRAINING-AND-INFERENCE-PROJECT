@@ -1,7 +1,7 @@
 INFO:     Will watch for changes in these directories: ['C:\\--DPM-MAIN-DIR--\\windsurf_projects\\MRI-CV-MODEL-TRAINING-AND-INFERENCE-PROJECT']
 INFO:     Uvicorn running on http://localhost:8000 (Press CTRL+C to quit)
-INFO:     Started reloader process [20980] using WatchFiles
-INFO:     Started server process [39232]
+INFO:     Started reloader process [38888] using WatchFiles
+INFO:     Started server process [16624]
 INFO:     Waiting for application startup.
 Traceback (most recent call last):
   File "C:\--DPM-MAIN-DIR--\windsurf_projects\MRI-CV-MODEL-TRAINING-AND-INFERENCE-PROJECT\app\backend\main_v2.py", line 171, in startup_event
@@ -45,11 +45,10 @@ Classifier: [OK]
 Calibration: [NO]
 Segmentation: [OK]
 ================================================================================
-INFO:     127.0.0.1:59788 - "GET /healthz HTTP/1.1" 200 OK
-INFO:     127.0.0.1:61095 - "GET /healthz HTTP/1.1" 200 OK
-INFO:     127.0.0.1:61099 - "GET /model/info HTTP/1.1" 200 OK
-WARNING:  WatchFiles detected changes in 'scripts\data\collection\download_brats_data.py', 'scripts\download_brats_data.py'. Reloading...
- INFO:     Shutting down
+INFO:     127.0.0.1:53039 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58222 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58226 - "GET /model/info HTTP/1.1" 200 OK
+INFO:     Shutting down
 INFO:     Waiting for application shutdown.
 INFO:     Application shutdown complete.
-INFO:     Finished server process [39232]
+INFO:     Finished server process [16624]

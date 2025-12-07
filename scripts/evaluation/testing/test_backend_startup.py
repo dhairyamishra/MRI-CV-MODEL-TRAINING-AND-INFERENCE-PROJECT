@@ -5,7 +5,7 @@ Quick diagnostic script to test backend startup and identify errors.
 import sys
 from pathlib import Path
 
-project_root = Path(__file__).parent.parent
+project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 print("Testing backend imports and model loading...")

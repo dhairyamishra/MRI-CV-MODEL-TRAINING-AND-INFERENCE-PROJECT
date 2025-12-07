@@ -16,7 +16,7 @@ import torch.nn.functional as F
 from tqdm import tqdm
 
 # Add project root to path
-sys.path.append(str(Path(__file__).parent.parent))
+sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from src.models.multi_task_model import create_multi_task_model
 from src.data.multi_source_dataset import MultiSourceDataset
