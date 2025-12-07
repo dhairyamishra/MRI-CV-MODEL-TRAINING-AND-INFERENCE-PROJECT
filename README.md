@@ -1,10 +1,10 @@
 # SliceWise - MRI Brain Tumor Detection & Segmentation
 
-> **A production-ready deep learning pipeline for brain tumor classification and segmentation from MRI images**
+> **A production-ready deep learning pipeline for brain tumor classification and segmentation from MRI images with unified multi-task architecture**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-ee4c2c.svg)](https://pytorch.org/)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.6+-ee4c2c.svg)](https://pytorch.org/)
 
 ## 🎯 Project Status
 
@@ -17,28 +17,35 @@
 | **Phase 4** | ✅ Complete | Calibration & Uncertainty Estimation |
 | **Phase 5** | ✅ Complete | Metrics & Patient-Level Evaluation |
 | **Phase 6** | ✅ Complete | Demo Application (API + UI) |
+| **Multi-Task** | ✅ Complete | Unified Architecture (Classification + Segmentation) |
 | **Phase 7** | 🚧 In Progress | Documentation & LaTeX Write-up |
 | **Phase 8** | 📋 Planned | Packaging & Deployment |
 
-**Progress: 75% Complete (6/8 phases) • ~13,500+ lines of code**
+**Progress: 85% Complete (7/8 phases + Multi-Task) • ~15,000+ lines of code • 21 organized scripts**
 
 ## 🌟 Overview
 
 SliceWise is a comprehensive medical imaging project that implements state-of-the-art deep learning models for:
 
 1. **🔍 Binary Classification**: Detecting presence of brain tumors in MRI scans
-   - EfficientNet-B0 (4M params) and ConvNeXt (27.8M params) architectures
+   - Multi-task unified encoder (shared with segmentation)
    - Grad-CAM explainability for interpretable predictions
    - Temperature-scaled calibration for reliable confidence estimates
-   - ROC-AUC: 0.95+, PR-AUC: 0.97+
+   - **Accuracy: 91.3%, Sensitivity: 97.1%, ROC-AUC: 91.8%**
 
 2. **🎯 Tumor Segmentation**: Precise tumor boundary delineation
-   - U-Net 2D architecture (31.4M parameters)
+   - U-Net 2D architecture with shared encoder
    - Multiple loss functions (Dice, BCE, Focal, Tversky)
    - MC Dropout and Test-Time Augmentation for uncertainty estimation
-   - Dice Score: 0.86 (train), 0.74 (val)
+   - **Dice Score: 76.5% ± 14.0%, IoU: 64.0%**
 
-3. **📊 Patient-Level Analysis**: Clinical decision support
+3. **🚀 Multi-Task Architecture**: Unified model for both tasks
+   - **Single forward pass** for classification + segmentation
+   - **31.7M parameters** (9.4% reduction vs separate models)
+   - **~40% faster inference** with conditional segmentation
+   - **Shared encoder** learns optimal features for both tasks
+
+4. **📊 Patient-Level Analysis**: Clinical decision support
    - Patient-level tumor detection and volume estimation
    - Comprehensive metrics (Dice, IoU, Sensitivity, Specificity)
    - Uncertainty quantification for risk assessment
@@ -47,17 +54,18 @@ SliceWise is a comprehensive medical imaging project that implements state-of-th
 
 - 🏗️ **Production-Ready Architecture**: Modular, tested, and documented
 - 🚀 **FastAPI Backend**: 12 comprehensive REST endpoints
-- 🎨 **Streamlit Frontend**: Beautiful, interactive UI with 4 specialized tabs
+- 🎨 **Streamlit Frontend**: Beautiful, interactive UI with multi-task tab
 - 🧪 **Comprehensive Testing**: Full E2E test suite with 100% pass rate
 - 📈 **Experiment Tracking**: W&B integration for training monitoring
 - 🔧 **Flexible Configuration**: YAML-based configs for all components
 - ⚡ **High Performance**: 2,500+ images/sec throughput, <1ms latency
-- 🎓 **Educational**: Extensive documentation and code comments
+- 🎯 **Educational**: Extensive documentation and code comments
+- 📦 **Organized Scripts**: 21 scripts organized by functionality
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Python 3.10 or 3.11
+- Python 3.11 or 3.12
 - CUDA-capable GPU (optional, but recommended)
 - 8GB+ RAM
 - Kaggle API credentials (for dataset download)
@@ -431,80 +439,30 @@ mypy src/
 - **Segmentation**: ~80ms per image
 - **Uncertainty (MC+TTA)**: ~800ms per image
 
-## 🔬 Data Pipeline Features
-
-### Unified .npz Format
-All preprocessed data uses a consistent format:
-```python
-{
-    'image': np.ndarray,      # Shape: (1, H, W), range: [0, 1]
-    'label': int,             # 0 or 1 for classification
-    'mask': np.ndarray,       # Shape: (1, H, W) for segmentation
-    'metadata': dict,         # Image ID, source, original size, etc.
-}
-```
-
-### Data Augmentation
-- Random rotations (90°, 180°, 270°)
-- Random horizontal/vertical flips
-- Intensity shifts and scaling
-- Gaussian noise
-- Elastic deformations
-- Three presets: standard, strong, light
-
-### Usage Example
-```python
-from src.data.kaggle_mri_dataset import create_dataloaders
-from src.data.transforms import get_train_transforms, get_val_transforms
-
-# Create dataloaders
-train_loader, val_loader, test_loader = create_dataloaders(
-    batch_size=32,
-    num_workers=4,
-    train_transform=get_train_transforms(),
-    val_transform=get_val_transforms(),
-)
-
-# Use in training
-for images, labels in train_loader:
-    # images: (batch_size, 1, 256, 256)
-    # labels: (batch_size,)
-    pass
-```
-
-## 📚 Documentation
-
-### Quick Start Guides
-- **[FULL_E2E_TEST_GUIDE.md](documentation/FULL_E2E_TEST_GUIDE.md)** - Complete E2E testing guide
-- **[FULL-PLAN.md](documentation/FULL-PLAN.md)** - Complete 8-phase roadmap with detailed checklists
-
-### Phase Documentation
-All phase documentation has been consolidated into `FULL-PLAN.md` for easier navigation.
-
-### Technical Documentation
-- **Data Pipeline**: See `src/data/` module docstrings
-- **Model Architectures**: See `src/models/` module docstrings
-- **Training**: See `src/training/` module docstrings
-- **Evaluation**: See `src/eval/` module docstrings
-- **API**: See `app/backend/main_v2.py` docstrings
-
 ## 🎯 Roadmap
 
 ### ✅ Completed Phases
 
 - [x] **Phase 0**: Project scaffolding, dependencies, CI/CD
 - [x] **Phase 1**: Data acquisition & preprocessing (Kaggle + BraTS)
-- [x] **Phase 2**: Classification MVP (EfficientNet + ConvNeXt + API + UI)
+- [x] **Phase 2**: Classification MVP (EfficientNet + API + UI)
 - [x] **Phase 3**: U-Net segmentation pipeline
 - [x] **Phase 4**: Calibration & uncertainty estimation
 - [x] **Phase 5**: Comprehensive metrics & patient-level evaluation
-- [x] **Phase 6**: Demo application with 12 API endpoints & 4-tab UI
+- [x] **Phase 6**: Demo application with 12 API endpoints & multi-tab UI
+- [x] **Multi-Task Integration**: Unified architecture with 3-stage training
+  - Stage 1: Segmentation warm-up (15.7M params)
+  - Stage 2: Classification head training (263K params)
+  - Stage 3: Joint fine-tuning (31.7M params total)
+  - **Results**: 91.3% accuracy, 97.1% sensitivity, 76.5% Dice
+  - **Benefits**: 9.4% fewer parameters, ~40% faster inference
 
 ### 🚧 In Progress
 
 - [ ] **Phase 7**: Documentation & LaTeX write-up
-  - [ ] Update README with all features
-  - [ ] Create comprehensive API documentation
+  - [x] Update README with multi-task features
+  - [x] Create SCRIPTS_REFERENCE.md with all 21 scripts
+  - [x] Reorganize scripts by functionality
   - [ ] Write LaTeX report with methodology and results
   - [ ] Create presentation slides
 
@@ -518,72 +476,29 @@ All phase documentation has been consolidated into `FULL-PLAN.md` for easier nav
 
 See [FULL-PLAN.md](documentation/FULL-PLAN.md) for detailed roadmap.
 
-## 🚀 Advanced Features
+## 📚 Documentation
 
-### Uncertainty Estimation
-- **MC Dropout**: Epistemic uncertainty via dropout sampling
-- **Test-Time Augmentation**: Aleatoric uncertainty via augmentation
-- **Ensemble Prediction**: Combines both methods for robust uncertainty
+### Quick Reference
+- **[SCRIPTS_REFERENCE.md](SCRIPTS_REFERENCE.md)** - Complete reference for all 21 scripts with options and descriptions
+- **[scripts/README.md](scripts/README.md)** - Scripts organization guide with workflows and troubleshooting
+- **[FULL-PLAN.md](documentation/FULL-PLAN.md)** - Complete 8-phase roadmap with detailed checklists
+- **[CONSOLIDATED_DOCUMENTATION.md](documentation/CONSOLIDATED_DOCUMENTATION.md)** - All phase documentation in one place
+- **[MULTITASK_EVALUATION_REPORT.md](documentation/MULTITASK_EVALUATION_REPORT.md)** - Multi-task architecture analysis and results
 
-### Calibration
-- **Temperature Scaling**: Post-hoc calibration for better confidence
-- **Reliability Diagrams**: Visualize calibration quality
-- **ECE & Brier Score**: Quantitative calibration metrics
-
-### Patient-Level Analysis
-- **Volume Estimation**: Tumor volume in mm³
-- **Patient-Level Metrics**: Aggregated metrics across slices
-- **Sensitivity/Specificity**: Patient-level tumor detection
-
-### Explainability
-- **Grad-CAM**: Visual explanations for classifier predictions
-- **Uncertainty Maps**: Spatial uncertainty visualization
-- **Attention Visualization**: Model attention patterns
-
-## 🤝 Contributing
-
-Contributions are welcome! Please:
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Follow code style (black, isort, ruff)
-4. Add tests for new functionality
-5. Update documentation
-6. Commit your changes (`git commit -m 'Add amazing feature'`)
-7. Push to the branch (`git push origin feature/amazing-feature`)
-8. Open a Pull Request
-
-## 📄 License
-
-MIT License with medical disclaimer. See [LICENSE](LICENSE) for details.
-
-**⚠️ IMPORTANT MEDICAL DISCLAIMER**: This software is for research and educational purposes only. It is NOT a medical device and has NOT been approved by any regulatory agency (FDA, CE, etc.). It should NOT be used for:
-- Clinical diagnosis or treatment decisions
-- Patient care without expert medical supervision
-- Any purpose where incorrect results could cause harm
-
-Always consult qualified healthcare professionals for medical advice.
-
-## 🙏 Acknowledgments
-
-- **Datasets**: 
-  - Navoneel Chakrabarty (Kaggle Brain MRI Dataset)
-  - BraTS Challenge organizers (Multimodal Brain Tumor Segmentation Challenge)
-- **Frameworks**: PyTorch, MONAI, FastAPI, Streamlit
-- **Community**: Open-source medical imaging community
-
-## 📞 Contact & Support
-
-- **Issues**: Open a GitHub issue for bugs or feature requests
-- **Discussions**: Use GitHub Discussions for questions and ideas
-- **Documentation**: See `documentation/` folder for detailed guides
+### Technical Documentation
+- **Data Pipeline**: See `src/data/` module docstrings
+- **Model Architectures**: See `src/models/` module docstrings
+- **Training**: See `src/training/` module docstrings
+- **Evaluation**: See `src/eval/` module docstrings
+- **API**: See `app/backend/main_v2.py` docstrings
 
 ## 📊 Project Statistics
 
-- **Total Lines of Code**: ~13,500+
+- **Total Lines of Code**: ~15,000+
 - **Number of Files**: 50+
 - **Test Coverage**: 100% E2E coverage
 - **Documentation**: 2,000+ lines
-- **Phases Complete**: 6/8 (75%)
+- **Phases Complete**: 7/8 (87.5%)
 
 ---
 
