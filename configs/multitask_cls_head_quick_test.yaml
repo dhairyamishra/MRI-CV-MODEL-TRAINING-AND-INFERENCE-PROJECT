@@ -59,7 +59,7 @@ scheduler:
 
 # Training hyperparameters (QUICK TEST)
 training:
-  epochs: 3             # Quick test
+  epochs: 2             # Quick test
   batch_size: 8           # Larger batch for classification
   num_workers: 0          # Windows compatibility
   pin_memory: false

@@ -20,7 +20,7 @@ model:
 
 # Training hyperparameters
 training:
-  epochs: 3  # Quick test (use 20-30 for full training)
+  epochs: 2  # Quick test (use 20-30 for full training)
   batch_size: 8
   
   # Differential learning rates

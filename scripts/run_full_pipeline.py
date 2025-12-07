@@ -355,6 +355,28 @@ class PipelineController:
         if not self._check_file_exists(joint_checkpoint, "Stage 3 (final) checkpoint"):
             return False
         
+        # Create model_config.json for demo to load the correct architecture
+        self._print_info("Creating model_config.json for demo...")
+        import json
+        import yaml
+        
+        # Read architecture params from the config file
+        with open(joint_config, 'r') as f:
+            config = yaml.safe_load(f)
+        
+        model_config = {
+            "base_filters": config['model']['base_filters'],
+            "depth": config['model']['depth'],
+            "in_channels": config['model']['in_channels'],
+            "seg_out_channels": 1,
+            "cls_num_classes": config['model']['num_classes']
+        }
+        
+        config_path = self.project_root / "checkpoints" / "multitask_joint" / "model_config.json"
+        with open(config_path, 'w') as f:
+            json.dump(model_config, f)
+        
+        self._print_success(f"Model config saved: {config_path}")
         self._print_success("All 3 training stages completed successfully!")
         return True
     
@@ -412,25 +434,25 @@ class PipelineController:
             return False
         
         self._print_info("Launching multi-task demo application...")
-        self._print_info("Backend: http://localhost:8000")
-        self._print_info("Frontend: http://localhost:8501")
-        self._print_info("API Docs: http://localhost:8000/docs")
-        self._print_warning("Press Ctrl+C to stop the demo application")
+        self._print_info("")
+        self._print_info("The demo will start in two separate terminal windows:")
+        self._print_info("  1. Backend API (FastAPI) - http://localhost:8000")
+        self._print_info("  2. Frontend UI (Streamlit) - http://localhost:8501")
+        self._print_info("")
+        self._print_info("Please run these commands in separate terminals:")
+        self._print_info("")
+        self._print_info("  Terminal 1 (Backend):")
+        self._print_info("    python app/backend/main_v2.py")
+        self._print_info("")
+        self._print_info("  Terminal 2 (Frontend):")
+        self._print_info("    streamlit run app/frontend/app_v2.py --server.port 8501")
+        self._print_info("")
+        self._print_info("Or use the demo launcher:")
+        self._print_info("    python scripts/demo/run_multitask_demo.py")
+        self._print_info("")
+        self._print_warning("Pipeline complete! Demo instructions printed above.")
         
-        try:
-            # Run demo (this will block until user stops it)
-            subprocess.run(
-                ["python", "scripts/demo/run_multitask_demo.py"],
-                cwd=str(self.project_root),
-                check=True
-            )
-            return True
-        except KeyboardInterrupt:
-            self._print_info("\nDemo application stopped by user")
-            return True
-        except subprocess.CalledProcessError as e:
-            self._print_error(f"Demo application failed: {e}")
-            return False
+        return True
     
     def _get_total_steps(self) -> int:
         """Get total number of steps based on mode."""
