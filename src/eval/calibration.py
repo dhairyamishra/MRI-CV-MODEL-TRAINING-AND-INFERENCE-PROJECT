@@ -345,4 +345,4 @@ if __name__ == "__main__":
     plt.close(fig)
     
     print("\n" + "=" * 60)
-    print("✓ All tests passed!")
+    print("[OK] All tests passed!")

@@ -49,7 +49,7 @@ def print_section(title):
 
 def print_test(name, passed, details=""):
     """Print test result."""
-    status = "✓ PASS" if passed else "✗ FAIL"
+    status = "[OK] PASS" if passed else "✗ FAIL"
     print(f"{status} - {name}")
     if details:
         print(f"       {details}")
@@ -185,7 +185,7 @@ def test_conditional_inference(predictor):
             expected_computed = tumor_prob >= 0.3
             logic_correct = seg_computed == expected_computed
             
-            details = f"Tumor prob: {tumor_prob:.3f}, Seg computed: {seg_computed}, Logic: {'✓' if logic_correct else '✗'}"
+            details = f"Tumor prob: {tumor_prob:.3f}, Seg computed: {seg_computed}, Logic: {'[OK]' if logic_correct else '✗'}"
         else:
             details = "Missing required fields"
             logic_correct = False
@@ -477,7 +477,7 @@ def print_summary():
     failed_tests = total_tests - passed_tests
     
     print(f"\nTotal Tests: {total_tests}")
-    print(f"✓ Passed: {passed_tests}")
+    print(f"[OK] Passed: {passed_tests}")
     print(f"✗ Failed: {failed_tests}")
     print(f"Success Rate: {(passed_tests/total_tests)*100:.1f}%")
     
@@ -493,7 +493,7 @@ def print_summary():
     with open(output_file, 'w') as f:
         json.dump(test_results, f, indent=2)
     
-    print(f"\n✓ Results saved to: {output_file}")
+    print(f"\n[OK] Results saved to: {output_file}")
     
     return passed_tests == total_tests
 

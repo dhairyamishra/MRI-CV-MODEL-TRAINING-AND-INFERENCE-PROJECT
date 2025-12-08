@@ -52,7 +52,7 @@ class ModelConfig:
         with open(path, 'w') as f:
             json.dump(self.to_dict(), f, indent=2)
         
-        print(f"✓ Model config saved to: {path}")
+        print(f"[OK] Model config saved to: {path}")
     
     @classmethod
     def load(cls, path: Path) -> 'ModelConfig':
@@ -65,7 +65,7 @@ class ModelConfig:
         with open(path, 'r') as f:
             data = json.load(f)
         
-        print(f"✓ Model config loaded from: {path}")
+        print(f"[OK] Model config loaded from: {path}")
         return cls(**data)
     
     @classmethod
@@ -150,7 +150,7 @@ def save_model_with_config(
         checkpoint['metrics'] = metrics
     
     torch.save(checkpoint, checkpoint_path)
-    print(f"✓ Model checkpoint saved to: {checkpoint_path}")
+    print(f"[OK] Model checkpoint saved to: {checkpoint_path}")
     
     # Save model config in same directory
     config_path = checkpoint_path.parent / "model_config.json"
@@ -188,7 +188,7 @@ def load_model_with_config(
     checkpoint = torch.load(checkpoint_path, map_location=device)
     model.load_state_dict(checkpoint['model_state_dict'])
     
-    print(f"✓ Model loaded from: {checkpoint_path}")
+    print(f"[OK] Model loaded from: {checkpoint_path}")
     print(f"  Architecture: {config}")
     
     return model, config, checkpoint

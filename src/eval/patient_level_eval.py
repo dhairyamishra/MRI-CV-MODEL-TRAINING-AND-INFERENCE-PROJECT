@@ -330,4 +330,4 @@ if __name__ == "__main__":
             print(f"  {key:20s}: {value}")
     
     print("\n" + "=" * 60)
-    print("✓ All tests passed!")
+    print("[OK] All tests passed!")

@@ -43,7 +43,7 @@ def download_kaggle_brain_mri(target_dir: str = "data/raw/kaggle_brain_mri"):
         print("(This may take a few minutes depending on your connection)")
         
         download_path = kagglehub.dataset_download(dataset_handle)
-        print(f"✓ Dataset downloaded to: {download_path}")
+        print(f"[OK] Dataset downloaded to: {download_path}")
         
         # Copy to target directory
         print(f"\n[2/3] Copying dataset to {target_dir}...")
@@ -73,9 +73,9 @@ def download_kaggle_brain_mri(target_dir: str = "data/raw/kaggle_brain_mri"):
             yes_count = len(list(yes_dir.glob("*.jpg")))
             no_count = len(list(no_dir.glob("*.jpg")))
             
-            print(f"✓ Found {yes_count} images with tumors (yes/)")
-            print(f"✓ Found {no_count} images without tumors (no/)")
-            print(f"✓ Total: {yes_count + no_count} images")
+            print(f"[OK] Found {yes_count} images with tumors (yes/)")
+            print(f"[OK] Found {no_count} images without tumors (no/)")
+            print(f"[OK] Total: {yes_count + no_count} images")
         else:
             print("⚠ Warning: Expected 'yes/' and 'no/' directories not found")
             print(f"  Contents of {target_dir}:")
@@ -83,7 +83,7 @@ def download_kaggle_brain_mri(target_dir: str = "data/raw/kaggle_brain_mri"):
                 print(f"    - {item.name}")
         
         print("\n" + "=" * 60)
-        print("✓ Download completed successfully!")
+        print("[OK] Download completed successfully!")
         print("=" * 60)
         print(f"\nDataset location: {target_path.absolute()}")
         print("\nNext steps:")

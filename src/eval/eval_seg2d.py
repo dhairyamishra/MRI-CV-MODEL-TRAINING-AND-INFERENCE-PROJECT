@@ -304,7 +304,7 @@ def evaluate_segmentation(
     print(f"Metrics distribution plot saved to: {output_path / 'metrics_distribution.png'}")
     
     print("\n" + "=" * 70)
-    print("✓ Evaluation Complete!")
+    print("[OK] Evaluation Complete!")
     print("=" * 70)
 
 

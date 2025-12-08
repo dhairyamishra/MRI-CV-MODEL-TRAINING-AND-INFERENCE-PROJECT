@@ -121,7 +121,7 @@ Examples:
         )
         
         print("\n" + "=" * 80)
-        print("✓ Data splitting complete!")
+        print("[OK] Data splitting complete!")
         print("=" * 80)
         print(f"\nData split into:")
         print(f"  - {output_dir}/train/")

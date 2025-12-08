@@ -285,7 +285,7 @@ def create_comparison_grid(
     plt.savefig(output_path, dpi=150, bbox_inches='tight')
     plt.close()
     
-    print(f"✓ Saved comparison grid: {output_path}")
+    print(f"[OK] Saved comparison grid: {output_path}")
 
 
 def export_dataset_examples(
@@ -357,7 +357,7 @@ def export_dataset_examples(
             kaggle_samples.append(sample)
             save_kaggle_example(sample, kaggle_output, kaggle_with_tumor + i)
         
-        print(f"  ✓ Exported {len(kaggle_samples)} Kaggle samples")
+        print(f"  [OK] Exported {len(kaggle_samples)} Kaggle samples")
     else:
         print(f"  ⚠️  Kaggle directory not found: {kaggle_path}")
     
@@ -402,7 +402,7 @@ def export_dataset_examples(
             brats_samples.append(sample)
             save_brats_example(sample, brats_output, brats_with_tumor + i)
         
-        print(f"  ✓ Exported {len(brats_samples)} BraTS samples")
+        print(f"  [OK] Exported {len(brats_samples)} BraTS samples")
     else:
         print(f"  ⚠️  BraTS directory not found: {brats_path}")
     
@@ -414,7 +414,7 @@ def export_dataset_examples(
     
     # ========== Create Summary ==========
     print("\n" + "=" * 70)
-    print("✓ Export Complete!")
+    print("[OK] Export Complete!")
     print("=" * 70)
     
     summary = {

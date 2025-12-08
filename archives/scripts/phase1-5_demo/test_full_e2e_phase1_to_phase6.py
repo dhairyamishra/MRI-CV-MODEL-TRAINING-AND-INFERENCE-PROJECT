@@ -70,7 +70,7 @@ def print_test(test_name):
 
 def print_success(message):
     """Print success message."""
-    print(f"{Colors.OKGREEN}✓ {message}{Colors.ENDC}")
+    print(f"{Colors.OKGREEN}[OK] {message}{Colors.ENDC}")
 
 
 def print_warning(message):
@@ -595,8 +595,8 @@ class FullE2ETest:
                 print_success(f"Backend API is running")
                 print_info(f"Status: {health['status']}")
                 print_info(f"Device: {health['device']}")
-                print_info(f"Classifier: {'✓' if health['classifier_loaded'] else '✗'}")
-                print_info(f"Segmentation: {'✓' if health['segmentation_loaded'] else '✗'}")
+                print_info(f"Classifier: {'[OK]' if health['classifier_loaded'] else '✗'}")
+                print_info(f"Segmentation: {'[OK]' if health['segmentation_loaded'] else '✗'}")
                 
                 phase_results['tests'].append(('Backend API running', True))
                 phase_results['passed'] += 1
@@ -718,7 +718,7 @@ class FullE2ETest:
             phase_total = phase_passed + phase_failed
             phase_rate = (phase_passed / phase_total * 100) if phase_total > 0 else 0
             
-            status = f"{Colors.OKGREEN}✓{Colors.ENDC}" if phase_failed == 0 else f"{Colors.FAIL}✗{Colors.ENDC}"
+            status = f"{Colors.OKGREEN}[OK]{Colors.ENDC}" if phase_failed == 0 else f"{Colors.FAIL}✗{Colors.ENDC}"
             print(f"  {status} {phase_name}: {phase_passed}/{phase_total} ({phase_rate:.0f}%)")
         
         # Save results

@@ -44,7 +44,7 @@ def render_sidebar() -> bool:
         health = check_api_health()
         
         if health and health['status'] in ['healthy', 'no_models_loaded']:
-            st.success("✓ API Connected")
+            st.success("[OK] API Connected")
             
             # Show model status in 3 columns (Multi-Task, Classifier, Segmentation)
             col1, col2, col3 = st.columns(3)
@@ -52,7 +52,7 @@ def render_sidebar() -> bool:
             with col1:
                 st.markdown("**Multi-Task**")
                 if health.get('multitask_loaded', False):
-                    st.markdown("✓")
+                    st.markdown("[OK]")
                     st.markdown(
                         f'<span style="color: {Colors.SUCCESS_GREEN}; font-size: 0.8rem;">Loaded</span>',
                         unsafe_allow_html=True
@@ -67,7 +67,7 @@ def render_sidebar() -> bool:
             with col2:
                 st.markdown("**Classifier**")
                 if health['classifier_loaded']:
-                    st.markdown("✓")
+                    st.markdown("[OK]")
                     st.markdown(
                         f'<span style="color: {Colors.SUCCESS_GREEN}; font-size: 0.8rem;">Loaded</span>',
                         unsafe_allow_html=True
@@ -82,7 +82,7 @@ def render_sidebar() -> bool:
             with col3:
                 st.markdown("**Segmentation**")
                 if health['segmentation_loaded']:
-                    st.markdown("✓")
+                    st.markdown("[OK]")
                     st.markdown(
                         f'<span style="color: {Colors.SUCCESS_GREEN}; font-size: 0.8rem;">Loaded</span>',
                         unsafe_allow_html=True
@@ -200,7 +200,7 @@ def render_simple_sidebar() -> bool:
         health = check_api_health()
         
         if health and health['status'] in ['healthy', 'no_models_loaded']:
-            st.success("✓ API Connected")
+            st.success("[OK] API Connected")
             st.caption(f"Device: {health['device']}")
             return True
         else:

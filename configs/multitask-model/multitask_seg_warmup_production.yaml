@@ -1,0 +1,117 @@
+# ============================================================================
+# Phase 2.1: Segmentation Warm-Up Configuration - PRODUCTION
+# ============================================================================
+# Train encoder + decoder on BraTS segmentation to initialize shared encoder
+# This is Stage 1 of 3-stage multi-task training strategy
+# PRODUCTION MODE: Full dataset, 100 epochs, ~2-4 hours
+# 
+# IMPORTANT: PyTorch 2.6+ requires weights_only=False when loading checkpoints
+# IMPORTANT: Windows requires num_workers=0 for DataLoader
+
+# Experiment metadata
+experiment:
+  name: "multitask_seg_warmup_production"
+  description: "Phase 2.1 PRODUCTION - Segmentation warm-up with full training"
+  tags: ["multitask", "segmentation", "warmup", "brats", "encoder_init", "production"]
+  notes: "Production training with 100 epochs for optimal performance"
+
+# Paths
+paths:
+  train_dir: "data/processed/brats2d_full/train"
+  val_dir: "data/processed/brats2d_full/val"
+  test_dir: "data/processed/brats2d_full/test"
+  checkpoint_dir: "checkpoints/multitask_seg_warmup"
+  log_dir: "logs/multitask_seg_warmup"
+  output_dir: "outputs/multitask_seg_warmup"
+
+# Model architecture (MultiTaskModel in seg-only mode)
+model:
+  name: "multitask"
+  in_channels: 1          # Single-channel MRI (FLAIR)
+  out_channels: 1         # Binary segmentation
+  base_filters: 32        # Base number of filters
+  depth: 4                # Number of encoder/decoder blocks
+
+# Loss function
+loss:
+  name: "dice_bce"        # Combined Dice + BCE loss
+  dice_weight: 0.6        # Weight for Dice loss
+  bce_weight: 0.4         # Weight for BCE loss
+  smooth: 1.0             # Smoothing factor for Dice loss
+
+# Optimizer
+optimizer:
+  name: "adamw"           # AdamW optimizer
+  lr: 0.001               # Consistent learning rate across all stages
+  weight_decay: 0.0001    # L2 regularization
+  betas: [0.9, 0.999]
+  eps: 1.0e-8
+
+# Learning rate scheduler
+scheduler:
+  name: "cosine"          # Cosine annealing
+  T_max: 50               # Match number of epochs
+  eta_min: 1.0e-7         # Minimum learning rate
+
+# Training hyperparameters
+training:
+  epochs: 50              # Consistent epochs across all stages
+  batch_size: 16          # Standard batch size for quality
+  num_workers: 0          # Set to 0 for Windows compatibility (use 4+ on Linux/Mac)
+  pin_memory: true
+  
+  # Mixed precision training
+  use_amp: true           # Automatic Mixed Precision
+  
+  # Gradient clipping
+  grad_clip: 1.0          # Max gradient norm
+  
+  # Early stopping
+  early_stopping:
+    enabled: true
+    patience: 20          # Full patience for production
+    min_delta: 0.0005     # Smaller delta for fine improvements
+    monitor: "val_dice"   # Metric to monitor
+    mode: "max"           # max or min
+  
+  # Checkpoint saving
+  save_best: true         # Save best model based on val metric
+  save_last: true         # Save last checkpoint
+  save_frequency: 10      # Save every 10 epochs
+  keep_last_n: 5          # Keep last 5 checkpoints
+  save_optimizer: true
+  save_scheduler: true
+
+# Data augmentation
+augmentation:
+  train:
+    enabled: true
+    random_flip_h: 0.5    # Horizontal flip probability
+    random_flip_v: 0.5    # Vertical flip probability
+    random_rotate: 20     # Full rotation range
+    random_scale: 0.15    # Full scale range
+    elastic_deform: true  # ENABLED for production
+    elastic_alpha: 50     # Elastic deformation strength
+    elastic_sigma: 5      # Elastic deformation smoothness
+    gaussian_noise: 0.02  # Full noise augmentation
+    gaussian_blur: 0.3    # Full blur augmentation
+    brightness: 0.2       # Full brightness range
+    contrast: 0.2         # Full contrast range
+    gamma: 0.2            # Full gamma range
+  val:
+    enabled: false        # No augmentation for validation
+
+# Weights & Biases logging
+wandb:
+  enabled: true           # ENABLED for production tracking
+  project: "slicewise-multitask-production"
+  entity: null            # Set to your W&B username/team
+  name: "seg_warmup_production"
+  tags: ["production", "stage1", "segmentation", "warmup"]
+  notes: "Production training with full dataset and 100 epochs"
+
+# Reproducibility
+seed: 42
+
+# Device
+device: "cuda"            # cuda or cpu

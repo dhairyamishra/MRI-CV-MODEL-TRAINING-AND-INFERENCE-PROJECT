@@ -500,7 +500,7 @@ if __name__ == "__main__":
     loss.backward()
     
     print(f"   Loss computed: {loss.item():.4f}")
-    print(f"   Gradient computed: {'✓' if pred_test.grad is not None else '✗'}")
+    print(f"   Gradient computed: {'[OK]' if pred_test.grad is not None else '✗'}")
     print(f"   Gradient shape: {pred_test.grad.shape}")
     
     # Test 8: Factory function
@@ -513,5 +513,5 @@ if __name__ == "__main__":
         print(f"   {name:12s}: {loss.item():.4f}")
     
     print("\n" + "=" * 60)
-    print("✓ All tests passed!")
+    print("[OK] All tests passed!")
     print("=" * 60)

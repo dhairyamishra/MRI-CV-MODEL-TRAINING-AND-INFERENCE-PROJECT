@@ -20,25 +20,25 @@
 ### Legacy Scripts (Phase 1-5 Individual Models)
 
 **phase1-5_training** (6 scripts):
-- ✓ `train_classifier.py`
-- ✓ `train_segmentation.py`
-- ✓ `train_classifier_brats.py`
-- ✓ `train_brats_e2e.py`
-- ✓ `train_production.py`
-- ✓ `train_controller.py`
+- [OK] `train_classifier.py`
+- [OK] `train_segmentation.py`
+- [OK] `train_classifier_brats.py`
+- [OK] `train_brats_e2e.py`
+- [OK] `train_production.py`
+- [OK] `train_controller.py`
 
 **phase1-5_evaluation** (3 scripts):
-- ✓ `evaluate_classifier.py`
-- ✓ `evaluate_segmentation.py`
-- ✓ `generate_gradcam.py`
+- [OK] `evaluate_classifier.py`
+- [OK] `evaluate_segmentation.py`
+- [OK] `generate_gradcam.py`
 
 **phase1-5_calibration** (2 scripts):
-- ✓ `calibrate_classifier.py`
-- ✓ `view_calibration_results.py`
+- [OK] `calibrate_classifier.py`
+- [OK] `view_calibration_results.py`
 
 **phase1-5_demo** (2 scripts):
-- ✓ `run_demo_with_production_models.py`
-- ✓ `test_full_e2e_phase1_to_phase6.py`
+- [OK] `run_demo_with_production_models.py`
+- [OK] `test_full_e2e_phase1_to_phase6.py`
 
 ---
 

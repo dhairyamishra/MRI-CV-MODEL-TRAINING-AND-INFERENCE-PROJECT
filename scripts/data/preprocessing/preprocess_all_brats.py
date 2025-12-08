@@ -269,7 +269,7 @@ Estimated Time:
     elapsed_minutes = elapsed_time / 60
     
     print(f"\n{'=' * 70}")
-    print("✓ Preprocessing Complete!")
+    print("[OK] Preprocessing Complete!")
     print(f"{'=' * 70}")
     print(f"\nTotal time: {elapsed_minutes:.1f} minutes")
     print(f"Output directory: {args.output}")

@@ -70,6 +70,7 @@ SliceWise is a comprehensive medical imaging project that implements state-of-th
 - CUDA-capable GPU (optional, but recommended)
 - 8GB+ RAM
 - Kaggle API credentials (for dataset download)
+- **Node.js and npm** (for PM2 process manager - recommended for demo)
 
 ### Installation
 
@@ -85,7 +86,10 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 # 3. Install dependencies
 pip install -e ".[dev]"
 
-# 4. Verify setup
+# 4. Install PM2 for demo process management (recommended)
+npm install -g pm2
+
+# 5. Verify setup
 python scripts/verify_setup.py
 ```
 
@@ -402,12 +406,12 @@ print(f"Aleatoric Uncertainty: {result['aleatoric_uncertainty']:.3f}")
 python scripts/test_full_e2e_phase1_to_phase6.py
 
 # Expected output:
-# ✓ Phase 1: Data pipeline (4/4 tests)
-# ✓ Phase 2: Classification (5/5 tests)
-# ✓ Phase 3: Segmentation (5/5 tests)
-# ✓ Phase 4: Calibration & Uncertainty (4/4 tests)
-# ✓ Phase 5: Metrics & Patient-Level (3/3 tests)
-# ✓ Phase 6: API Integration (4/4 tests)
+# [OK] Phase 1: Data pipeline (4/4 tests)
+# [OK] Phase 2: Classification (5/5 tests)
+# [OK] Phase 3: Segmentation (5/5 tests)
+# [OK] Phase 4: Calibration & Uncertainty (4/4 tests)
+# [OK] Phase 5: Metrics & Patient-Level (3/3 tests)
+# [OK] Phase 6: API Integration (4/4 tests)
 # Total: 25/25 tests passing (100%)
 ```
 

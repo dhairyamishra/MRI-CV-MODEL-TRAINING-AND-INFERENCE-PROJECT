@@ -456,7 +456,7 @@ def main():
                 checkpoint_path=checkpoint_dir / "best_model.pth",
                 config=config,
             )
-            print(f"✓ New best model! Dice: {best_dice:.4f}")
+            print(f"[OK] New best model! Dice: {best_dice:.4f}")
             patience_counter = 0
         else:
             patience_counter += 1

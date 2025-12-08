@@ -307,7 +307,7 @@ def main():
     # Load encoder and decoder
     model.load_state_dict(encoder_state, strict=False)
     model.load_state_dict(decoder_state, strict=False)
-    print(f"✓ Loaded encoder and decoder from Phase 2.1 checkpoint")
+    print(f"[OK] Loaded encoder and decoder from Phase 2.1 checkpoint")
     
     # Freeze encoder
     print("\n=== Freezing Encoder ===")
@@ -458,7 +458,7 @@ def main():
                 checkpoint_path=checkpoint_dir / "best_model.pth",
                 config=config,
             )
-            print(f"✓ New best model! Acc: {best_acc:.4f}")
+            print(f"[OK] New best model! Acc: {best_acc:.4f}")
             patience_counter = 0
         else:
             patience_counter += 1

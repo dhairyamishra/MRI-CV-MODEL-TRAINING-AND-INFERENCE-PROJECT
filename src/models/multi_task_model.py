@@ -327,9 +327,9 @@ if __name__ == "__main__":
     total_loss = seg_loss + cls_loss
     total_loss.backward()
     
-    print(f"   Input gradient: {'✓' if x.grad is not None else '✗'}")
-    print(f"   Seg output gradient: {'✓' if output['seg'].requires_grad else '✗'}")
-    print(f"   Cls output gradient: {'✓' if output['cls'].requires_grad else '✗'}")
+    print(f"   Input gradient: {'[OK]' if x.grad is not None else '✗'}")
+    print(f"   Seg output gradient: {'[OK]' if output['seg'].requires_grad else '✗'}")
+    print(f"   Cls output gradient: {'[OK]' if output['cls'].requires_grad else '✗'}")
     
     # Test 5: Different configurations
     print("\n5. Different Model Configurations")
@@ -391,5 +391,5 @@ if __name__ == "__main__":
     print(f"   Multi-task is {multi_task_params/separate_total*100:.1f}% the size!")
     
     print("\n" + "=" * 70)
-    print("✓ All multi-task model tests passed!")
+    print("[OK] All multi-task model tests passed!")
     print("=" * 70)

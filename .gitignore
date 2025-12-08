@@ -226,6 +226,12 @@ backend_startup.log
 # Hugging Face cache (if used)
 .huggingface/
 
+# PM2 process manager
+.pm2/
+pm2.log
+*.pm2.log
+logs/*.log
+
 # MLflow
 mlruns/
 mlartifacts/

@@ -52,15 +52,15 @@ python scripts/generate_model_configs.py
 Generating Model Configuration Files
 ================================================================================
 
-✓ Generated config for: multitask_seg_warmup
+[OK] Generated config for: multitask_seg_warmup
   Location: checkpoints/multitask_seg_warmup/model_config.json
   Architecture: base_filters=64, depth=4
 
-✓ Generated config for: multitask_cls_head
+[OK] Generated config for: multitask_cls_head
   Location: checkpoints/multitask_cls_head/model_config.json
   Architecture: base_filters=64, depth=4
 
-✓ Generated config for: multitask_joint
+[OK] Generated config for: multitask_joint
   Location: checkpoints/multitask_joint/model_config.json
   Architecture: base_filters=64, depth=4
 
@@ -117,7 +117,7 @@ from src.inference.multi_task_predictor import MultiTaskPredictor
 predictor = MultiTaskPredictor(
     checkpoint_path="checkpoints/multitask_joint/best_model.pth"
 )
-# ✓ Loaded model config from: checkpoints/multitask_joint/model_config.json
+# [OK] Loaded model config from: checkpoints/multitask_joint/model_config.json
 # Using architecture: base_filters=64, depth=4
 
 # Option 2: Override if needed

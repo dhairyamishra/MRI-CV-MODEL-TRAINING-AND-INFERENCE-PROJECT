@@ -273,4 +273,4 @@ if __name__ == "__main__":
     print(f"  Patient ID: {metadata['patient_id']}")
     print(f"  Slice index: {metadata['slice_idx']}")
     
-    print("\n✓ All tests passed!")
+    print("\n[OK] All tests passed!")

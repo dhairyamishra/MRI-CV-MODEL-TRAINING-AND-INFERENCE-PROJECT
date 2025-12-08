@@ -89,7 +89,7 @@ def download_brats_dataset(
         print("Dataset size: ~20 GB for BraTS 2020, ~70 GB for BraTS 2021")
         
         download_path = kagglehub.dataset_download(kaggle_id)
-        print(f"✓ Dataset downloaded to: {download_path}")
+        print(f"[OK] Dataset downloaded to: {download_path}")
         
         # Copy to target directory
         print(f"\n[2/3] Organizing dataset to {output_dir}...")
@@ -108,7 +108,7 @@ def download_brats_dataset(
                 if copied_count % 10 == 0:
                     print(f"  Copied {copied_count} patient folders...")
         
-        print(f"✓ Copied {copied_count} patient folders")
+        print(f"[OK] Copied {copied_count} patient folders")
         
         # Verify download
         print("\n[3/3] Verifying dataset...")
@@ -120,7 +120,7 @@ def download_brats_dataset(
             print(f"  Expected folders like: {dataset_config['expected_folders']}")
             sys.exit(1)
         
-        print(f"✓ Found {len(patient_folders)} patient folders")
+        print(f"[OK] Found {len(patient_folders)} patient folders")
         
         # Verify a sample patient folder
         sample_folder = patient_folders[0]
@@ -135,7 +135,7 @@ def download_brats_dataset(
             matching = [f for f in modalities if modality in f.name.lower()]
             if matching:
                 found_files.append(modality)
-                print(f"  ✓ {modality.upper()}: {matching[0].name}")
+                print(f"  [OK] {modality.upper()}: {matching[0].name}")
             else:
                 print(f"  ✗ {modality.upper()}: NOT FOUND")
         
@@ -144,7 +144,7 @@ def download_brats_dataset(
         
         # Summary
         print("\n" + "=" * 70)
-        print("✓ Download completed successfully!")
+        print("[OK] Download completed successfully!")
         print("=" * 70)
         print(f"\nDataset location: {output_path.absolute()}")
         print(f"Total patients: {len(patient_folders)}")

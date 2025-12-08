@@ -306,7 +306,7 @@ def generate_gradcam_visualizations(
         samples_processed += 1
         sample_idx += 1
     
-    print(f"\n✓ Generated {samples_processed} Grad-CAM visualizations")
+    print(f"\n[OK] Generated {samples_processed} Grad-CAM visualizations")
     print(f"  - Correct predictions: {correct_samples}")
     print(f"  - Incorrect predictions: {incorrect_samples}")
     print(f"  - Saved to: {save_dir}")

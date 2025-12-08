@@ -1,0 +1,100 @@
+# ============================================================================
+# Phase 2.1: Segmentation Warm-Up - Quick Test Configuration
+# ============================================================================
+# Fast E2E testing with small dataset (10 patients, 5 epochs)
+# 
+# IMPORTANT: Windows requires num_workers=0 for DataLoader
+
+# Experiment metadata
+experiment:
+  name: "multitask_seg_warmup_test"
+  description: "Quick test of Phase 2.1 segmentation warm-up"
+  tags: ["multitask", "segmentation", "warmup", "test"]
+
+# Paths
+paths:
+  train_dir: "data/processed/brats2d/train"
+  val_dir: "data/processed/brats2d/val"
+  test_dir: "data/processed/brats2d/test"
+  checkpoint_dir: "checkpoints/multitask_seg_warmup_test"
+  log_dir: "logs/multitask_seg_warmup_test"
+  output_dir: "outputs/multitask_seg_warmup_test"
+
+# Model architecture (smaller for quick test)
+model:
+  name: "multitask"
+  in_channels: 1          # Single-channel MRI (FLAIR)
+  out_channels: 1         # Binary segmentation
+  base_filters: 16        # Reduced from 64 for faster training
+  depth: 3                # Reduced from 4 for faster training
+
+# Loss function
+loss:
+  name: "dice_bce"        # Combined Dice + BCE loss
+  dice_weight: 0.5
+  bce_weight: 0.5
+  smooth: 1.0
+
+# Optimizer
+optimizer:
+  name: "adam"            # Adam for quick test
+  lr: 0.001               # Higher LR for quick test
+  weight_decay: 0.0001
+  betas: [0.9, 0.999]
+  eps: 1.0e-8
+
+# Learning rate scheduler
+scheduler:
+  name: "cosine"          # Cosine annealing
+  T_max: 2                # Match epochs
+  eta_min: 1.0e-6
+
+# Training hyperparameters (QUICK TEST)
+training:
+  epochs: 2               # Quick test
+  batch_size: 8          # Small batch for quick test
+  num_workers: 0          # Windows compatibility
+  pin_memory: false
+  
+  # Mixed precision training
+  use_amp: true           # Automatic Mixed Precision
+  
+  # Gradient clipping
+  grad_clip: 1.0          # Max gradient norm
+  
+  # Early stopping (disabled for quick test)
+  early_stopping:
+    enabled: false
+    patience: 10
+    min_delta: 0.001
+    monitor: "val_dice"
+    mode: "max"
+  
+  # Checkpoint saving
+  save_best: true         # Save best model
+  save_last: true         # Save last checkpoint
+  save_frequency: 2       # Save every 2 epochs
+  keep_last_n: 2
+
+# Data augmentation (minimal for quick test)
+augmentation:
+  train:
+    enabled: true
+    random_flip_h: 0.5
+    random_flip_v: 0.5
+    random_rotate: 10     # Reduced
+    random_scale: 0.0     # Disabled
+    elastic_deform: false # Disabled
+    gaussian_noise: 0.0   # Disabled
+    gaussian_blur: 0.0    # Disabled
+    brightness: 0.0       # Disabled
+    contrast: 0.0         # Disabled
+    gamma: 0.0            # Disabled
+  val:
+    enabled: false        # No augmentation for validation
+
+# Reproducibility
+seed: 42
+
+# Device
+device: "cuda"            # cuda or cpu

@@ -97,7 +97,7 @@ class ScriptsCleanup:
             
             if not self.dry_run:
                 archive_path.mkdir(parents=True, exist_ok=True)
-                print(f"  ✓ Created: {archive_path.relative_to(project_root)}")
+                print(f"  [OK] Created: {archive_path.relative_to(project_root)}")
             else:
                 print(f"  [DRY RUN] Would create: {archive_path.relative_to(project_root)}")
                 
@@ -119,7 +119,7 @@ class ScriptsCleanup:
                 
                 # Check if file already exists in archive
                 if dest.exists() and not source.exists():
-                    print(f"    ✓ [{current}/{total_scripts}] Already archived: {script}")
+                    print(f"    [OK] [{current}/{total_scripts}] Already archived: {script}")
                     already_archived += 1
                     self.moved_files.append((source, dest))
                     continue
@@ -133,7 +133,7 @@ class ScriptsCleanup:
                     try:
                         shutil.move(str(source), str(dest))
                         self.moved_files.append((source, dest))
-                        print(f"    ✓ [{current}/{total_scripts}] Moved: {script}")
+                        print(f"    [OK] [{current}/{total_scripts}] Moved: {script}")
                     except Exception as e:
                         print(f"    ❌ [{current}/{total_scripts}] Error moving {script}: {e}")
                         self.errors.append(f"Error moving {script}: {e}")
@@ -242,7 +242,7 @@ python scripts/run_multitask_demo.py
         
         if not self.dry_run:
             readme_path.write_text(readme_content, encoding='utf-8')
-            print(f"  ✓ Created: {readme_path.relative_to(project_root)}")
+            print(f"  [OK] Created: {readme_path.relative_to(project_root)}")
         else:
             print(f"  [DRY RUN] Would create: {readme_path.relative_to(project_root)}")
             
@@ -275,7 +275,7 @@ python scripts/run_multitask_demo.py
         for category, scripts in self.LEGACY_SCRIPTS.items():
             summary_content += f"\n**{category}** ({len(scripts)} scripts):\n"
             for script in scripts:
-                status = "✓" if any(str(source).endswith(script) for source, _ in self.moved_files) else "⚠️"
+                status = "[OK]" if any(str(source).endswith(script) for source, _ in self.moved_files) else "⚠️"
                 summary_content += f"- {status} `{script}`\n"
                 
         summary_content += """
@@ -362,7 +362,7 @@ archives/scripts/
                 
         if not self.dry_run:
             summary_path.write_text(summary_content, encoding='utf-8')
-            print(f"  ✓ Created: {summary_path.relative_to(project_root)}")
+            print(f"  [OK] Created: {summary_path.relative_to(project_root)}")
         else:
             print(f"  [DRY RUN] Would create: {summary_path.relative_to(project_root)}")
             
@@ -376,10 +376,10 @@ archives/scripts/
         already_archived = sum(1 for source, dest in self.moved_files if dest.exists() and not source.exists())
         newly_moved = len(self.moved_files) - already_archived
         
-        print(f"\n✓ Scripts newly moved: {newly_moved}")
-        print(f"✓ Scripts already archived: {already_archived}")
-        print(f"✓ Total scripts accounted for: {len(self.moved_files)}")
-        print(f"✓ Categories: {len(self.LEGACY_SCRIPTS)}")
+        print(f"\n[OK] Scripts newly moved: {newly_moved}")
+        print(f"[OK] Scripts already archived: {already_archived}")
+        print(f"[OK] Total scripts accounted for: {len(self.moved_files)}")
+        print(f"[OK] Categories: {len(self.LEGACY_SCRIPTS)}")
         
         if self.errors:
             # Filter out "not found" errors if files are already archived

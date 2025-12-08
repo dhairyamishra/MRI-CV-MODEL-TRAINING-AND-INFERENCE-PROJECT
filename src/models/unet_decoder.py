@@ -190,8 +190,8 @@ if __name__ == "__main__":
     loss = output.sum()
     loss.backward()
     
-    print(f"   Input gradient: {'✓' if x.grad is not None else '✗'}")
-    print(f"   Output gradient: {'✓' if output.requires_grad else '✗'}")
+    print(f"   Input gradient: {'[OK]' if x.grad is not None else '✗'}")
+    print(f"   Output gradient: {'[OK]' if output.requires_grad else '✗'}")
     
     # Test 5: Different configurations
     print("\n5. Different Decoder Configurations")
@@ -210,5 +210,5 @@ if __name__ == "__main__":
         print(f"   {name:12s}: {params:>10,} decoder params")
     
     print("\n" + "=" * 70)
-    print("✓ All decoder tests passed!")
+    print("[OK] All decoder tests passed!")
     print("=" * 70)

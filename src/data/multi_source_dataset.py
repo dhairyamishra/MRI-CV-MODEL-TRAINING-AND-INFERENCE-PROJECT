@@ -358,7 +358,7 @@ if __name__ == "__main__":
                 print(f"  Mask sum: {sample['mask'].sum().item()}")
             print(f"  Classification label: {sample['cls']}")
         
-        print("\n✓ All tests passed!")
+        print("\n[OK] All tests passed!")
         
     except Exception as e:
         print(f"\n✗ Error: {e}")

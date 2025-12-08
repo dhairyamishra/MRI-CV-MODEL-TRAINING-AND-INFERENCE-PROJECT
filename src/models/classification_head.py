@@ -181,8 +181,8 @@ if __name__ == "__main__":
     loss = logits.sum()
     loss.backward()
     
-    print(f"   Input gradient: {'✓' if x.grad is not None else '✗'}")
-    print(f"   Logits gradient: {'✓' if logits.requires_grad else '✗'}")
+    print(f"   Input gradient: {'[OK]' if x.grad is not None else '✗'}")
+    print(f"   Logits gradient: {'[OK]' if logits.requires_grad else '✗'}")
     
     # Test 5: With different encoder configurations
     print("\n5. Classification Head for Different Encoders")
@@ -234,5 +234,5 @@ if __name__ == "__main__":
     print(f"   Classification head is only {cls_params/encoder_params*100:.2f}% of encoder!")
     
     print("\n" + "=" * 70)
-    print("✓ All classification head tests passed!")
+    print("[OK] All classification head tests passed!")
     print("=" * 70)
