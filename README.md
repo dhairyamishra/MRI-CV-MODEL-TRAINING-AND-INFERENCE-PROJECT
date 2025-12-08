@@ -18,10 +18,11 @@
 | **Phase 5** | ✅ Complete | Metrics & Patient-Level Evaluation |
 | **Phase 6** | ✅ Complete | Demo Application (API + UI) |
 | **Multi-Task** | ✅ Complete | Unified Architecture (Classification + Segmentation) |
+| **Frontend Refactor** | ✅ Complete | Modular UI Architecture (87% Code Reduction) |
 | **Phase 7** | 🚧 In Progress | Documentation & LaTeX Write-up |
 | **Phase 8** | 📋 Planned | Packaging & Deployment |
 
-**Progress: 85% Complete (7/8 phases + Multi-Task) • ~15,000+ lines of code • 21 organized scripts**
+**Progress: 90% Complete (7/8 phases + Multi-Task + Frontend) • ~18,700+ lines of code • 21 organized scripts**
 
 ## 🌟 Overview
 
@@ -54,7 +55,7 @@ SliceWise is a comprehensive medical imaging project that implements state-of-th
 
 - 🏗️ **Production-Ready Architecture**: Modular, tested, and documented
 - 🚀 **FastAPI Backend**: 12 comprehensive REST endpoints
-- 🎨 **Streamlit Frontend**: Beautiful, interactive UI with multi-task tab
+- 🎨 **Streamlit Frontend**: Refactored modular UI (15 files, 87% complexity reduction)
 - 🧪 **Comprehensive Testing**: Full E2E test suite with 100% pass rate
 - 📈 **Experiment Tracking**: W&B integration for training monitoring
 - 🔧 **Flexible Configuration**: YAML-based configs for all components
@@ -265,7 +266,7 @@ MRI-CV-MODEL-TRAINING-AND-INFERENCE-PROJECT/
 - **Splits**: 70% train / 15% val / 15% test (stratified)
 - **Use Case**: Binary classification
 
-### BraTS 2020 Dataset
+### BraTS Dataset
 - **Source**: [Brain Tumor Segmentation Challenge](https://www.med.upenn.edu/cbica/brats2020/)
 - **Total Patients**: 988 (369 training, 125 validation, 494 testing)
 - **Modalities**: FLAIR, T1, T1ce, T2
@@ -480,6 +481,7 @@ mypy src/
   - Stage 3: Joint fine-tuning (31.7M params total)
   - **Results**: 91.3% accuracy, 97.1% sensitivity, 76.5% Dice
   - **Benefits**: 9.4% fewer parameters, ~40% faster inference
+- [x] **Frontend Refactor**: Modular UI architecture (87% code reduction)
 
 ### 🚧 In Progress
 
@@ -518,7 +520,7 @@ See [FULL-PLAN.md](documentation/FULL-PLAN.md) for detailed roadmap.
 
 ## 📊 Project Statistics
 
-- **Total Lines of Code**: ~15,000+
+- **Total Lines of Code**: ~18,700+
 - **Number of Files**: 50+
 - **Test Coverage**: 100% E2E coverage
 - **Documentation**: 2,000+ lines

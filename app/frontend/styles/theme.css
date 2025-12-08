@@ -1,0 +1,225 @@
+/*
+ * SliceWise v2 - Theme Variables
+ * 
+ * This file defines CSS custom properties (variables) for consistent theming.
+ * All colors, spacing, typography, and other design tokens are centralized here.
+ * 
+ * To use: var(--variable-name, fallback-value)
+ * Example: color: var(--color-primary-blue, #1f77b4);
+ */
+
+:root {
+    /* ========================================================================
+       Color Palette - Primary Colors
+       ======================================================================== */
+    
+    --color-primary-blue: #1f77b4;
+    --color-success-green: #28a745;
+    --color-danger-red: #dc3545;
+    --color-warning-yellow: #ffc107;
+    --color-info-blue: #17a2b8;
+    
+    /* ========================================================================
+       Color Palette - Text Colors
+       ======================================================================== */
+    
+    --color-text-dark: #333333;
+    --color-text-medium: #666666;
+    --color-text-light: #999999;
+    --color-text-white: #ffffff;
+    
+    /* ========================================================================
+       Color Palette - Background Colors
+       ======================================================================== */
+    
+    --color-bg-light: #f0f2f6;
+    --color-bg-white: #ffffff;
+    --color-bg-success: #d4edda;
+    --color-bg-warning: #574301;
+    --color-bg-info: #d1ecf1;
+    --color-bg-danger: #f8d7da;
+    
+    /* ========================================================================
+       Color Palette - Chart Colors
+       ======================================================================== */
+    
+    --color-chart-tumor: #dc3545;
+    --color-chart-no-tumor: #28a745;
+    --color-chart-neutral: #1f77b4;
+    --color-chart-uncertainty: #ffc107;
+    
+    /* ========================================================================
+       Color Palette - Border Colors
+       ======================================================================== */
+    
+    --color-border-light: #e0e0e0;
+    --color-border-medium: #cccccc;
+    --color-border-dark: #999999;
+    
+    /* ========================================================================
+       Spacing Scale
+       ======================================================================== */
+    
+    --spacing-xs: 0.25rem;   /* 4px */
+    --spacing-sm: 0.5rem;    /* 8px */
+    --spacing-md: 1rem;      /* 16px */
+    --spacing-lg: 1.5rem;    /* 24px */
+    --spacing-xl: 2rem;      /* 32px */
+    --spacing-2xl: 3rem;     /* 48px */
+    --spacing-3xl: 4rem;     /* 64px */
+    
+    /* ========================================================================
+       Typography
+       ======================================================================== */
+    
+    /* Font Families */
+    --font-family-base: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-family-monospace: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace;
+    
+    /* Font Sizes */
+    --font-size-xs: 0.75rem;    /* 12px */
+    --font-size-sm: 0.875rem;   /* 14px */
+    --font-size-base: 1rem;     /* 16px */
+    --font-size-lg: 1.125rem;   /* 18px */
+    --font-size-xl: 1.25rem;    /* 20px */
+    --font-size-2xl: 1.5rem;    /* 24px */
+    --font-size-3xl: 2rem;      /* 32px */
+    --font-size-4xl: 3rem;      /* 48px */
+    
+    /* Font Weights */
+    --font-weight-light: 300;
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+    
+    /* Line Heights */
+    --line-height-tight: 1.25;
+    --line-height-normal: 1.5;
+    --line-height-relaxed: 1.75;
+    
+    /* ========================================================================
+       Border Radius
+       ======================================================================== */
+    
+    --radius-sm: 0.25rem;    /* 4px */
+    --radius-md: 0.5rem;     /* 8px */
+    --radius-lg: 1rem;       /* 16px */
+    --radius-full: 9999px;   /* Fully rounded */
+    
+    /* ========================================================================
+       Shadows
+       ======================================================================== */
+    
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    
+    /* ========================================================================
+       Z-Index Scale
+       ======================================================================== */
+    
+    --z-index-dropdown: 1000;
+    --z-index-sticky: 1020;
+    --z-index-fixed: 1030;
+    --z-index-modal-backdrop: 1040;
+    --z-index-modal: 1050;
+    --z-index-popover: 1060;
+    --z-index-tooltip: 1070;
+    
+    /* ========================================================================
+       Transitions
+       ======================================================================== */
+    
+    --transition-fast: 150ms ease-in-out;
+    --transition-base: 300ms ease-in-out;
+    --transition-slow: 500ms ease-in-out;
+    
+    /* ========================================================================
+       Breakpoints (for reference in media queries)
+       ======================================================================== */
+    
+    --breakpoint-sm: 640px;
+    --breakpoint-md: 768px;
+    --breakpoint-lg: 1024px;
+    --breakpoint-xl: 1280px;
+    --breakpoint-2xl: 1536px;
+    
+    /* ========================================================================
+       Component-Specific Variables
+       ======================================================================== */
+    
+    /* Buttons */
+    --button-padding-sm: var(--spacing-sm) var(--spacing-md);
+    --button-padding-md: var(--spacing-md) var(--spacing-lg);
+    --button-padding-lg: var(--spacing-lg) var(--spacing-xl);
+    
+    /* Cards */
+    --card-padding: var(--spacing-lg);
+    --card-border-radius: var(--radius-md);
+    --card-shadow: var(--shadow-md);
+    
+    /* Inputs */
+    --input-border-color: var(--color-border-medium);
+    --input-border-radius: var(--radius-sm);
+    --input-padding: var(--spacing-sm) var(--spacing-md);
+    
+    /* Tabs */
+    --tab-gap: var(--spacing-xl);
+    --tab-padding: var(--spacing-md) var(--spacing-xl);
+    --tab-height: 3rem;
+}
+
+/* ============================================================================
+   Dark Mode Theme (Optional - for future implementation)
+   ============================================================================ */
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        /* Override colors for dark mode */
+        --color-text-dark: #f0f0f0;
+        --color-text-medium: #cccccc;
+        --color-text-light: #999999;
+        
+        --color-bg-light: #1e1e1e;
+        --color-bg-white: #2d2d2d;
+        
+        --color-border-light: #404040;
+        --color-border-medium: #555555;
+        --color-border-dark: #666666;
+    }
+}
+
+/* ============================================================================
+   High Contrast Mode (Accessibility)
+   ============================================================================ */
+
+@media (prefers-contrast: high) {
+    :root {
+        /* Increase contrast for better accessibility */
+        --color-text-dark: #000000;
+        --color-text-medium: #333333;
+        --color-border-medium: #000000;
+        
+        /* Make borders more prominent */
+        --shadow-md: 0 0 0 2px rgba(0, 0, 0, 0.3);
+        --shadow-lg: 0 0 0 3px rgba(0, 0, 0, 0.4);
+    }
+}
+
+/* ============================================================================
+   Print Styles
+   ============================================================================ */
+
+@media print {
+    :root {
+        /* Optimize for printing */
+        --color-bg-light: #ffffff;
+        --color-bg-white: #ffffff;
+        --shadow-sm: none;
+        --shadow-md: none;
+        --shadow-lg: none;
+        --shadow-xl: none;
+    }
+}
