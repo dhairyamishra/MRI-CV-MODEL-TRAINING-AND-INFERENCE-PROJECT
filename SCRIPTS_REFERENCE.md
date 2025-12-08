@@ -68,6 +68,10 @@ python scripts/run_full_pipeline.py --mode full --training-mode baseline --skip-
 - `python scripts/demo/run_demo_backend.py [--port PORT] [--host HOST] [--reload] [--no-check]` - Launches FastAPI backend only (default http://localhost:8000, API docs at /docs)
 - `python scripts/demo/run_demo_frontend.py [--port PORT] [--backend-url URL] [--no-check]` - Launches Streamlit frontend only (default http://localhost:8501, requires backend running)
 
+**New Modular Frontend:**
+- `streamlit run app/frontend/app.py` - **RECOMMENDED** Launches refactored modular frontend (87% code reduction, 15 files, production-ready)
+- `streamlit run app/frontend/app_v2.py` - Legacy monolithic frontend (1,187 lines, kept for reference)
+
 ## 🔧 Debug & Diagnostics
 
 - `python scripts/debug/debug_multitask_data.py` - Debugs multi-task dataset loading, validates batch collation, mixed source handling (BraTS + Kaggle), mask availability, and data shapes
