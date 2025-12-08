@@ -25,7 +25,7 @@ model:
   name: "multitask"
   in_channels: 1          # Single-channel MRI (FLAIR)
   out_channels: 1         # Binary segmentation
-  base_filters: 32        # Reduced from 64 for faster training
+  base_filters: 16        # Reduced from 64 for faster training
   depth: 3                # Reduced from 4 for faster training
 
 # Loss function
@@ -52,7 +52,7 @@ scheduler:
 # Training hyperparameters (QUICK TEST)
 training:
   epochs: 2               # Quick test
-  batch_size: 4           # Small batch for quick test
+  batch_size: 8          # Small batch for quick test
   num_workers: 0          # Windows compatibility
   pin_memory: false
   

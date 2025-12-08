@@ -40,7 +40,55 @@ from typing import List, Optional
 import json
 from datetime import datetime
 
+# ============================================================================
+# Configuration Constants
+# ============================================================================
+
+# Config file paths
+CONFIG_DIR = "configs/multitask-model"
+
+# Quick test configs (10 patients, 5 epochs, ~30 minutes)
+QUICK_SEG_CONFIG = f"{CONFIG_DIR}/multitask_seg_warmup_quick_test.yaml"
+QUICK_CLS_CONFIG = f"{CONFIG_DIR}/multitask_cls_head_quick_test.yaml"
+QUICK_JOINT_CONFIG = f"{CONFIG_DIR}/multitask_joint_quick_test.yaml"
+
+# Baseline configs (100 patients, 50 epochs, ~2-4 hours)
+BASELINE_SEG_CONFIG = f"{CONFIG_DIR}/multitask_seg_warmup.yaml"
+BASELINE_CLS_CONFIG = f"{CONFIG_DIR}/multitask_cls_head_quick_test.yaml"
+BASELINE_JOINT_CONFIG = f"{CONFIG_DIR}/multitask_joint_quick_test.yaml"
+
+# Production configs (988 patients, 100 epochs, ~8-12 hours)
+PRODUCTION_SEG_CONFIG = f"{CONFIG_DIR}/multitask_seg_warmup_production.yaml"
+PRODUCTION_CLS_CONFIG = f"{CONFIG_DIR}/multitask_cls_head_production.yaml"
+PRODUCTION_JOINT_CONFIG = f"{CONFIG_DIR}/multitask_joint_production.yaml"
+
+# Timeout values (in seconds)
+QUICK_TIMEOUT_SEG = 600      # 10 minutes
+QUICK_TIMEOUT_CLS = 300      # 5 minutes
+QUICK_TIMEOUT_JOINT = 600    # 10 minutes
+
+BASELINE_TIMEOUT_SEG = 7200   # 2 hours
+BASELINE_TIMEOUT_CLS = 3600   # 1 hour
+BASELINE_TIMEOUT_JOINT = 7200 # 2 hours
+
+PRODUCTION_TIMEOUT_SEG = 21600   # 6 hours
+PRODUCTION_TIMEOUT_CLS = 10800   # 3 hours
+PRODUCTION_TIMEOUT_JOINT = 21600 # 6 hours
+
+# Checkpoint paths
+CHECKPOINT_DIR = "checkpoints"
+MULTITASK_CHECKPOINT = f"{CHECKPOINT_DIR}/multitask_joint/best_model.pth"
+SEG_WARMUP_CHECKPOINT = f"{CHECKPOINT_DIR}/multitask_seg_warmup/best_model.pth"
+CLS_HEAD_CHECKPOINT = f"{CHECKPOINT_DIR}/multitask_cls_head/best_model.pth"
+
+# Demo URLs
+FRONTEND_URL = "http://localhost:8501"
+BACKEND_URL = "http://localhost:8000"
+API_DOCS_URL = f"{BACKEND_URL}/docs"
+
+# ============================================================================
 # ANSI color codes for terminal output
+# ============================================================================
 class Colors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -116,7 +164,7 @@ class PipelineController:
         """Print an info message."""
         print(f"{Colors.OKBLUE}ℹ {message}{Colors.ENDC}")
     
-    def _run_command(self, cmd: List[str], step_name: str, timeout: Optional[int] = None) -> bool:
+    def _run_command(self, cmd: List[str], step_name: str, timeout: Optional[int] = None, shell: bool = False) -> bool:
         """
         Run a command and track its execution.
         
@@ -124,6 +172,7 @@ class PipelineController:
             cmd: Command to run as list of strings
             step_name: Name of the step for logging
             timeout: Optional timeout in seconds
+            shell: Whether to run command through shell (needed for npm/pm2 on Windows)
             
         Returns:
             True if successful, False otherwise
@@ -133,12 +182,13 @@ class PipelineController:
         
         try:
             result = subprocess.run(
-                cmd,
+                cmd if not shell else ' '.join(cmd),
                 cwd=str(self.project_root),
                 check=True,
                 capture_output=False,
                 text=True,
-                timeout=timeout
+                timeout=timeout,
+                shell=shell
             )
             
             duration = time.time() - step_start
@@ -222,6 +272,10 @@ class PipelineController:
         """Step 2: Preprocess datasets."""
         self._print_step(2, self._get_total_steps(), "Data Preprocessing")
         
+        if self.args.skip_preprocessing:
+            self._print_warning("Skipping data preprocessing (--skip-preprocessing flag)")
+            return True
+        
         # Determine number of patients based on training mode
         if self.args.training_mode == "quick":
             num_patients = 10
@@ -284,26 +338,26 @@ class PipelineController:
         
         # Determine config files based on training mode
         if self.args.training_mode == "quick":
-            seg_config = "configs/multitask_seg_warmup_quick_test.yaml"
-            cls_config = "configs/multitask_cls_head_quick_test.yaml"
-            joint_config = "configs/multitask_joint_quick_test.yaml"
-            timeout_seg = 600  # 10 minutes
-            timeout_cls = 300  # 5 minutes
-            timeout_joint = 600  # 10 minutes
+            seg_config = QUICK_SEG_CONFIG
+            cls_config = QUICK_CLS_CONFIG
+            joint_config = QUICK_JOINT_CONFIG
+            timeout_seg = QUICK_TIMEOUT_SEG
+            timeout_cls = QUICK_TIMEOUT_CLS
+            timeout_joint = QUICK_TIMEOUT_JOINT
         elif self.args.training_mode == "baseline":
-            seg_config = "configs/multitask_seg_warmup.yaml"
-            cls_config = "configs/multitask_cls_head_quick_test.yaml"
-            joint_config = "configs/multitask_joint_quick_test.yaml"
-            timeout_seg = 7200  # 2 hours
-            timeout_cls = 3600  # 1 hour
-            timeout_joint = 7200  # 2 hours
+            seg_config = BASELINE_SEG_CONFIG
+            cls_config = BASELINE_CLS_CONFIG
+            joint_config = BASELINE_JOINT_CONFIG
+            timeout_seg = BASELINE_TIMEOUT_SEG
+            timeout_cls = BASELINE_TIMEOUT_CLS
+            timeout_joint = BASELINE_TIMEOUT_JOINT
         else:  # production
-            seg_config = "configs/multitask_seg_warmup_production.yaml"
-            cls_config = "configs/multitask_cls_head_production.yaml"
-            joint_config = "configs/multitask_joint_production.yaml"
-            timeout_seg = 21600  # 6 hours
-            timeout_cls = 10800  # 3 hours
-            timeout_joint = 21600  # 6 hours
+            seg_config = PRODUCTION_SEG_CONFIG
+            cls_config = PRODUCTION_CLS_CONFIG
+            joint_config = PRODUCTION_JOINT_CONFIG
+            timeout_seg = PRODUCTION_TIMEOUT_SEG
+            timeout_cls = PRODUCTION_TIMEOUT_CLS
+            timeout_joint = PRODUCTION_TIMEOUT_JOINT
         
         # Stage 1: Segmentation Warm-up
         self._print_info("Stage 1/3: Segmentation warm-up (encoder + decoder on BraTS)")
@@ -317,7 +371,7 @@ class PipelineController:
             return False
         
         # Check if checkpoint exists
-        seg_checkpoint = self.project_root / "checkpoints" / "multitask_seg_warmup" / "best_model.pth"
+        seg_checkpoint = self.project_root / SEG_WARMUP_CHECKPOINT
         if not self._check_file_exists(seg_checkpoint, "Stage 1 checkpoint"):
             return False
         
@@ -334,7 +388,7 @@ class PipelineController:
             return False
         
         # Check if checkpoint exists
-        cls_checkpoint = self.project_root / "checkpoints" / "multitask_cls_head" / "best_model.pth"
+        cls_checkpoint = self.project_root / CLS_HEAD_CHECKPOINT
         if not self._check_file_exists(cls_checkpoint, "Stage 2 checkpoint"):
             return False
         
@@ -351,7 +405,7 @@ class PipelineController:
             return False
         
         # Check if final checkpoint exists
-        joint_checkpoint = self.project_root / "checkpoints" / "multitask_joint" / "best_model.pth"
+        joint_checkpoint = self.project_root / MULTITASK_CHECKPOINT
         if not self._check_file_exists(joint_checkpoint, "Stage 3 (final) checkpoint"):
             return False
         
@@ -428,7 +482,7 @@ class PipelineController:
         self._print_step(6, self._get_total_steps(), "Launch Demo Application")
         
         # Check if model checkpoint exists
-        model_checkpoint = self.project_root / "checkpoints" / "multitask_joint" / "best_model.pth"
+        model_checkpoint = self.project_root / MULTITASK_CHECKPOINT
         if not self._check_file_exists(model_checkpoint, "Trained model checkpoint"):
             self._print_error("Cannot launch demo without trained model!")
             return False
@@ -437,46 +491,50 @@ class PipelineController:
         self._print_info("")
         self._print_info("PM2 provides robust process management with:")
         self._print_info("  Automatic restart on failure")
-        self._print_info("  Centralized logging")
+        self._print_info("  Centralized logging in logs/ directory")
+        self._print_info("  Background execution (no terminal windows)")
         self._print_info("  Easy monitoring and control")
         self._print_info("")
         
-        # Launch using PM2 script
-        if not self._run_command(
-            ["python", "scripts/demo/run_demo_pm2.py"],
-            "launch_demo_pm2",
-            timeout=120  # 2 minutes for startup
+        # Try running PM2 directly (works on Windows)
+        if self._run_command(
+            ["pm2", "start", "configs/pm2-ecosystem/ecosystem.config.js"],
+            "launch_pm2_direct",
+            timeout=60,  # 1 minute for startup
+            shell=True
         ):
-            self._print_warning("PM2 launcher failed or PM2 is not installed.")
+            self._print_success("Demo launched successfully with PM2!")
             self._print_info("")
-            self._print_info("Alternative: Run the demo manually in separate terminals:")
+            self._print_info("🌐 Access the demo:")
+            self._print_info(f"  Frontend: {FRONTEND_URL}")
+            self._print_info(f"  Backend:  {BACKEND_URL}")
+            self._print_info(f"  API Docs: {API_DOCS_URL}")
             self._print_info("")
-            self._print_info("  Terminal 1 (Backend):")
-            self._print_info("    python app/backend/main_v2.py")
+            self._print_info("📊 Manage with PM2:")
+            self._print_info("  pm2 status              - View process status")
+            self._print_info("  pm2 logs                - View all logs (live)")
+            self._print_info("  pm2 monit               - Interactive monitoring")
+            self._print_info("  pm2 stop all            - Stop the demo")
+            self._print_info("  pm2 delete all          - Stop and remove processes")
             self._print_info("")
-            self._print_info("  Terminal 2 (Frontend - New Modular Version):")
-            self._print_info("    streamlit run app/frontend/app.py --server.port 8501")
+            self._print_info("💡 Tip: Processes run in background. You can close this terminal.")
             self._print_info("")
-            self._print_info("  Terminal 2 (Frontend - Legacy Version):")
-            self._print_info("    streamlit run app/frontend/app_v2.py --server.port 8501")
-            self._print_info("")
-            self._print_info("Or install PM2 and try again:")
-            self._print_info("    npm install -g pm2")
-            self._print_info("    python scripts/demo/run_demo_pm2.py")
-            self._print_info("")
-            return False
+            return True
         
-        self._print_success("Demo launched successfully with PM2!")
+        # PM2 command failed - show alternatives
+        self._print_warning("PM2 command failed or PM2 is not installed.")
         self._print_info("")
-        self._print_info("To manage the demo:")
-        self._print_info("  pm2 status              - View process status")
-        self._print_info("  pm2 logs                - View all logs")
-        self._print_info("  pm2 monit               - Monitor processes")
-        self._print_info("  pm2 stop all            - Stop the demo")
-        self._print_info("  pm2 delete all          - Stop and remove processes")
+        self._print_info("To install PM2:")
+        self._print_info("  npm install -g pm2")
         self._print_info("")
-        
-        return True
+        self._print_info("Then run:")
+        self._print_info("  pm2 start configs/pm2-ecosystem/ecosystem.config.js")
+        self._print_info("")
+        self._print_info("Alternative: Run manually in separate terminals:")
+        self._print_info("  Terminal 1: python scripts/demo/run_demo_backend.py")
+        self._print_info("  Terminal 2: python scripts/demo/run_demo_frontend.py")
+        self._print_info("")
+        return False
     
     def _get_total_steps(self) -> int:
         """Get total number of steps based on mode."""
@@ -641,6 +699,12 @@ Training Modes:
         "--skip-download",
         action="store_true",
         help="Skip data download step (use existing data)"
+    )
+    
+    parser.add_argument(
+        "--skip-preprocessing",
+        action="store_true",
+        help="Skip data preprocessing step (use existing processed data)"
     )
     
     return parser.parse_args()

@@ -32,7 +32,7 @@ model:
   name: "multitask"
   in_channels: 1          # Single-channel MRI
   out_channels: 1         # Binary segmentation (not used in this phase)
-  base_filters: 32        # Must match Phase 2.1 (quick test)
+  base_filters: 16        # Must match Phase 2.1 (quick test)
   depth: 3                # Must match Phase 2.1 (quick test)
 
 # Loss function (classification)
@@ -52,7 +52,7 @@ optimizer:
 # Learning rate scheduler
 scheduler:
   name: "cosine"          # Cosine annealing
-  T_max: 3               # Match epochs
+  T_max: 2              # Match epochs
   eta_min: 1.0e-6
   mode: "max"             # For ReduceLROnPlateau
   factor: 0.5
