@@ -1,5 +1,11 @@
-# Phase 2.3: Joint Fine-Tuning Configuration
-# Quick test with 5 epochs for validation
+# ============================================================================
+# Phase 2.3: Joint Fine-Tuning Configuration - Quick Test
+# ============================================================================
+# Quick test with 2 epochs for validation
+# This is Stage 3 of 3-stage multi-task training strategy
+# 
+# IMPORTANT: PyTorch 2.6+ requires weights_only=False when loading checkpoints
+# IMPORTANT: Windows requires num_workers=0 for DataLoader
 
 # Random seed for reproducibility
 seed: 42
@@ -30,6 +36,7 @@ training:
   weight_decay: 0.0001
   grad_clip: 1.0
   mixed_precision: true
+  use_amp: true           # Alternative name for mixed precision
 
 # Loss function configuration
 loss:

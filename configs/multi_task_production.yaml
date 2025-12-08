@@ -5,6 +5,10 @@
 # This model performs both tumor classification and segmentation in a single
 # forward pass, achieving ~40% faster inference than separate models.
 #
+# IMPORTANT: PyTorch 2.6+ requires weights_only=False when loading checkpoints
+# IMPORTANT: Segmentation requires z-score normalization (mean=0, std=1)
+# IMPORTANT: Visualization requires [0,1] normalized images for overlays
+#
 # Model Performance (Test Set - 161 samples):
 #   - Classification Accuracy: 91.30%
 #   - Classification Sensitivity: 97.14% (only 4 missed tumors!)
@@ -73,15 +77,21 @@ inference:
 # Preprocessing Parameters
 # ----------------------------------------------------------------------------
 preprocessing:
-  # Z-score normalization (for segmentation compatibility)
+  # Z-score normalization (REQUIRED for segmentation model)
+  # Model was trained with z-score normalization (mean=0, std=1)
+  # This is critical for correct segmentation predictions
   z_score:
     mean: 0.0                       # Target mean after normalization
     std: 1.0                        # Target std after normalization
+    enabled: true                   # Must be enabled for segmentation
   
-  # Min-max normalization (alternative)
+  # Min-max normalization (for visualization only)
+  # Use [0,1] normalized images for overlay visualization
+  # Do NOT use for model inference
   min_max:
     min: 0.0                        # Target minimum
     max: 1.0                        # Target maximum
+    enabled: false                  # Only for visualization, not inference
   
   # Image resizing
   resize:
@@ -91,6 +101,13 @@ preprocessing:
   # Grayscale conversion
   grayscale:
     method: "cv2"                   # 'cv2', 'pil', 'luminosity'
+  
+  # Preprocessing pipeline order
+  # 1. Convert to grayscale (if needed)
+  # 2. Resize to target size
+  # 3. Apply min-max normalization [0,1] for visualization
+  # 4. Apply z-score normalization for model inference
+  # 5. Keep original [0,1] image for overlay visualization
 
 # Post-processing Parameters
 # ----------------------------------------------------------------------------

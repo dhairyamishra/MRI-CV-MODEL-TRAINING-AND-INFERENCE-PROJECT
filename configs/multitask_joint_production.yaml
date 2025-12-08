@@ -3,7 +3,10 @@
 # ============================================================================
 # Joint fine-tuning of all components with differential learning rates
 # This is Stage 3 of 3-stage multi-task training strategy
-# PRODUCTION MODE: Full dataset, 50 epochs, ~4-6 hours
+# PRODUCTION MODE: Full dataset, 1000 epochs, ~4-6 hours
+# 
+# IMPORTANT: PyTorch 2.6+ requires weights_only=False when loading checkpoints
+# IMPORTANT: Windows requires num_workers=0 for DataLoader
 
 # Experiment metadata
 experiment:
@@ -12,14 +15,17 @@ experiment:
   tags: ["multitask", "joint", "fine_tuning", "brats", "kaggle", "production"]
   notes: "Fine-tune all components jointly with differential learning rates for optimal performance"
 
-# Paths
-paths:
+# Data directories (changed from 'paths' to 'data' to match training function)
+data:
   kaggle_train_dir: "data/processed/kaggle/train"
   kaggle_val_dir: "data/processed/kaggle/val"
   kaggle_test_dir: "data/processed/kaggle/test"
   brats_train_dir: "data/processed/brats2d_full/train"
   brats_val_dir: "data/processed/brats2d_full/val"
   brats_test_dir: "data/processed/brats2d_full/test"
+
+# Checkpoint and output paths
+paths:
   checkpoint_dir: "checkpoints/multitask_joint_production"
   log_dir: "logs/multitask_joint_production"
   output_dir: "outputs/multitask_joint_production"
@@ -29,7 +35,7 @@ model:
   name: "multitask"
   in_channels: 1
   seg_out_channels: 1
-  cls_num_classes: 2
+  num_classes: 2              # Changed from cls_num_classes to match training function
   base_filters: 64
   depth: 4
   cls_hidden_dim: 256
@@ -54,7 +60,7 @@ loss:
   # Classification loss
   cls_loss:
     name: "cross_entropy"
-    class_weights: null   # Auto-compute
+    # class_weights: null   # Commented out - will use unweighted loss
     label_smoothing: 0.1
   
   # Loss weighting
@@ -64,12 +70,8 @@ loss:
 # Differential learning rates
 optimizer:
   name: "adamw"
-  
-  # Different LR for different components
   encoder_lr: 0.0001      # Lower LR for encoder (already trained)
-  seg_decoder_lr: 0.0003  # Medium LR for seg decoder
-  cls_head_lr: 0.0003     # Medium LR for cls head
-  
+  decoder_cls_lr: 0.0003  # Medium LR for decoder and classifier (consolidated from seg_decoder_lr and cls_head_lr)
   weight_decay: 0.0001
   betas: [0.9, 0.999]
   eps: 1.0e-8
@@ -77,18 +79,24 @@ optimizer:
 # Learning rate scheduler
 scheduler:
   name: "cosine"
-  T_max: 50
+  T_max: 1000             # Match number of epochs (changed from 50)
   eta_min: 1.0e-7
 
 # Training hyperparameters
 training:
-  epochs: 50              # Extended training for production
-  batch_size: 16          # Balance between seg and cls
-  num_workers: 4
+  epochs: 1000            # Extended training for production (changed from 50)
+  batch_size: 32          # Increased batch size (changed from 16)
+  num_workers: 0          # Set to 0 for Windows compatibility (use 4+ on Linux/Mac)
   pin_memory: true
+  
+  # Differential learning rates (key for joint fine-tuning)
+  encoder_lr: 0.0001      # 1e-4 (lower for fine-tuning pre-trained encoder)
+  decoder_cls_lr: 0.0003  # 3e-4 (higher for task-specific heads)
+  weight_decay: 0.0001    # L2 regularization
   
   # Mixed precision training
   use_amp: true
+  mixed_precision: true   # Added for compatibility with training function
   
   # Gradient clipping
   grad_clip: 1.0
@@ -96,7 +104,7 @@ training:
   # Early stopping (monitor combined metric)
   early_stopping:
     enabled: true
-    patience: 20          # More patience for joint training
+    patience: 50          # More patience for longer training (changed from 20)
     min_delta: 0.0005
     monitor: "val_combined" # Combined metric: (dice + acc) / 2
     mode: "max"

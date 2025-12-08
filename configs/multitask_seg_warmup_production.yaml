@@ -3,7 +3,10 @@
 # ============================================================================
 # Train encoder + decoder on BraTS segmentation to initialize shared encoder
 # This is Stage 1 of 3-stage multi-task training strategy
-# PRODUCTION MODE: Full dataset (988 patients), 100 epochs, ~4-6 hours
+# PRODUCTION MODE: Full dataset (988 patients), 1000 epochs, ~4-6 hours
+# 
+# IMPORTANT: PyTorch 2.6+ requires weights_only=False when loading checkpoints
+# IMPORTANT: Windows requires num_workers=0 for DataLoader
 
 # Experiment metadata
 experiment:
@@ -47,14 +50,14 @@ optimizer:
 # Learning rate scheduler
 scheduler:
   name: "cosine"          # Cosine annealing
-  T_max: 100              # Maximum number of epochs
+  T_max: 1000             # Match number of epochs
   eta_min: 1.0e-7         # Minimum learning rate
 
 # Training hyperparameters
 training:
-  epochs: 100             # Extended training for production
-  batch_size: 16          # Adjust based on GPU memory
-  num_workers: 4          # Increase for faster data loading
+  epochs: 1000            # Extended training for production
+  batch_size: 32          # Increased batch size
+  num_workers: 0          # Set to 0 for Windows compatibility (use 4+ on Linux/Mac)
   pin_memory: true
   
   # Mixed precision training
@@ -66,7 +69,7 @@ training:
   # Early stopping
   early_stopping:
     enabled: true
-    patience: 20          # More patience for production
+    patience: 50          # More patience for longer training
     min_delta: 0.0005     # Smaller delta for fine improvements
     monitor: "val_dice"   # Metric to monitor
     mode: "max"           # max or min

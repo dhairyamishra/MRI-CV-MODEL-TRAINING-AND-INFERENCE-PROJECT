@@ -2,6 +2,8 @@
 # Phase 2.1: Segmentation Warm-Up - Quick Test Configuration
 # ============================================================================
 # Fast E2E testing with small dataset (10 patients, 5 epochs)
+# 
+# IMPORTANT: Windows requires num_workers=0 for DataLoader
 
 # Experiment metadata
 experiment:

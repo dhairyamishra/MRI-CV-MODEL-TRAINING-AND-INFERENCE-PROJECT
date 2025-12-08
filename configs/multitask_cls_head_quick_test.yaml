@@ -3,6 +3,9 @@
 # ============================================================================
 # Train classification head with FROZEN encoder on BraTS + Kaggle data
 # This is Stage 2 of 3-stage multi-task training strategy
+# 
+# IMPORTANT: PyTorch 2.6+ requires weights_only=False when loading checkpoints
+# IMPORTANT: Windows requires num_workers=0 for DataLoader
 
 # Experiment metadata
 experiment:

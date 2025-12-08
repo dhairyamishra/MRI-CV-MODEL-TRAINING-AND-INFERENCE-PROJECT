@@ -401,20 +401,27 @@ def main():
     # Training loop
     start_epoch = 0
     best_val_metric = 0.0
+    patience_counter = 0
+    patience = config['training']['early_stopping']['patience']
+    min_delta = config['training']['early_stopping'].get('min_delta', 0.0)
     
     if args.resume:
         print(f"=== Resuming from {args.resume} ===")
-        checkpoint = torch.load(args.resume, map_location=device)
+        checkpoint = torch.load(args.resume, map_location=device, weights_only=False)
         model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         start_epoch = checkpoint['epoch'] + 1
         best_val_metric = checkpoint.get('best_val_metric', 0.0)
+        patience_counter = checkpoint.get('patience_counter', 0)
         print(f"Resuming from epoch {start_epoch}\n")
     
     print("=== Starting Training ===")
     print(f"Training for {config['training']['epochs']} epochs")
     print(f"Batch size: {config['training']['batch_size']}")
-    print(f"Mixed precision: {config['training']['mixed_precision']}\n")
+    print(f"Mixed precision: {config['training']['mixed_precision']}")
+    if config['training']['early_stopping']['enabled']:
+        print(f"Early stopping: enabled (patience={patience}, min_delta={min_delta})")
+    print()
     
     for epoch in range(start_epoch, config['training']['epochs']):
         print("=" * 60)
@@ -454,6 +461,7 @@ def main():
         
         # Combined metric (average of Dice and Accuracy)
         val_metric = (val_metrics['dice'] + val_metrics['acc']) / 2.0
+        print(f"Combined metric: {val_metric:.4f} (best: {best_val_metric:.4f})")
         
         # Save checkpoint
         checkpoint = {
@@ -463,19 +471,32 @@ def main():
             'train_metrics': train_metrics,
             'val_metrics': val_metrics,
             'best_val_metric': best_val_metric,
+            'patience_counter': patience_counter,
             'config': config,
         }
         
         # Save last checkpoint
         torch.save(checkpoint, os.path.join(args.checkpoint_dir, 'last_model.pth'))
         
-        # Save best checkpoint
-        if val_metric > best_val_metric:
+        # Save best checkpoint and update early stopping
+        if val_metric > best_val_metric + min_delta:
             best_val_metric = val_metric
+            patience_counter = 0
             torch.save(checkpoint, os.path.join(args.checkpoint_dir, 'best_model.pth'))
             print(f"✓ Saved best model (metric: {best_val_metric:.4f})")
+        else:
+            patience_counter += 1
+            print(f"  No improvement (patience: {patience_counter}/{patience})")
         
         print(f"Saved checkpoint to {args.checkpoint_dir}/last_model.pth\n")
+        
+        # Early stopping check
+        if config['training']['early_stopping']['enabled']:
+            if patience_counter >= patience:
+                print(f"⚠ Early stopping triggered after {epoch + 1} epochs")
+                print(f"  No improvement for {patience} consecutive epochs")
+                print(f"  Best validation metric: {best_val_metric:.4f}")
+                break
     
     print("=== Training Complete ===")
     print(f"Best validation metric: {best_val_metric:.4f}")

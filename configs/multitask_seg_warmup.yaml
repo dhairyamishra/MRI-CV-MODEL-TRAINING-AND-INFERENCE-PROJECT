@@ -3,6 +3,9 @@
 # ============================================================================
 # Train encoder + decoder on BraTS segmentation to initialize shared encoder
 # This is Stage 1 of 3-stage multi-task training strategy
+# 
+# IMPORTANT: PyTorch 2.6+ requires weights_only=False when loading checkpoints
+# IMPORTANT: Windows requires num_workers=0 for DataLoader
 
 # Experiment metadata
 experiment:

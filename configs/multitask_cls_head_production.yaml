@@ -3,7 +3,10 @@
 # ============================================================================
 # Train classification head with frozen encoder on Kaggle dataset
 # This is Stage 2 of 3-stage multi-task training strategy
-# PRODUCTION MODE: Full dataset, 50 epochs, ~2-3 hours
+# PRODUCTION MODE: Full dataset, 1000 epochs, ~20-30 hours
+# 
+# IMPORTANT: PyTorch 2.6+ requires weights_only=False when loading checkpoints
+# IMPORTANT: Windows requires num_workers=0 for DataLoader
 
 # Experiment metadata
 experiment:
@@ -28,6 +31,7 @@ paths:
 model:
   name: "multitask"
   in_channels: 1          # Single-channel MRI
+  out_channels: 1         # Binary segmentation
   seg_out_channels: 1     # Binary segmentation
   cls_num_classes: 2      # Tumor / No Tumor
   base_filters: 64        # Must match Stage 1
@@ -44,7 +48,7 @@ encoder_init:
 # Loss function
 loss:
   name: "cross_entropy"   # Cross-entropy for classification
-  class_weights: null     # Auto-compute from dataset
+  # class_weights: null   # Commented out - will use unweighted loss (or specify weights like [0.4, 0.6])
   label_smoothing: 0.1    # Label smoothing for better generalization
 
 # Optimizer (only for classification head parameters)
@@ -58,14 +62,14 @@ optimizer:
 # Learning rate scheduler
 scheduler:
   name: "cosine"
-  T_max: 50
+  T_max: 1000
   eta_min: 1.0e-6
 
 # Training hyperparameters
 training:
-  epochs: 50              # Extended training for production
-  batch_size: 32          # Larger batch for classification
-  num_workers: 4
+  epochs: 1000
+  batch_size: 32
+  num_workers: 0
   pin_memory: true
   
   # Mixed precision training
@@ -77,9 +81,9 @@ training:
   # Early stopping
   early_stopping:
     enabled: true
-    patience: 15
+    patience: 50
     min_delta: 0.001
-    monitor: "val_acc"    # Monitor accuracy
+    monitor: "val_acc"
     mode: "max"
   
   # Checkpoint saving
