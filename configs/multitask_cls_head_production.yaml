@@ -1,19 +1,19 @@
 # ============================================================================
-# Phase 2.2: Classification Head Training Configuration - PRODUCTION
+# Phase 2.2: Classification Head Training Configuration - QUICK TEST
 # ============================================================================
 # Train classification head with frozen encoder on Kaggle dataset
 # This is Stage 2 of 3-stage multi-task training strategy
-# PRODUCTION MODE: Full dataset, 1000 epochs, ~20-30 hours
+# QUICK TEST MODE: Full dataset, 3 epochs, ~5-10 minutes
 # 
 # IMPORTANT: PyTorch 2.6+ requires weights_only=False when loading checkpoints
 # IMPORTANT: Windows requires num_workers=0 for DataLoader
 
 # Experiment metadata
 experiment:
-  name: "multitask_cls_head_production"
-  description: "Phase 2.2 PRODUCTION - Classification head training with frozen encoder"
-  tags: ["multitask", "classification", "cls_head", "kaggle", "production"]
-  notes: "Train classification head on full Kaggle dataset with frozen encoder from Stage 1"
+  name: "multitask_cls_head_quick_test"
+  description: "Phase 2.2 QUICK TEST - Classification head training for fast testing"
+  tags: ["multitask", "classification", "cls_head", "kaggle", "quick_test"]
+  notes: "Quick test with 3 epochs for rapid validation"
 
 # Paths
 paths:
@@ -23,9 +23,9 @@ paths:
   brats_train_dir: "data/processed/brats2d_full/train"
   brats_val_dir: "data/processed/brats2d_full/val"
   brats_test_dir: "data/processed/brats2d_full/test"
-  checkpoint_dir: "checkpoints/multitask_cls_head_production"
-  log_dir: "logs/multitask_cls_head_production"
-  output_dir: "outputs/multitask_cls_head_production"
+  checkpoint_dir: "checkpoints/multitask_cls_head_quick_test"
+  log_dir: "logs/multitask_cls_head_quick_test"
+  output_dir: "outputs/multitask_cls_head_quick_test"
 
 # Model architecture
 model:
@@ -34,14 +34,14 @@ model:
   out_channels: 1         # Binary segmentation
   seg_out_channels: 1     # Binary segmentation
   cls_num_classes: 2      # Tumor / No Tumor
-  base_filters: 64        # Must match Stage 1
+  base_filters: 32        # Must match Stage 1
   depth: 4                # Must match Stage 1
-  cls_hidden_dim: 256     # Classification head hidden dimension
+  cls_hidden_dim: 128     # REDUCED from 256 for faster training
   cls_dropout: 0.5        # Classification head dropout
 
 # Encoder initialization
 encoder_init:
-  path: "checkpoints/multitask_seg_warmup_production/best_model.pth"
+  path: "checkpoints/multitask_seg_warmup_quick_test/best_model.pth"
   freeze_encoder: true    # Freeze encoder during training
   freeze_seg_decoder: true # Freeze segmentation decoder
 
@@ -62,13 +62,13 @@ optimizer:
 # Learning rate scheduler
 scheduler:
   name: "cosine"
-  T_max: 1000
+  T_max: 3                # REDUCED to match epochs
   eta_min: 1.0e-6
 
 # Training hyperparameters
 training:
-  epochs: 1000
-  batch_size: 32
+  epochs: 3               # REDUCED for quick test
+  batch_size: 64          # INCREASED for faster iterations
   num_workers: 0
   pin_memory: true
   
@@ -81,7 +81,7 @@ training:
   # Early stopping
   early_stopping:
     enabled: true
-    patience: 50
+    patience: 10          # REDUCED patience
     min_delta: 0.001
     monitor: "val_acc"
     mode: "max"
@@ -100,24 +100,24 @@ augmentation:
     enabled: true
     random_flip_h: 0.5
     random_flip_v: 0.5
-    random_rotate: 15
-    random_scale: 0.1
-    gaussian_noise: 0.01
-    gaussian_blur: 0.2
-    brightness: 0.15
-    contrast: 0.15
-    gamma: 0.15
+    random_rotate: 10     # REDUCED rotation
+    random_scale: 0.08    # REDUCED scale
+    gaussian_noise: 0.008 # REDUCED noise
+    gaussian_blur: 0.15   # REDUCED blur
+    brightness: 0.1       # REDUCED brightness
+    contrast: 0.1         # REDUCED contrast
+    gamma: 0.1            # REDUCED gamma
   val:
     enabled: false
 
 # Weights & Biases logging
 wandb:
-  enabled: true
-  project: "slicewise-multitask-production"
+  enabled: false          # DISABLED for quick test
+  project: null
   entity: null
-  name: "cls_head_production"
-  tags: ["production", "stage2", "classification", "cls_head"]
-  notes: "Production training of classification head"
+  name: null
+  tags: null
+  notes: null
 
 # Reproducibility
 seed: 42

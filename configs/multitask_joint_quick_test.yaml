@@ -37,6 +37,12 @@ training:
   grad_clip: 1.0
   mixed_precision: true
   use_amp: true           # Alternative name for mixed precision
+  
+  # Early stopping (disabled for quick test)
+  early_stopping:
+    enabled: false        # Disabled for quick test (only 2 epochs)
+    patience: 5
+    min_delta: 0.001
 
 # Loss function configuration
 loss:

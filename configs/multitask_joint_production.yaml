@@ -1,19 +1,19 @@
 # ============================================================================
-# Phase 2.3: Joint Fine-Tuning Configuration - PRODUCTION
+# Phase 2.3: Joint Fine-Tuning Configuration - QUICK TEST
 # ============================================================================
 # Joint fine-tuning of all components with differential learning rates
 # This is Stage 3 of 3-stage multi-task training strategy
-# PRODUCTION MODE: Full dataset, 1000 epochs, ~4-6 hours
+# QUICK TEST MODE: Full dataset, 3 epochs, ~5-10 minutes
 # 
 # IMPORTANT: PyTorch 2.6+ requires weights_only=False when loading checkpoints
 # IMPORTANT: Windows requires num_workers=0 for DataLoader
 
 # Experiment metadata
 experiment:
-  name: "multitask_joint_production"
-  description: "Phase 2.3 PRODUCTION - Joint fine-tuning with differential LR on full dataset"
-  tags: ["multitask", "joint", "fine_tuning", "brats", "kaggle", "production"]
-  notes: "Fine-tune all components jointly with differential learning rates for optimal performance"
+  name: "multitask_joint_quick_test"
+  description: "Phase 2.3 QUICK TEST - Joint fine-tuning for fast testing"
+  tags: ["multitask", "joint", "fine_tuning", "brats", "kaggle", "quick_test"]
+  notes: "Quick test with 3 epochs for rapid validation"
 
 # Data directories (changed from 'paths' to 'data' to match training function)
 data:
@@ -26,9 +26,9 @@ data:
 
 # Checkpoint and output paths
 paths:
-  checkpoint_dir: "checkpoints/multitask_joint_production"
-  log_dir: "logs/multitask_joint_production"
-  output_dir: "outputs/multitask_joint_production"
+  checkpoint_dir: "checkpoints/multitask_joint_quick_test"
+  log_dir: "logs/multitask_joint_quick_test"
+  output_dir: "outputs/multitask_joint_quick_test"
 
 # Model architecture
 model:
@@ -36,14 +36,14 @@ model:
   in_channels: 1
   seg_out_channels: 1
   num_classes: 2              # Changed from cls_num_classes to match training function
-  base_filters: 64
+  base_filters: 32
   depth: 4
-  cls_hidden_dim: 256
+  cls_hidden_dim: 128
   cls_dropout: 0.5
 
 # Model initialization
 init:
-  path: "checkpoints/multitask_cls_head_production/best_model.pth"
+  path: "checkpoints/multitask_cls_head_quick_test/best_model.pth"
   freeze_encoder: false   # Unfreeze all components
   freeze_seg_decoder: false
   freeze_cls_head: false
@@ -79,13 +79,13 @@ optimizer:
 # Learning rate scheduler
 scheduler:
   name: "cosine"
-  T_max: 1000             # Match number of epochs (changed from 50)
+  T_max: 3                # Match number of epochs (changed from 50)
   eta_min: 1.0e-7
 
 # Training hyperparameters
 training:
-  epochs: 1000            # Extended training for production (changed from 50)
-  batch_size: 32          # Increased batch size (changed from 16)
+  epochs: 3               # Extended training for production (changed from 50)
+  batch_size: 64          # Increased batch size (changed from 16)
   num_workers: 0          # Set to 0 for Windows compatibility (use 4+ on Linux/Mac)
   pin_memory: true
   
@@ -104,7 +104,7 @@ training:
   # Early stopping (monitor combined metric)
   early_stopping:
     enabled: true
-    patience: 50          # More patience for longer training (changed from 20)
+    patience: 10          # More patience for longer training (changed from 20)
     min_delta: 0.0005
     monitor: "val_combined" # Combined metric: (dice + acc) / 2
     mode: "max"
@@ -123,16 +123,17 @@ augmentation:
     enabled: true
     random_flip_h: 0.5
     random_flip_v: 0.5
-    random_rotate: 15
-    random_scale: 0.1
-    elastic_deform: true
+    random_rotate: 10
+    random_scale: 0.08
+    elastic_deform: false
     elastic_alpha: 40
     elastic_sigma: 4
-    gaussian_noise: 0.015
-    gaussian_blur: 0.25
-    brightness: 0.15
-    contrast: 0.15
-    gamma: 0.15
+    gaussian_noise: 0.01
+    gaussian_blur: 0.2
+    brightness: 0.1
+    contrast: 0.1
+    gamma: 0.1
+  
   val:
     enabled: false
 
@@ -148,12 +149,12 @@ dataset:
 
 # Weights & Biases logging
 wandb:
-  enabled: true
-  project: "slicewise-multitask-production"
+  enabled: false
+  project: null
   entity: null
-  name: "joint_production"
-  tags: ["production", "stage3", "joint", "fine_tuning"]
-  notes: "Production joint fine-tuning with full dataset"
+  name: null
+  tags: null
+  notes: null
   
   # Log additional metrics
   log_gradients: true     # Log gradient norms

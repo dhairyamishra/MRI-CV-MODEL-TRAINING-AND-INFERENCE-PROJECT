@@ -1,25 +1,25 @@
 {
   "segmentation": {
-    "dice": 0.8372705663953509,
-    "dice_std": 0.07819771642941883,
-    "iou": 0.7275394967624119,
-    "iou_std": 0.11092683444862403,
+    "dice": 0.8991873008864266,
+    "dice_std": 0.06424680467272495,
+    "iou": 0.8226693953786578,
+    "iou_std": 0.1000256099810457,
     "n_samples": 7
   },
   "classification": {
-    "accuracy": 0.9254658385093167,
-    "precision": 0.9324324324324325,
-    "recall": 0.9857142857142858,
-    "f1": 0.9583333333333334,
-    "roc_auc": 0.9581632653061225,
+    "accuracy": 0.8695652173913043,
+    "precision": 0.8695652173913043,
+    "recall": 1.0,
+    "f1": 0.9302325581395349,
+    "roc_auc": 0.9523809523809523,
     "confusion_matrix": [
       [
-        11,
-        10
+        0,
+        21
       ],
       [
-        2,
-        138
+        0,
+        140
       ]
     ],
     "n_samples": 161
@@ -30,11 +30,11 @@
     "test_kaggle": "data/processed/kaggle/test",
     "device": "cuda",
     "model_params": {
-      "encoder": 18846016,
-      "seg_decoder": 12537665,
-      "cls_head": 262914,
-      "total": 31646595
+      "encoder": 4713632,
+      "seg_decoder": 3135393,
+      "cls_head": 131842,
+      "total": 7980867
     },
-    "combined_metric": 0.8813682024523338
+    "combined_metric": 0.8843762591388655
   }
 }
