@@ -180,21 +180,39 @@ def render_sidebar():
         if health and health['status'] in ['healthy', 'no_models_loaded']:
             st.success("✓ API Connected")
             
-            # Show model status
-            col1, col2 = st.columns(2)
+            # Show model status in 3 columns (Multi-Task, Classifier, Segmentation)
+            col1, col2, col3 = st.columns(3)
+            
             with col1:
-                if health['classifier_loaded']:
-                    st.metric("Classifier", "✓", delta="Ready")
+                st.markdown("**Multi-Task**")
+                if health.get('multitask_loaded', False):
+                    st.markdown("✓")
+                    st.markdown('<span style="color: #28a745; font-size: 0.8rem;">Loaded</span>', unsafe_allow_html=True)
                 else:
-                    st.metric("Classifier", "✗", delta="Not loaded")
+                    st.markdown("✗")
+                    st.markdown('<span style="color: #dc3545; font-size: 0.8rem;">Not loaded</span>', unsafe_allow_html=True)
+            
             with col2:
-                if health['segmentation_loaded']:
-                    st.metric("Segmentation", "✓", delta="Ready")
+                st.markdown("**Classifier**")
+                if health['classifier_loaded']:
+                    st.markdown("✓")
+                    st.markdown('<span style="color: #28a745; font-size: 0.8rem;">Loaded</span>', unsafe_allow_html=True)
                 else:
-                    st.metric("Segmentation", "✗", delta="Not loaded")
+                    st.markdown("✗")
+                    st.markdown('<span style="color: #dc3545; font-size: 0.8rem;">Not loaded</span>', unsafe_allow_html=True)
+            
+            with col3:
+                st.markdown("**Segmentation**")
+                if health['segmentation_loaded']:
+                    st.markdown("✓")
+                    st.markdown('<span style="color: #28a745; font-size: 0.8rem;">Loaded</span>', unsafe_allow_html=True)
+                else:
+                    st.markdown("✗")
+                    st.markdown('<span style="color: #dc3545; font-size: 0.8rem;">Not loaded</span>', unsafe_allow_html=True)
             
             # Additional features
-            if health['calibration_loaded']:
+            st.markdown("")  # Spacing
+            if health.get('calibration_loaded', False):
                 st.info("🎯 Calibration: Enabled")
             
             st.caption(f"Device: {health['device']}")
@@ -207,10 +225,28 @@ def render_sidebar():
         st.divider()
         
         # Model information
-        if health and (health['classifier_loaded'] or health['segmentation_loaded']):
+        if health and (health.get('multitask_loaded') or health['classifier_loaded'] or health['segmentation_loaded']):
             st.subheader("📊 Model Info")
             model_info = get_model_info()
             if model_info:
+                # Multi-Task Model Details
+                if model_info.get('multitask'):
+                    with st.expander("Multi-Task Model Details", expanded=False):
+                        mt_info = model_info['multitask']
+                        st.write(f"**Architecture:** {mt_info.get('architecture', 'N/A')}")
+                        st.write(f"**Parameters:** {mt_info.get('parameters', 'N/A')}")
+                        st.write(f"**Tasks:** {', '.join(mt_info.get('tasks', []))}")
+                        st.write(f"**Classification Threshold:** {mt_info.get('classification_threshold', 'N/A')}")
+                        st.write(f"**Segmentation Threshold:** {mt_info.get('segmentation_threshold', 'N/A')}")
+                        
+                        # Performance metrics
+                        if mt_info.get('performance'):
+                            st.write("**Performance:**")
+                            perf = mt_info['performance']
+                            st.write(f"- Accuracy: {perf.get('classification_accuracy', 0)*100:.1f}%")
+                            st.write(f"- Sensitivity: {perf.get('classification_sensitivity', 0)*100:.1f}%")
+                            st.write(f"- Dice Score: {perf.get('segmentation_dice', 0)*100:.1f}%")
+                
                 if model_info.get('classifier'):
                     with st.expander("Classifier Details"):
                         cls_info = model_info['classifier']
