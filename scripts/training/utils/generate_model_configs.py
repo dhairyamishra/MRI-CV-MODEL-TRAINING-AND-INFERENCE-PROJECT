@@ -86,7 +86,7 @@ def generate_configs():
         config.save(config_path)
         generated_count += 1
         
-        print(f"\n✓ Generated config for: {checkpoint_name}")
+        print(f"\n[OK] Generated config for: {checkpoint_name}")
         print(f"  Location: {config_path}")
         print(f"  Architecture: base_filters={config.base_filters}, depth={config.depth}")
     

@@ -105,7 +105,7 @@ def test_brain_crop_on_sample():
     output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / "brain_crop_comparison.png"
     plt.savefig(output_path, dpi=150, bbox_inches='tight')
-    print(f"\n✓ Visualization saved to: {output_path}")
+    print(f"\n[OK] Visualization saved to: {output_path}")
     
     plt.show()
     
@@ -120,23 +120,23 @@ def test_transforms_pipeline():
     
     # Test train transforms
     train_transform = get_train_transforms()
-    print("\n✓ Train transforms:")
+    print("\n[OK] Train transforms:")
     print(f"  Number of transforms: {len(train_transform.transforms)}")
     print(f"  First transform: {train_transform.transforms[0].__class__.__name__}")
     
     if train_transform.transforms[0].__class__.__name__ == 'BrainRegionCrop':
-        print("  ✓ BrainRegionCrop is FIRST (correct!)")
+        print("  [OK] BrainRegionCrop is FIRST (correct!)")
     else:
         print("  ✗ BrainRegionCrop is NOT first (error!)")
     
     # Test val transforms
     val_transform = get_val_transforms()
-    print("\n✓ Validation transforms:")
+    print("\n[OK] Validation transforms:")
     print(f"  Number of transforms: {len(val_transform.transforms)}")
     print(f"  First transform: {val_transform.transforms[0].__class__.__name__}")
     
     if val_transform.transforms[0].__class__.__name__ == 'BrainRegionCrop':
-        print("  ✓ BrainRegionCrop is present (correct!)")
+        print("  [OK] BrainRegionCrop is present (correct!)")
     else:
         print("  ✗ BrainRegionCrop is NOT present (error!)")
     
@@ -157,7 +157,7 @@ def test_transforms_pipeline():
     print(f"After train transform: {transformed.shape}")
     print(f"Size reduction: {100*(1 - transformed.size/dummy_img.size):.1f}%")
     
-    print("\n✓ All transform tests passed!")
+    print("\n[OK] All transform tests passed!")
     return True
 
 
@@ -176,7 +176,7 @@ if __name__ == "__main__":
         test_transforms_pipeline()
         
         print("\n" + "=" * 60)
-        print("✓ ALL TESTS PASSED!")
+        print("[OK] ALL TESTS PASSED!")
         print("=" * 60)
         print("\nNext steps:")
         print("1. Check the visualization in visualizations/brain_crop_test/")

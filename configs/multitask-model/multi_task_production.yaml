@@ -1,0 +1,291 @@
+# ============================================================================
+# Multi-Task Model Production Configuration
+# ============================================================================
+# Configuration for deploying the unified multi-task model in production.
+# This model performs both tumor classification and segmentation in a single
+# forward pass, achieving ~40% faster inference than separate models.
+#
+# IMPORTANT: PyTorch 2.6+ requires weights_only=False when loading checkpoints
+# IMPORTANT: Segmentation requires z-score normalization (mean=0, std=1)
+# IMPORTANT: Visualization requires [0,1] normalized images for overlays
+#
+# Model Performance (Test Set - 161 samples):
+#   - Classification Accuracy: 91.30%
+#   - Classification Sensitivity: 97.14% (only 4 missed tumors!)
+#   - Classification ROC-AUC: 0.9184
+#   - Segmentation Dice: 0.7650 ± 0.1397
+#   - Segmentation IoU: 0.6401 ± 0.1837
+#   - Combined Metric: 0.8390 (83.90%)
+# ============================================================================
+
+# Model Architecture
+# ----------------------------------------------------------------------------
+model:
+  name: "multi_task_unet"
+  in_channels: 1                    # Single channel (FLAIR modality)
+  seg_out_channels: 1               # Binary segmentation mask
+  cls_num_classes: 2                # Tumor / No Tumor
+  base_filters: 32                  # Base number of filters (matches trained model)
+  depth: 3                          # Encoder/decoder depth (matches trained model)
+  bilinear: true                    # Use bilinear upsampling
+  dropout: 0.0                      # Encoder/decoder dropout
+  cls_hidden_dim: 256               # Classification head hidden dimension
+  cls_dropout: 0.5                  # Classification head dropout
+
+# Checkpoint
+# ----------------------------------------------------------------------------
+checkpoint:
+  path: "checkpoints/multitask_joint/best_model.pth"
+  
+  # Model statistics (for reference)
+  parameters:
+    encoder: 1172640                # 1.17M params (58.2%)
+    seg_decoder: 775073             # 775K params (38.5%)
+    cls_head: 66306                 # 66K params (3.3%)
+    total: 2014019                  # 2.0M params total
+  
+  # Training metadata
+  training:
+    epochs: 10
+    best_val_dice: 0.7448
+    best_val_acc: 0.8750
+    combined_metric: 0.8273
+
+# Inference Settings
+# ----------------------------------------------------------------------------
+inference:
+  device: "cuda"                    # 'cuda', 'cpu', or 'auto' for auto-detection
+  
+  # Input preprocessing
+  input_size: [256, 256]            # Input image size (H, W)
+  normalization: "z_score"          # 'z_score' or 'min_max'
+  
+  # Thresholds
+  classification_threshold: 0.3     # Show segmentation if tumor_prob >= 0.3
+  segmentation_threshold: 0.5       # Binary mask threshold
+  
+  # Batch processing
+  max_batch_size: 32                # Maximum batch size for inference
+  
+  # Conditional inference
+  conditional_segmentation: true    # Only compute segmentation if tumor_prob >= threshold
+  
+  # Grad-CAM
+  gradcam_enabled: true             # Enable Grad-CAM visualization
+  gradcam_target_layer: "bottleneck" # Target layer for Grad-CAM
+
+# Preprocessing Parameters
+# ----------------------------------------------------------------------------
+preprocessing:
+  # Z-score normalization (REQUIRED for segmentation model)
+  # Model was trained with z-score normalization (mean=0, std=1)
+  # This is critical for correct segmentation predictions
+  z_score:
+    mean: 0.0                       # Target mean after normalization
+    std: 1.0                        # Target std after normalization
+    enabled: true                   # Must be enabled for segmentation
+  
+  # Min-max normalization (for visualization only)
+  # Use [0,1] normalized images for overlay visualization
+  # Do NOT use for model inference
+  min_max:
+    min: 0.0                        # Target minimum
+    max: 1.0                        # Target maximum
+    enabled: false                  # Only for visualization, not inference
+  
+  # Image resizing
+  resize:
+    method: "bilinear"              # 'bilinear', 'nearest', 'bicubic'
+    antialias: true                 # Apply antialiasing
+  
+  # Grayscale conversion
+  grayscale:
+    method: "cv2"                   # 'cv2', 'pil', 'luminosity'
+  
+  # Preprocessing pipeline order
+  # 1. Convert to grayscale (if needed)
+  # 2. Resize to target size
+  # 3. Apply min-max normalization [0,1] for visualization
+  # 4. Apply z-score normalization for model inference
+  # 5. Keep original [0,1] image for overlay visualization
+
+# Post-processing Parameters
+# ----------------------------------------------------------------------------
+postprocessing:
+  # Segmentation mask refinement
+  segmentation:
+    apply_morphology: false         # Apply morphological operations
+    morphology_kernel: 3            # Kernel size for morphology
+    remove_small_objects: false     # Remove small connected components
+    min_object_size: 100            # Minimum object size (pixels)
+    fill_holes: false               # Fill holes in mask
+    fill_holes_size: 50             # Maximum hole size to fill
+  
+  # Classification confidence calibration
+  classification:
+    apply_temperature_scaling: false # Apply temperature scaling (requires calibration)
+    temperature: 1.0                # Temperature parameter (1.0 = no scaling)
+
+# API Settings
+# ----------------------------------------------------------------------------
+api:
+  host: "0.0.0.0"
+  port: 8000
+  
+  # CORS
+  cors:
+    enabled: true
+    allow_origins: ["*"]            # In production, specify allowed origins
+    allow_credentials: true
+    allow_methods: ["*"]
+    allow_headers: ["*"]
+  
+  # Rate limiting
+  rate_limit:
+    enabled: false
+    requests_per_minute: 60
+  
+  # Response format
+  response:
+    include_probabilities: true     # Include class probabilities
+    include_tumor_stats: true       # Include tumor area/percentage
+    include_recommendations: true   # Include clinical recommendations
+    base64_images: true             # Return images as base64
+
+# UI Settings
+# ----------------------------------------------------------------------------
+ui:
+  title: "SliceWise Multi-Task - Brain Tumor Detection"
+  port: 8501
+  
+  # Display settings
+  display:
+    show_confidence: true           # Show confidence scores
+    show_probabilities: true        # Show probability distributions
+    show_tumor_stats: true          # Show tumor statistics
+    show_gradcam: true              # Show Grad-CAM visualizations
+    show_performance_metrics: true  # Show model performance metrics
+  
+  # Conditional display logic
+  conditional:
+    low_prob_threshold: 0.3         # Threshold for "no tumor" display
+    high_prob_threshold: 0.7        # Threshold for "high confidence" display
+  
+  # Visualization
+  visualization:
+    colormap: "jet"                 # Colormap for heatmaps
+    overlay_alpha: 0.4              # Overlay transparency
+    figure_dpi: 100                 # Figure DPI
+
+# Performance Metrics (from Phase 3 Evaluation)
+# ----------------------------------------------------------------------------
+performance:
+  # Test set results (161 samples)
+  test_set:
+    # Classification
+    classification:
+      accuracy: 0.9130              # 91.30%
+      precision: 0.9315             # 93.15%
+      recall: 0.9714                # 97.14% (excellent sensitivity!)
+      f1_score: 0.9510              # 95.10%
+      roc_auc: 0.9184               # 91.84%
+      specificity: 0.5238           # 52.38%
+      
+      # Confusion matrix
+      confusion_matrix:
+        true_positives: 136         # Correctly detected tumors
+        true_negatives: 11          # Correctly identified healthy
+        false_positives: 10         # False alarms
+        false_negatives: 4          # Missed tumors
+    
+    # Segmentation (7 BraTS samples with masks)
+    segmentation:
+      dice: 0.7650                  # 76.50%
+      dice_std: 0.1397              # ±13.97%
+      iou: 0.6401                   # 64.01%
+      iou_std: 0.1837               # ±18.37%
+    
+    # Combined
+    combined_metric: 0.8390         # 83.90%
+  
+  # Comparison with separate models
+  comparison:
+    parameter_reduction: 0.094      # 9.4% fewer parameters
+    inference_speedup: 0.40         # ~40% faster inference
+
+# Clinical Recommendations
+# ----------------------------------------------------------------------------
+clinical:
+  # Interpretation guidelines
+  interpretation:
+    high_confidence: "> 70% tumor probability"
+    moderate_confidence: "30-70% tumor probability"
+    low_confidence: "< 30% tumor probability"
+  
+  # Disclaimers
+  disclaimers:
+    - "This is a research tool and NOT approved for clinical diagnosis"
+    - "All predictions should be verified by qualified medical professionals"
+    - "Model trained on limited dataset (BraTS 2020 + Kaggle)"
+    - "Performance may vary on different MRI scanners and protocols"
+  
+  # Recommendations by confidence level
+  recommendations:
+    high_confidence:
+      - "Strong evidence of tumor presence"
+      - "Recommend immediate radiologist review"
+      - "Consider additional imaging (contrast-enhanced MRI)"
+    
+    moderate_confidence:
+      - "Uncertain tumor presence"
+      - "Recommend radiologist review and follow-up imaging"
+      - "Consider patient history and symptoms"
+    
+    low_confidence:
+      - "Low probability of tumor"
+      - "Routine follow-up recommended"
+      - "Monitor for changes in symptoms"
+
+# Logging
+# ----------------------------------------------------------------------------
+logging:
+  level: "INFO"                     # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  
+  # File logging
+  file:
+    enabled: true
+    path: "logs/multitask_inference.log"
+    max_bytes: 10485760             # 10 MB
+    backup_count: 5
+  
+  # Console logging
+  console:
+    enabled: true
+    colorize: true
+
+# Monitoring
+# ----------------------------------------------------------------------------
+monitoring:
+  # Inference metrics
+  track_latency: true               # Track inference latency
+  track_throughput: true            # Track throughput (images/sec)
+  track_memory: true                # Track GPU memory usage
+  
+  # Model metrics
+  track_predictions: true           # Log prediction distributions
+  track_confidence: true            # Log confidence scores
+  
+  # Alerts
+  alerts:
+    enabled: false
+    low_confidence_threshold: 0.5   # Alert if confidence < threshold
+    high_latency_threshold: 1000    # Alert if latency > threshold (ms)
+
+# Version
+# ----------------------------------------------------------------------------
+version:
+  config: "1.0.0"
+  model: "multi_task_v1"
+  date: "2025-12-06"
+  description: "Production configuration for unified multi-task model"

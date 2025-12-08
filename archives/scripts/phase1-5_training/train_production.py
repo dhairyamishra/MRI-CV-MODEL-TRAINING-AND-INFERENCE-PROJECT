@@ -76,7 +76,7 @@ class ProductionTrainer:
                 capture_output=False,
                 text=True
             )
-            self.log(f"✓ Completed: {description}")
+            self.log(f"[OK] Completed: {description}")
             self.results["steps_completed"].append(description)
             return True
         except subprocess.CalledProcessError as e:
@@ -371,7 +371,7 @@ class ProductionTrainer:
             for error in self.results['errors']:
                 print(f"  - {error}")
         else:
-            print("\n✓ All steps completed successfully!")
+            print("\n[OK] All steps completed successfully!")
         
         print("\nNext steps:")
         print("  1. Check W&B dashboard for training curves")

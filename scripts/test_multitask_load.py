@@ -33,7 +33,7 @@ print(f"   Exists: {config_path.exists()}")
 print(f"\n3. Importing MultiTaskPredictor...")
 try:
     from src.inference.multi_task_predictor import MultiTaskPredictor
-    print(f"   ✓ Import successful")
+    print(f"   [OK] Import successful")
 except Exception as e:
     print(f"   ❌ Import failed: {e}")
     import traceback
@@ -48,7 +48,7 @@ try:
         classification_threshold=0.3,
         segmentation_threshold=0.5
     )
-    print(f"   ✓ Model loaded successfully!")
+    print(f"   [OK] Model loaded successfully!")
     print(f"   Device: {predictor.device}")
     print(f"   Parameters: {predictor.model.get_num_params()}")
 except Exception as e:
@@ -67,7 +67,7 @@ try:
     dummy_image = np.random.rand(256, 256).astype(np.float32)
     
     result = predictor.predict_single(dummy_image)
-    print(f"   ✓ Prediction successful!")
+    print(f"   [OK] Prediction successful!")
     print(f"   Classification: {result['classification']['predicted_label']}")
     print(f"   Confidence: {result['classification']['confidence']:.4f}")
     print(f"   Tumor probability: {result['classification']['tumor_probability']:.4f}")
@@ -79,5 +79,5 @@ except Exception as e:
     sys.exit(1)
 
 print("\n" + "=" * 80)
-print("✓ ALL TESTS PASSED - Model is ready for backend!")
+print("[OK] ALL TESTS PASSED - Model is ready for backend!")
 print("=" * 80)

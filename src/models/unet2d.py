@@ -346,9 +346,9 @@ if __name__ == "__main__":
     loss = output.sum()
     loss.backward()
     
-    print(f"   Input gradient:  {'✓' if x.grad is not None else '✗'}")
-    print(f"   Output gradient: {'✓' if output.requires_grad else '✗'}")
+    print(f"   Input gradient:  {'[OK]' if x.grad is not None else '✗'}")
+    print(f"   Output gradient: {'[OK]' if output.requires_grad else '✗'}")
     
     print("\n" + "=" * 60)
-    print("✓ All tests passed!")
+    print("[OK] All tests passed!")
     print("=" * 60)

@@ -357,7 +357,7 @@ def main():
     print(f"\n=== Loading Phase 2.2 Checkpoint: {args.init_from} ===")
     checkpoint = torch.load(args.init_from, map_location=device)
     model.load_state_dict(checkpoint['model_state_dict'])
-    print("✓ Loaded Phase 2.2 checkpoint\n")
+    print("[OK] Loaded Phase 2.2 checkpoint\n")
     
     # Unfreeze all parameters
     print("=== Unfreezing All Parameters ===")
@@ -483,7 +483,7 @@ def main():
             best_val_metric = val_metric
             patience_counter = 0
             torch.save(checkpoint, os.path.join(args.checkpoint_dir, 'best_model.pth'))
-            print(f"✓ Saved best model (metric: {best_val_metric:.4f})")
+            print(f"[OK] Saved best model (metric: {best_val_metric:.4f})")
         else:
             patience_counter += 1
             print(f"  No improvement (patience: {patience_counter}/{patience})")

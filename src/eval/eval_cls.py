@@ -200,7 +200,7 @@ class ClassifierEvaluator:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        print(f"✓ Saved confusion matrix to {save_path}")
+        print(f"[OK] Saved confusion matrix to {save_path}")
     
     def plot_roc_curve(
         self,
@@ -224,7 +224,7 @@ class ClassifierEvaluator:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        print(f"✓ Saved ROC curve to {save_path}")
+        print(f"[OK] Saved ROC curve to {save_path}")
     
     def plot_pr_curve(
         self,
@@ -247,7 +247,7 @@ class ClassifierEvaluator:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        print(f"✓ Saved PR curve to {save_path}")
+        print(f"[OK] Saved PR curve to {save_path}")
     
     def save_predictions(
         self,
@@ -269,14 +269,14 @@ class ClassifierEvaluator:
         })
         
         df.to_csv(save_path, index=False)
-        print(f"✓ Saved predictions to {save_path}")
+        print(f"[OK] Saved predictions to {save_path}")
     
     def save_metrics(self, metrics: Dict[str, float], save_path: Path):
         """Save metrics to JSON."""
         with open(save_path, 'w') as f:
             json.dump(metrics, f, indent=4)
         
-        print(f"✓ Saved metrics to {save_path}")
+        print(f"[OK] Saved metrics to {save_path}")
     
     def print_metrics(self, metrics: Dict[str, float]):
         """Print metrics in a formatted way."""
@@ -343,7 +343,7 @@ class ClassifierEvaluator:
                 self.results_dir / 'pr_curve.png'
             )
         
-        print("\n✓ Evaluation complete!")
+        print("\n[OK] Evaluation complete!")
         print(f"Results saved to: {self.results_dir}")
         
         return metrics

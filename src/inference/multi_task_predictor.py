@@ -74,7 +74,7 @@ class MultiTaskPredictor:
         # Grad-CAM (initialized lazily)
         self._gradcam = None
         
-        print(f"✓ Multi-task model loaded from {checkpoint_path}")
+        print(f"[OK] Multi-task model loaded from {checkpoint_path}")
         print(f"  Device: {self.device}")
         print(f"  Classification threshold: {self.classification_threshold}")
         print(f"  Segmentation threshold: {self.segmentation_threshold}")
@@ -92,7 +92,7 @@ class MultiTaskPredictor:
         # Try to load config from checkpoint directory
         try:
             config = ModelConfig.from_checkpoint_dir(checkpoint_path.parent)
-            print(f"✓ Loaded model config from: {checkpoint_path.parent / 'model_config.json'}")
+            print(f"[OK] Loaded model config from: {checkpoint_path.parent / 'model_config.json'}")
             
             # Use config values if not overridden
             if base_filters is None:

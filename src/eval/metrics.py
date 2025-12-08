@@ -400,4 +400,4 @@ if __name__ == "__main__":
     print(f"  Optimal threshold (Youden): {thresh:.4f} (J={score:.4f})")
     
     print("\n" + "=" * 60)
-    print("✓ All tests passed!")
+    print("[OK] All tests passed!")

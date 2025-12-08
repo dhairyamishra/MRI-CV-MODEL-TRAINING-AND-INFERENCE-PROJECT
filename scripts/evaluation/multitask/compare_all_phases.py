@@ -368,7 +368,7 @@ def main():
     with open(output_path, 'w') as f:
         json.dump(results, f, indent=2)
     
-    print(f"\n✓ Results saved to: {output_path}\n")
+    print(f"\n[OK] Results saved to: {output_path}\n")
 
 
 if __name__ == "__main__":

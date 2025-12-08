@@ -129,7 +129,7 @@ def main():
         sys.argv = original_argv
     
     print("\n" + "=" * 80)
-    print("✓ Phase 2.2 Complete!")
+    print("[OK] Phase 2.2 Complete!")
     print("=" * 80)
     print(f"\nCheckpoints saved to: {args.checkpoint_dir}")
     print(f"Best model: {args.checkpoint_dir}/best_model.pth")

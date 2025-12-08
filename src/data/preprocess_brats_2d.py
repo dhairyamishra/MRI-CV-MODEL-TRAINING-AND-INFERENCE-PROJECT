@@ -326,7 +326,7 @@ def preprocess_brats_dataset(
     
     # Summary
     print("\n" + "=" * 70)
-    print("✓ Preprocessing Complete!")
+    print("[OK] Preprocessing Complete!")
     print("=" * 70)
     print(f"\nResults:")
     print(f"  Patients processed: {successful_patients}/{len(patient_dirs)}")

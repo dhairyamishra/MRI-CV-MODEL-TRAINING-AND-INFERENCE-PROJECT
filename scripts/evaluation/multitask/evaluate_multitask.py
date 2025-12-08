@@ -217,7 +217,7 @@ def main():
     
     # Load weights
     model.load_state_dict(checkpoint['model_state_dict'])
-    print("✓ Model loaded successfully")
+    print("[OK] Model loaded successfully")
     
     # Print model info
     params = model.get_num_params()
@@ -301,7 +301,7 @@ def main():
     with open(output_path, 'w') as f:
         json.dump(results, f, indent=2)
     
-    print(f"\n✓ Results saved to: {output_path}")
+    print(f"\n[OK] Results saved to: {output_path}")
     print("\n" + "=" * 80)
 
 

@@ -493,7 +493,7 @@ class ClassificationTrainer:
         if is_best:
             best_path = checkpoint_dir / "best_model.pth"
             torch.save(checkpoint, best_path)
-            print(f"✓ Saved best model (metric: {self.best_metric:.4f})")
+            print(f"[OK] Saved best model (metric: {self.best_metric:.4f})")
         
         # Keep only last N checkpoints
         self._cleanup_checkpoints()

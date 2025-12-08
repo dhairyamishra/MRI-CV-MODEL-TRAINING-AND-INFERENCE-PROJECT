@@ -102,7 +102,7 @@ class PipelineController:
     
     def _print_success(self, message: str):
         """Print a success message."""
-        print(f"{Colors.OKGREEN}✓ {message}{Colors.ENDC}")
+        print(f"{Colors.OKGREEN}[OK] {message}{Colors.ENDC}")
     
     def _print_warning(self, message: str):
         """Print a warning message."""
@@ -433,27 +433,48 @@ class PipelineController:
             self._print_error("Cannot launch demo without trained model!")
             return False
         
-        self._print_info("Launching multi-task demo application...")
+        self._print_info("Launching multi-task demo application using PM2...")
         self._print_info("")
-        self._print_info("The demo will start in two separate terminal windows:")
-        self._print_info("  1. Backend API (FastAPI) - http://localhost:8000")
-        self._print_info("  2. Frontend UI (Streamlit) - http://localhost:8501")
+        self._print_info("PM2 provides robust process management with:")
+        self._print_info("  Automatic restart on failure")
+        self._print_info("  Centralized logging")
+        self._print_info("  Easy monitoring and control")
         self._print_info("")
-        self._print_info("Please run these commands in separate terminals:")
+        
+        # Launch using PM2 script
+        if not self._run_command(
+            ["python", "scripts/demo/run_demo_pm2.py"],
+            "launch_demo_pm2",
+            timeout=120  # 2 minutes for startup
+        ):
+            self._print_warning("PM2 launcher failed or PM2 is not installed.")
+            self._print_info("")
+            self._print_info("Alternative: Run the demo manually in separate terminals:")
+            self._print_info("")
+            self._print_info("  Terminal 1 (Backend):")
+            self._print_info("    python app/backend/main_v2.py")
+            self._print_info("")
+            self._print_info("  Terminal 2 (Frontend - New Modular Version):")
+            self._print_info("    streamlit run app/frontend/app.py --server.port 8501")
+            self._print_info("")
+            self._print_info("  Terminal 2 (Frontend - Legacy Version):")
+            self._print_info("    streamlit run app/frontend/app_v2.py --server.port 8501")
+            self._print_info("")
+            self._print_info("Or install PM2 and try again:")
+            self._print_info("    npm install -g pm2")
+            self._print_info("    python scripts/demo/run_demo_pm2.py")
+            self._print_info("")
+            return False
+        
+        self._print_success("Demo launched successfully with PM2!")
         self._print_info("")
-        self._print_info("  Terminal 1 (Backend):")
-        self._print_info("    python app/backend/main_v2.py")
+        self._print_info("To manage the demo:")
+        self._print_info("  pm2 status              - View process status")
+        self._print_info("  pm2 logs                - View all logs")
+        self._print_info("  pm2 monit               - Monitor processes")
+        self._print_info("  pm2 stop all            - Stop the demo")
+        self._print_info("  pm2 delete all          - Stop and remove processes")
         self._print_info("")
-        self._print_info("  Terminal 2 (Frontend - New Modular Version):")
-        self._print_info("    streamlit run app/frontend/app.py --server.port 8501")
-        self._print_info("")
-        self._print_info("  Terminal 2 (Frontend - Legacy Version):")
-        self._print_info("    streamlit run app/frontend/app_v2.py --server.port 8501")
-        self._print_info("")
-        self._print_info("Or use the demo launcher:")
-        self._print_info("    python scripts/demo/run_multitask_demo.py")
-        self._print_info("")
-        self._print_warning("Pipeline complete! Demo instructions printed above.")
         
         return True
     
@@ -544,7 +565,7 @@ class PipelineController:
         if success:
             print(f"\n{Colors.BOLD}Next Steps:{Colors.ENDC}")
             if self.args.mode == "full":
-                self._print_info("✓ Pipeline complete! Demo application is running.")
+                self._print_info("Pipeline complete! Demo application is running.")
             elif self.args.mode == "data-only":
                 self._print_info("Run training: python scripts/run_full_pipeline.py --mode train-eval")
             elif self.args.mode == "train-eval":

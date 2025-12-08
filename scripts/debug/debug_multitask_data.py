@@ -139,10 +139,10 @@ def main():
         print(f"\n⚠️  WARNING: Found {len(invalid_labels)} invalid labels!")
         print(f"  Invalid labels: {set(invalid_labels)}")
     else:
-        print(f"\n✓ All labels are valid (0 or 1)")
+        print(f"\n[OK] All labels are valid (0 or 1)")
     
     print(f"\n{'='*80}")
-    print("✓ Debug complete!")
+    print("[OK] Debug complete!")
     print(f"{'='*80}")
 
 

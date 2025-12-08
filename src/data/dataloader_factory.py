@@ -368,7 +368,7 @@ if __name__ == "__main__":
         print(f"  Has masks: {batch['has_masks']}")
         print(f"  Sources: {batch['sources']}")
         
-        print("\n✓ Mixed mode test passed!")
+        print("\n[OK] Mixed mode test passed!")
         
     except Exception as e:
         print(f"\n✗ Error: {e}")
@@ -402,7 +402,7 @@ if __name__ == "__main__":
         print(f"  Masks: {kaggle_batch['masks']}")
         print(f"  None have masks: {(~kaggle_batch['has_masks']).all()}")
         
-        print("\n✓ Alternating mode test passed!")
+        print("\n[OK] Alternating mode test passed!")
         
     except Exception as e:
         print(f"\n✗ Error: {e}")
@@ -423,7 +423,7 @@ if __name__ == "__main__":
         print(f"  Masks shape: {batch['masks'].shape}")
         print(f"  Cls labels shape: {batch['cls_labels'].shape}")
         
-        print("\n✓ BraTS-only mode test passed!")
+        print("\n[OK] BraTS-only mode test passed!")
         
     except Exception as e:
         print(f"\n✗ Error: {e}")

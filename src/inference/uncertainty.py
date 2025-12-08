@@ -368,4 +368,4 @@ if __name__ == "__main__":
     print(f"   Aleatoric: {ensemble_result['aleatoric'].mean():.4f}")
     
     print("\n" + "=" * 60)
-    print("✓ All tests passed!")
+    print("[OK] All tests passed!")

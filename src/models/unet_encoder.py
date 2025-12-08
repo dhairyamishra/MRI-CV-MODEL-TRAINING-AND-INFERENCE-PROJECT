@@ -260,8 +260,8 @@ if __name__ == "__main__":
     loss = features[-1].sum()
     loss.backward()
     
-    print(f"   Input gradient: {'✓' if x.grad is not None else '✗'}")
-    print(f"   Bottleneck gradient: {'✓' if features[-1].requires_grad else '✗'}")
+    print(f"   Input gradient: {'[OK]' if x.grad is not None else '✗'}")
+    print(f"   Bottleneck gradient: {'[OK]' if features[-1].requires_grad else '✗'}")
     
     # Test 6: Compatibility with different input sizes
     print("\n6. Testing Different Input Sizes")
@@ -275,5 +275,5 @@ if __name__ == "__main__":
         print(f"   Input: ({h}, {w}) -> Bottleneck: {bottleneck_shape}")
     
     print("\n" + "=" * 70)
-    print("✓ All encoder tests passed!")
+    print("[OK] All encoder tests passed!")
     print("=" * 70)

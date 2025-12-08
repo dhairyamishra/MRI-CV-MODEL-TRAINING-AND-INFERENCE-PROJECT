@@ -90,8 +90,8 @@ async def startup_event():
                 model_name="efficientnet"
             )
             MODEL_LOADED = True
-            print(f"✓ Model loaded successfully from {checkpoint_path}")
-            print(f"✓ Using device: {predictor.device}")
+            print(f"[OK] Model loaded successfully from {checkpoint_path}")
+            print(f"[OK] Using device: {predictor.device}")
         else:
             print(f"⚠ Model checkpoint not found at {checkpoint_path}")
             print("⚠ API will run but predictions will fail")

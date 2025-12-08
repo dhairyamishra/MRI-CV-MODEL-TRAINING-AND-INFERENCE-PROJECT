@@ -14,7 +14,7 @@ print("=" * 80)
 try:
     print("\n1. Testing MultiTaskPredictor import...")
     from src.inference.multi_task_predictor import MultiTaskPredictor
-    print("   ✓ Import successful")
+    print("   [OK] Import successful")
     
     print("\n2. Testing MultiTaskPredictor creation...")
     checkpoint_path = project_root / "checkpoints" / "multitask_joint" / "best_model.pth"
@@ -28,11 +28,11 @@ try:
         classification_threshold=0.3,
         segmentation_threshold=0.5
     )
-    print("   ✓ Predictor created successfully")
+    print("   [OK] Predictor created successfully")
     
     print("\n3. Testing backend imports...")
     from app.backend.main_v2 import app
-    print("   ✓ Backend imports successful")
+    print("   [OK] Backend imports successful")
     
     print("\n" + "=" * 80)
     print("✅ All tests passed! Backend should start successfully.")

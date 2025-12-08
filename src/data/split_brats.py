@@ -137,7 +137,7 @@ def split_brats_dataset(
     
     # Summary
     print("\n" + "=" * 70)
-    print("✓ Splitting Complete!")
+    print("[OK] Splitting Complete!")
     print("=" * 70)
     
     print(f"\nOutput directories:")

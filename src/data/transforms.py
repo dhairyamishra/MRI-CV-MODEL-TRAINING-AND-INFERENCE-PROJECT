@@ -478,4 +478,4 @@ if __name__ == "__main__":
         aug = train_transform(img_np)
         print(f"  Aug {i+1}: range=[{aug.min():.3f}, {aug.max():.3f}], mean={aug.mean():.3f}")
     
-    print("\n✓ All tests passed!")
+    print("\n[OK] All tests passed!")

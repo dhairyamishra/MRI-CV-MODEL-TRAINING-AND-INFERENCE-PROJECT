@@ -195,7 +195,7 @@ def main():
     print(f"  Saved: {output_path / 'reliability_after.png'}")
     
     print("\n" + "=" * 70)
-    print("✓ Calibration Complete!")
+    print("[OK] Calibration Complete!")
     print("=" * 70)
     print(f"\nOutput directory: {output_path}")
     print("\nNext steps:")

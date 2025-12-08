@@ -95,15 +95,15 @@ This PR implements a complete multi-task learning pipeline for brain tumor detec
 ### **E2E Tests: 9/9 Passing (100%)**
 
 ```
-✓ Checkpoint validation
-✓ Predictor creation (with auto-config!)
-✓ Single inference (203.57ms)
-✓ Conditional segmentation logic
-✓ Batch inference (12.94ms/image)
-✓ Grad-CAM generation (83.30ms)
-✓ Performance benchmark (10.94ms avg)
-✓ API health check
-✓ API prediction endpoint
+[OK] Checkpoint validation
+[OK] Predictor creation (with auto-config!)
+[OK] Single inference (203.57ms)
+[OK] Conditional segmentation logic
+[OK] Batch inference (12.94ms/image)
+[OK] Grad-CAM generation (83.30ms)
+[OK] Performance benchmark (10.94ms avg)
+[OK] API health check
+[OK] API prediction endpoint
 ```
 
 **Success Rate**: 100% (9/9 tests passing)
@@ -133,7 +133,7 @@ predictor = MultiTaskPredictor(
 **After** (automatic):
 ```python
 predictor = MultiTaskPredictor(checkpoint_path="...")
-# ✓ Loaded model config from: model_config.json
+# [OK] Loaded model config from: model_config.json
 # Using architecture: base_filters=64, depth=4
 ```
 

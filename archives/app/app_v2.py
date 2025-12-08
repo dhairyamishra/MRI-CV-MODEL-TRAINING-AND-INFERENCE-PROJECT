@@ -178,7 +178,7 @@ def render_sidebar():
         health = check_api_health()
         
         if health and health['status'] in ['healthy', 'no_models_loaded']:
-            st.success("✓ API Connected")
+            st.success("[OK] API Connected")
             
             # Show model status in 3 columns (Multi-Task, Classifier, Segmentation)
             col1, col2, col3 = st.columns(3)
@@ -186,7 +186,7 @@ def render_sidebar():
             with col1:
                 st.markdown("**Multi-Task**")
                 if health.get('multitask_loaded', False):
-                    st.markdown("✓")
+                    st.markdown("[OK]")
                     st.markdown('<span style="color: #28a745; font-size: 0.8rem;">Loaded</span>', unsafe_allow_html=True)
                 else:
                     st.markdown("✗")
@@ -195,7 +195,7 @@ def render_sidebar():
             with col2:
                 st.markdown("**Classifier**")
                 if health['classifier_loaded']:
-                    st.markdown("✓")
+                    st.markdown("[OK]")
                     st.markdown('<span style="color: #28a745; font-size: 0.8rem;">Loaded</span>', unsafe_allow_html=True)
                 else:
                     st.markdown("✗")
@@ -204,7 +204,7 @@ def render_sidebar():
             with col3:
                 st.markdown("**Segmentation**")
                 if health['segmentation_loaded']:
-                    st.markdown("✓")
+                    st.markdown("[OK]")
                     st.markdown('<span style="color: #28a745; font-size: 0.8rem;">Loaded</span>', unsafe_allow_html=True)
                 else:
                     st.markdown("✗")

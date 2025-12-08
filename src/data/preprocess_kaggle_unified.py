@@ -215,7 +215,7 @@ def process_kaggle_dataset(
     
     # Summary
     print("\n" + "=" * 70)
-    print("✓ Preprocessing Complete!")
+    print("[OK] Preprocessing Complete!")
     print("=" * 70)
     
     # Calculate class distribution for each split

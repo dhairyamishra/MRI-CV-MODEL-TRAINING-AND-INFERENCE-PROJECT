@@ -51,7 +51,7 @@ def print_section(text):
 
 
 def print_success(text):
-    print(f"{Colors.OKGREEN}✓ {text}{Colors.ENDC}")
+    print(f"{Colors.OKGREEN}[OK] {text}{Colors.ENDC}")
 
 
 def print_warning(text):
@@ -211,7 +211,7 @@ Pipeline Steps:
     
     print_section("Completed Steps")
     for step_name, step_data in results['steps'].items():
-        status = "✓" if step_data['success'] else "✗"
+        status = "[OK]" if step_data['success'] else "✗"
         color = Colors.OKGREEN if step_data['success'] else Colors.FAIL
         print(f"{color}{status} {step_name}: {step_data['time']/60:.1f} minutes{Colors.ENDC}")
     

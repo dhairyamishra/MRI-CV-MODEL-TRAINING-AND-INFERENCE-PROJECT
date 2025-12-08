@@ -38,7 +38,7 @@ def setup_models():
     if seg_production.exists():
         seg_demo.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(seg_production, seg_demo)
-        print(f"✓ Copied segmentation model: {seg_production.name}")
+        print(f"[OK] Copied segmentation model: {seg_production.name}")
         print(f"  → {seg_demo}")
     else:
         print(f"⚠️  Segmentation model not found: {seg_production}")
@@ -50,7 +50,7 @@ def setup_models():
     if cls_production.exists():
         cls_demo.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(cls_production, cls_demo)
-        print(f"✓ Copied classification model: {cls_production.name}")
+        print(f"[OK] Copied classification model: {cls_production.name}")
         print(f"  → {cls_demo}")
     else:
         print(f"ℹ️  Classification model not found (optional): {cls_production}")

@@ -155,7 +155,7 @@ def visualize_sample(image, heatmap, pred_class, true_class, pred_prob, save_pat
     class_names = ['No Tumor', 'Tumor']
     pred_name = class_names[pred_class]
     true_name = class_names[true_class]
-    correct = '✓' if pred_class == true_class else '✗'
+    correct = '[OK]' if pred_class == true_class else '✗'
     
     fig.suptitle(
         f'{correct} Predicted: {pred_name} ({pred_prob:.2%}) | True: {true_name}',
@@ -205,14 +205,14 @@ def main():
     # Load weights
     model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
-    print("✓ Model loaded successfully")
+    print("[OK] Model loaded successfully")
     
     # Create Grad-CAM
     # Target the last convolutional layer in the encoder (bottleneck)
     # The bottleneck is the last down block's DoubleConv
     target_layer = model.encoder.down_blocks[-1].maxpool_conv[1].double_conv[-2]  # Last conv before ReLU
     gradcam = GradCAM(model, target_layer)
-    print(f"✓ Grad-CAM initialized on layer: {target_layer.__class__.__name__}")
+    print(f"[OK] Grad-CAM initialized on layer: {target_layer.__class__.__name__}")
     
     # Load test dataset
     print("\nLoading test datasets...")
@@ -300,7 +300,7 @@ def main():
         save_path = output_dir / f"gradcam_{i:03d}_{source}_pred{pred_class}_true{true_class}.png"
         visualize_sample(image_np, heatmap, pred_class, true_class, pred_prob, save_path)
     
-    print(f"\n✓ Saved {len(selected_indices)} Grad-CAM visualizations to: {output_dir}")
+    print(f"\n[OK] Saved {len(selected_indices)} Grad-CAM visualizations to: {output_dir}")
     
     # Summary statistics
     print("\n" + "=" * 80)

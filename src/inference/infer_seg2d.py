@@ -352,4 +352,4 @@ if __name__ == "__main__":
     # Cleanup
     Path(checkpoint_path).unlink()
     
-    print("\n✓ All tests passed!")
+    print("\n[OK] All tests passed!")

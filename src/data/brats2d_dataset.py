@@ -230,4 +230,4 @@ if __name__ == "__main__":
         print(f"  Modality: {metadata['modality']}")
         print(f"  Has tumor: {metadata['has_tumor']}")
     
-    print("\n✓ All tests passed!")
+    print("\n[OK] All tests passed!")
