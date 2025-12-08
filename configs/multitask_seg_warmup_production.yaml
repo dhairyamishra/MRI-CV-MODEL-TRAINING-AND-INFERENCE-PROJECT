@@ -1,28 +1,28 @@
 # ============================================================================
-# Phase 2.1: Segmentation Warm-Up Configuration - QUICK TEST
+# Phase 2.1: Segmentation Warm-Up Configuration - PRODUCTION
 # ============================================================================
 # Train encoder + decoder on BraTS segmentation to initialize shared encoder
 # This is Stage 1 of 3-stage multi-task training strategy
-# QUICK TEST MODE: Full dataset, 3 epochs, ~5-10 minutes
+# PRODUCTION MODE: Full dataset, 100 epochs, ~2-4 hours
 # 
 # IMPORTANT: PyTorch 2.6+ requires weights_only=False when loading checkpoints
 # IMPORTANT: Windows requires num_workers=0 for DataLoader
 
 # Experiment metadata
 experiment:
-  name: "multitask_seg_warmup_quick_test"
-  description: "Phase 2.1 QUICK TEST - Segmentation warm-up for fast testing"
-  tags: ["multitask", "segmentation", "warmup", "brats", "encoder_init", "quick_test"]
-  notes: "Quick test with 3 epochs for rapid validation"
+  name: "multitask_seg_warmup_production"
+  description: "Phase 2.1 PRODUCTION - Segmentation warm-up with full training"
+  tags: ["multitask", "segmentation", "warmup", "brats", "encoder_init", "production"]
+  notes: "Production training with 100 epochs for optimal performance"
 
 # Paths
 paths:
   train_dir: "data/processed/brats2d_full/train"
   val_dir: "data/processed/brats2d_full/val"
   test_dir: "data/processed/brats2d_full/test"
-  checkpoint_dir: "checkpoints/multitask_seg_warmup_quick_test"
-  log_dir: "logs/multitask_seg_warmup_quick_test"
-  output_dir: "outputs/multitask_seg_warmup_quick_test"
+  checkpoint_dir: "checkpoints/multitask_seg_warmup"
+  log_dir: "logs/multitask_seg_warmup"
+  output_dir: "outputs/multitask_seg_warmup"
 
 # Model architecture (MultiTaskModel in seg-only mode)
 model:
@@ -42,7 +42,7 @@ loss:
 # Optimizer
 optimizer:
   name: "adamw"           # AdamW optimizer
-  lr: 0.0003              # Slightly lower LR for production
+  lr: 0.001               # Consistent learning rate across all stages
   weight_decay: 0.0001    # L2 regularization
   betas: [0.9, 0.999]
   eps: 1.0e-8
@@ -50,13 +50,13 @@ optimizer:
 # Learning rate scheduler
 scheduler:
   name: "cosine"          # Cosine annealing
-  T_max: 3                # Match number of epochs
+  T_max: 50               # Match number of epochs
   eta_min: 1.0e-7         # Minimum learning rate
 
 # Training hyperparameters
 training:
-  epochs: 3               # REDUCED for quick test
-  batch_size: 64          # INCREASED for faster iterations
+  epochs: 50              # Consistent epochs across all stages
+  batch_size: 16          # Standard batch size for quality
   num_workers: 0          # Set to 0 for Windows compatibility (use 4+ on Linux/Mac)
   pin_memory: true
   
@@ -69,7 +69,7 @@ training:
   # Early stopping
   early_stopping:
     enabled: true
-    patience: 10          # REDUCED patience
+    patience: 20          # Full patience for production
     min_delta: 0.0005     # Smaller delta for fine improvements
     monitor: "val_dice"   # Metric to monitor
     mode: "max"           # max or min
@@ -88,27 +88,27 @@ augmentation:
     enabled: true
     random_flip_h: 0.5    # Horizontal flip probability
     random_flip_v: 0.5    # Vertical flip probability
-    random_rotate: 15     # REDUCED rotation
-    random_scale: 0.1     # REDUCED scale
-    elastic_deform: false # DISABLED for speed
+    random_rotate: 20     # Full rotation range
+    random_scale: 0.15    # Full scale range
+    elastic_deform: true  # ENABLED for production
     elastic_alpha: 50     # Elastic deformation strength
     elastic_sigma: 5      # Elastic deformation smoothness
-    gaussian_noise: 0.01  # REDUCED noise
-    gaussian_blur: 0.2    # REDUCED blur
-    brightness: 0.15      # REDUCED brightness
-    contrast: 0.15        # REDUCED contrast
-    gamma: 0.15           # REDUCED gamma
+    gaussian_noise: 0.02  # Full noise augmentation
+    gaussian_blur: 0.3    # Full blur augmentation
+    brightness: 0.2       # Full brightness range
+    contrast: 0.2         # Full contrast range
+    gamma: 0.2            # Full gamma range
   val:
     enabled: false        # No augmentation for validation
 
 # Weights & Biases logging
 wandb:
-  enabled: false          # DISABLED for quick test
+  enabled: true           # ENABLED for production tracking
   project: "slicewise-multitask-production"
   entity: null            # Set to your W&B username/team
   name: "seg_warmup_production"
   tags: ["production", "stage1", "segmentation", "warmup"]
-  notes: "Production training with full dataset"
+  notes: "Production training with full dataset and 100 epochs"
 
 # Reproducibility
 seed: 42

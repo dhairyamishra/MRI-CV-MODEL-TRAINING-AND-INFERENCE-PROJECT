@@ -1,19 +1,19 @@
 # ============================================================================
-# Phase 2.2: Classification Head Training Configuration - QUICK TEST
+# Phase 2.2: Classification Head Training Configuration - PRODUCTION
 # ============================================================================
 # Train classification head with frozen encoder on Kaggle dataset
 # This is Stage 2 of 3-stage multi-task training strategy
-# QUICK TEST MODE: Full dataset, 3 epochs, ~5-10 minutes
+# PRODUCTION MODE: Full dataset, 50 epochs, ~1-2 hours
 # 
 # IMPORTANT: PyTorch 2.6+ requires weights_only=False when loading checkpoints
 # IMPORTANT: Windows requires num_workers=0 for DataLoader
 
 # Experiment metadata
 experiment:
-  name: "multitask_cls_head_quick_test"
-  description: "Phase 2.2 QUICK TEST - Classification head training for fast testing"
-  tags: ["multitask", "classification", "cls_head", "kaggle", "quick_test"]
-  notes: "Quick test with 3 epochs for rapid validation"
+  name: "multitask_cls_head_production"
+  description: "Phase 2.2 PRODUCTION - Classification head training with full training"
+  tags: ["multitask", "classification", "cls_head", "kaggle", "production"]
+  notes: "Production training with 50 epochs for optimal performance"
 
 # Paths
 paths:
@@ -23,9 +23,9 @@ paths:
   brats_train_dir: "data/processed/brats2d_full/train"
   brats_val_dir: "data/processed/brats2d_full/val"
   brats_test_dir: "data/processed/brats2d_full/test"
-  checkpoint_dir: "checkpoints/multitask_cls_head_quick_test"
-  log_dir: "logs/multitask_cls_head_quick_test"
-  output_dir: "outputs/multitask_cls_head_quick_test"
+  checkpoint_dir: "checkpoints/multitask_cls_head"
+  log_dir: "logs/multitask_cls_head"
+  output_dir: "outputs/multitask_cls_head"
 
 # Model architecture
 model:
@@ -36,12 +36,12 @@ model:
   cls_num_classes: 2      # Tumor / No Tumor
   base_filters: 32        # Must match Stage 1
   depth: 4                # Must match Stage 1
-  cls_hidden_dim: 128     # REDUCED from 256 for faster training
+  cls_hidden_dim: 128     # Classification head hidden dimension
   cls_dropout: 0.5        # Classification head dropout
 
 # Encoder initialization
 encoder_init:
-  path: "checkpoints/multitask_seg_warmup_quick_test/best_model.pth"
+  path: "checkpoints/multitask_seg_warmup/best_model.pth"
   freeze_encoder: true    # Freeze encoder during training
   freeze_seg_decoder: true # Freeze segmentation decoder
 
@@ -62,13 +62,13 @@ optimizer:
 # Learning rate scheduler
 scheduler:
   name: "cosine"
-  T_max: 3                # REDUCED to match epochs
+  T_max: 50               # Match number of epochs
   eta_min: 1.0e-6
 
 # Training hyperparameters
 training:
-  epochs: 3               # REDUCED for quick test
-  batch_size: 64          # INCREASED for faster iterations
+  epochs: 50              # Full production training
+  batch_size: 16          # Consistent batch size across all stages
   num_workers: 0
   pin_memory: true
   
@@ -81,7 +81,7 @@ training:
   # Early stopping
   early_stopping:
     enabled: true
-    patience: 10          # REDUCED patience
+    patience: 15          # Full patience for production
     min_delta: 0.001
     monitor: "val_acc"
     mode: "max"
@@ -100,24 +100,24 @@ augmentation:
     enabled: true
     random_flip_h: 0.5
     random_flip_v: 0.5
-    random_rotate: 10     # REDUCED rotation
-    random_scale: 0.08    # REDUCED scale
-    gaussian_noise: 0.008 # REDUCED noise
-    gaussian_blur: 0.15   # REDUCED blur
-    brightness: 0.1       # REDUCED brightness
-    contrast: 0.1         # REDUCED contrast
-    gamma: 0.1            # REDUCED gamma
+    random_rotate: 15     # Full rotation range
+    random_scale: 0.1     # Full scale range
+    gaussian_noise: 0.01  # Full noise augmentation
+    gaussian_blur: 0.2    # Full blur augmentation
+    brightness: 0.15      # Full brightness range
+    contrast: 0.15        # Full contrast range
+    gamma: 0.15           # Full gamma range
   val:
     enabled: false
 
 # Weights & Biases logging
 wandb:
-  enabled: false          # DISABLED for quick test
-  project: null
-  entity: null
-  name: null
-  tags: null
-  notes: null
+  enabled: true           # ENABLED for production tracking
+  project: "slicewise-multitask-production"
+  entity: null            # Set to your W&B username/team
+  name: "cls_head_production"
+  tags: ["production", "stage2", "classification", "cls_head"]
+  notes: "Production training with 50 epochs for optimal performance"
 
 # Reproducibility
 seed: 42
