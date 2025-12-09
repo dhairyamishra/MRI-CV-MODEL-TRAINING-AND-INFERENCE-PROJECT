@@ -12,11 +12,10 @@ from pathlib import Path
 import sys
 
 # Import settings and utilities
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from config.settings import Colors, UIConfig, ClinicalGuidelines
-from utils.api_client import predict_multitask
-from utils.image_utils import base64_to_image, image_to_bytes
-from utils.validators import validate_and_display_file
+from app.frontend.config.settings import Colors, UIConfig, ClinicalGuidelines
+from app.frontend.utils.api_client import predict_multitask
+from app.frontend.utils.image_utils import base64_to_image, image_to_bytes
+from app.frontend.utils.validators import validate_and_display_file
 from PIL import Image
 
 

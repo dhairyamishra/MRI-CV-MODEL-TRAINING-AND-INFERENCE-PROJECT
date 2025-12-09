@@ -35,16 +35,21 @@ from pathlib import Path
 # Import frontend components
 try:
     from app.frontend.utils.api_client import APIClient
-    from app.frontend.utils.image_utils import process_uploaded_image, validate_image
-    from app.frontend.utils.validators import validate_api_response
+    from app.frontend.utils.image_utils import base64_to_image, image_to_base64, is_valid_mri_image
+    from app.frontend.utils.validators import validate_api_response, validate_image_file
     FRONTEND_AVAILABLE = True
-except ImportError:
+    # Create aliases for test compatibility
+    process_uploaded_image = lambda x: base64_to_image(x) if isinstance(x, str) else x
+    validate_image = is_valid_mri_image
+except ImportError as e:
     # Mock components if not available
     FRONTEND_AVAILABLE = False
     APIClient = MagicMock()
     process_uploaded_image = MagicMock()
     validate_image = MagicMock()
     validate_api_response = MagicMock()
+    # Print import error for debugging
+    print(f"Frontend components not available: {e}")
 
 
 @pytest.fixture

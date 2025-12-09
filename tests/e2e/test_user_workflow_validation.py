@@ -29,7 +29,8 @@ sys.path.insert(0, str(project_root))
 
 # Import components (mock if not available)
 try:
-    from app.frontend.app import main as streamlit_app
+    # Don't import app.py directly (it has st.set_page_config() at module level)
+    # Just import the components and utilities we need
     from app.frontend.utils.api_client import APIClient
     from app.frontend.components.classification_tab import render_classification_tab
     from app.frontend.components.segmentation_tab import render_segmentation_tab
@@ -37,9 +38,11 @@ try:
     from app.frontend.components.patient_tab import render_patient_tab
     from app.frontend.components.multitask_tab import render_multitask_tab
     FRONTEND_AVAILABLE = True
-except ImportError:
+except ImportError as e:
     FRONTEND_AVAILABLE = False
     APIClient = MagicMock()
+    # Print import error for debugging
+    print(f"Frontend components not available: {e}")
 
 
 @pytest.fixture

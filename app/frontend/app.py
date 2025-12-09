@@ -20,7 +20,7 @@ import streamlit as st
 from pathlib import Path
 
 # Import modular components
-from components import (
+from app.frontend.components import (
     render_header,
     render_sidebar,
     render_multitask_tab,
@@ -31,7 +31,7 @@ from components import (
 )
 
 # Import settings for CSS loading
-from config.settings import AppMetadata
+from app.frontend.config.settings import AppMetadata
 
 
 # ============================================================================

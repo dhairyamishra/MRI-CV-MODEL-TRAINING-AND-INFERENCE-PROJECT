@@ -10,8 +10,7 @@ from pathlib import Path
 import sys
 
 # Import settings
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from config.settings import AppMetadata
+from app.frontend.config.settings import AppMetadata
 
 
 def render_header():

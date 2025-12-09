@@ -26,20 +26,24 @@ sys.path.insert(0, str(project_root))
 
 # Import Streamlit components (mock if not available)
 try:
-    from app.frontend.app import main as streamlit_app
+    # Don't import app.py directly (it has st.set_page_config() at module level)
     from app.frontend.components.header import render_header
     from app.frontend.components.sidebar import render_sidebar
     from app.frontend.components.multitask_tab import render_multitask_tab
     from app.frontend.components.classification_tab import render_classification_tab
     from app.frontend.components.segmentation_tab import render_segmentation_tab
     from app.frontend.utils.api_client import APIClient
-    from app.frontend.utils.image_utils import process_uploaded_image
+    from app.frontend.utils.image_utils import base64_to_image, image_to_base64
     STREAMLIT_AVAILABLE = True
-except ImportError:
+    # Create alias for test compatibility
+    process_uploaded_image = lambda x: base64_to_image(x) if isinstance(x, str) else x
+except ImportError as e:
     # Mock components if not available
     STREAMLIT_AVAILABLE = False
     APIClient = MagicMock()
     process_uploaded_image = MagicMock()
+    # Print import error for debugging
+    print(f"Streamlit components not available: {e}")
 
 from pathlib import Path
 

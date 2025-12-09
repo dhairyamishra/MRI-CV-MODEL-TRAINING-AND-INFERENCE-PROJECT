@@ -13,10 +13,9 @@ import sys
 from PIL import Image
 
 # Import settings and utilities
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from config.settings import UIConfig, ModelConfig
-from utils.api_client import classify_batch, segment_batch
-from utils.validators import validate_batch_and_display
+from app.frontend.config.settings import UIConfig, ModelConfig
+from app.frontend.utils.api_client import classify_batch, segment_batch
+from app.frontend.utils.validators import validate_batch_and_display
 
 
 def render_batch_tab():
