@@ -9,7 +9,12 @@ import sys
 from pathlib import Path
 import pytest
 import numpy as np
+
+# Set matplotlib backend to non-interactive before importing pyplot
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend for testing
 import matplotlib.pyplot as plt
+
 import tempfile
 import os
 from PIL import Image

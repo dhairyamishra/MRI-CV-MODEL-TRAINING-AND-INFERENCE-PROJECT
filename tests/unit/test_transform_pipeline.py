@@ -34,25 +34,33 @@ class TestGeometricTransforms:
     """Test geometric transformations (rotation, flip, scale, elastic)."""
 
     def test_random_rotation90(self):
-        """Test 90-degree rotation transform."""
-        transform = RandomRotation90(p=1.0)  # Always apply
+        """Test random 90-degree rotation."""
+        transform = RandomRotation90(p=1.0)
 
         # Create test image with asymmetric pattern
         test_image = np.zeros((128, 128), dtype=np.float32)
         test_image[10:20, 10:20] = 1.0  # Top-left square
         original_sum = np.sum(test_image)
 
-        # Apply rotation
-        rotated = transform(test_image)
-
-        # Basic properties
-        assert rotated.shape == test_image.shape
-        assert rotated.dtype == test_image.dtype
-        assert np.sum(rotated) == original_sum  # Pixel sum preserved
-        assert np.all((rotated >= 0) & (rotated <= 1))  # Valid range
-
-        # Verify it's actually rotated (not identical)
-        assert not np.array_equal(rotated, test_image)
+        # Apply rotation multiple times to ensure at least one is different
+        # (since k=0 means no rotation, we need to test multiple times)
+        rotations_differ = False
+        for _ in range(10):
+            rotated = transform(test_image.copy())
+            
+            # Basic properties
+            assert rotated.shape == test_image.shape
+            assert rotated.dtype == test_image.dtype
+            assert np.sum(rotated) == original_sum  # Pixel sum preserved
+            assert np.all((rotated >= 0) & (rotated <= 1))  # Valid range
+            
+            # Check if this rotation is different
+            if not np.array_equal(rotated, test_image):
+                rotations_differ = True
+                break
+        
+        # At least one rotation should be different (probability of all k=0 is 0.25^10 ≈ 0)
+        assert rotations_differ, "Expected at least one rotation to differ from original"
 
     def test_rotation_reproducibility(self):
         """Test rotation reproducibility with fixed seed."""
