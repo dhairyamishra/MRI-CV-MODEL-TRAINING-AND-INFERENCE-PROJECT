@@ -56,17 +56,19 @@ class TestGeometricTransforms:
 
     def test_rotation_reproducibility(self):
         """Test rotation reproducibility with fixed seed."""
-        np.random.seed(42)
-        transform1 = RandomRotation90(p=1.0)
-        np.random.seed(42)
-        transform2 = RandomRotation90(p=1.0)
-
+        # Note: Each transform instance uses np.random independently,
+        # so we need to set seed before each call, not before instantiation
+        transform = RandomRotation90(p=1.0)
         test_image = np.random.rand(128, 128).astype(np.float32)
 
-        result1 = transform1(test_image)
-        result2 = transform2(test_image)
+        # Set seed before each transform call
+        np.random.seed(42)
+        result1 = transform(test_image.copy())
+        
+        np.random.seed(42)
+        result2 = transform(test_image.copy())
 
-        # Should be identical with same seed
+        # Should be identical with same seed before each call
         np.testing.assert_array_equal(result1, result2)
 
     def test_rotation_edge_cases(self):
@@ -294,19 +296,19 @@ class TestTransformReproducibility:
 
     def test_seed_based_reproducibility(self):
         """Test transforms are reproducible with fixed seeds."""
-        # Test with same seed
-        np.random.seed(123)
-        transform1 = get_train_transforms()
-
-        np.random.seed(123)
-        transform2 = get_train_transforms()
-
+        # Note: Transforms use np.random internally, so we need to set seed
+        # before each transform call, not before instantiation
+        transform = get_train_transforms()
         test_image = np.random.rand(128, 128).astype(np.float32)
 
-        result1 = transform1(test_image)
-        result2 = transform2(test_image)
+        # Set seed before each transform call
+        np.random.seed(123)
+        result1 = transform(test_image.copy())
 
-        # Should be identical with same seed
+        np.random.seed(123)
+        result2 = transform(test_image.copy())
+
+        # Should be identical with same seed before each call
         np.testing.assert_array_equal(result1, result2)
 
     def test_different_seeds_produce_variation(self):

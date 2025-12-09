@@ -66,6 +66,7 @@ class TestGradCAMGeneration:
                 loaded_img = Image.open(output_file)
                 assert loaded_img.size[0] > 0  # Width > 0
                 assert loaded_img.size[1] > 0  # Height > 0
+                loaded_img.close()  # Close image to release file handle on Windows
 
     def test_gradcam_overlay_quality(self):
         """Test Grad-CAM overlay maintains image quality."""
@@ -348,6 +349,7 @@ class TestMedicalImageQuality:
             loaded_img = Image.open(medical_file)
             assert loaded_img.size[0] >= min_resolution[0]
             assert loaded_img.size[1] >= min_resolution[1]
+            loaded_img.close()  # Close image to release file handle on Windows
 
     def test_color_accuracy(self):
         """Test color reproduction accuracy for medical imaging."""
@@ -402,14 +404,21 @@ class TestMedicalImageQuality:
 
         # Save and verify readability (manual inspection would be needed in practice)
         with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp_file:
-            fig.savefig(tmp_file.name, dpi=150, bbox_inches='tight')
-            plt.close(fig)
+            tmp_filename = tmp_file.name
+        
+        # Save figure after closing tempfile to avoid handle conflicts
+        fig.savefig(tmp_filename, dpi=150, bbox_inches='tight')
+        plt.close(fig)
 
-            # Basic file validation
-            assert os.path.exists(tmp_file.name)
-            assert os.path.getsize(tmp_file.name) > 10000  # Substantial file
+        # Basic file validation
+        assert os.path.exists(tmp_filename)
+        assert os.path.getsize(tmp_filename) > 10000  # Substantial file
 
-            os.unlink(tmp_file.name)
+        # Clean up
+        try:
+            os.unlink(tmp_filename)
+        except PermissionError:
+            pass  # File will be cleaned up by OS eventually
 
     def test_visualization_file_formats(self):
         """Test multiple output formats for different use cases."""
