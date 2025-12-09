@@ -348,9 +348,12 @@ def main():
     # Create model
     model = create_multi_task_model(
         in_channels=config['model']['in_channels'],
-        cls_num_classes=config['model']['num_classes'],
+        seg_out_channels=config['model']['seg_out_channels'],
+        cls_num_classes=config['model']['cls_num_classes'],
         base_filters=config['model']['base_filters'],
         depth=config['model']['depth'],
+        cls_hidden_dim=config['model']['cls_hidden_dim'],
+        cls_dropout=config['model']['cls_dropout'],
     ).to(device)
     
     # Load Phase 2.2 checkpoint
@@ -374,8 +377,8 @@ def main():
     
     # Create optimizer with differential learning rates
     print("=== Setting Up Differential Learning Rates ===")
-    encoder_lr = config['training']['encoder_lr']
-    decoder_cls_lr = config['training']['decoder_cls_lr']
+    encoder_lr = config['optimizer'].get('encoder_lr', config['optimizer']['lr'] * 0.1)  # Default to 10% of main LR
+    decoder_cls_lr = config['optimizer'].get('decoder_cls_lr', config['optimizer']['lr'] * 0.3)  # Default to 30% of main LR
     
     param_groups = [
         {'params': model.encoder.parameters(), 'lr': encoder_lr},
@@ -386,7 +389,7 @@ def main():
     print(f"Encoder LR: {encoder_lr}")
     print(f"Decoder + Cls Head LR: {decoder_cls_lr}\n")
     
-    optimizer = torch.optim.Adam(param_groups, weight_decay=config['training']['weight_decay'])
+    optimizer = torch.optim.Adam(param_groups, weight_decay=config['optimizer']['weight_decay'])
     
     # Create scheduler
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
@@ -396,13 +399,13 @@ def main():
     )
     
     # Mixed precision scaler
-    scaler = GradScaler(enabled=config['training']['mixed_precision'])
+    scaler = GradScaler(enabled=config['training']['use_amp'])
     
     # Training loop
     start_epoch = 0
     best_val_metric = 0.0
     patience_counter = 0
-    patience = config['training']['early_stopping']['patience']
+    patience = config['training']['early_stopping'].get('patience', 10)  # Default to 10 if not specified
     min_delta = config['training']['early_stopping'].get('min_delta', 0.0)
     
     if args.resume:
@@ -418,7 +421,7 @@ def main():
     print("=== Starting Training ===")
     print(f"Training for {config['training']['epochs']} epochs")
     print(f"Batch size: {config['training']['batch_size']}")
-    print(f"Mixed precision: {config['training']['mixed_precision']}")
+    print(f"Mixed precision: {config['training']['use_amp']}")
     if config['training']['early_stopping']['enabled']:
         print(f"Early stopping: enabled (patience={patience}, min_delta={min_delta})")
     print()
@@ -436,7 +439,7 @@ def main():
             optimizer=optimizer,
             device=device,
             scaler=scaler,
-            use_amp=config['training']['mixed_precision'],
+            use_amp=config['training']['use_amp'],
             grad_clip=config['training']['grad_clip'],
         )
         

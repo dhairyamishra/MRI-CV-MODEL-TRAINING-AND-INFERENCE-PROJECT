@@ -44,23 +44,24 @@ from datetime import datetime
 # Configuration Constants
 # ============================================================================
 
-# Config file paths
-CONFIG_DIR = "configs/multitask-model"
+# Config file paths - Using new hierarchical config system
+# Configs are generated from base/stages/modes using scripts/utils/merge_configs.py
+CONFIG_DIR = "configs/final"
 
-# Quick test configs (10 patients, 5 epochs, ~30 minutes)
-QUICK_SEG_CONFIG = f"{CONFIG_DIR}/multitask_seg_warmup_quick_test.yaml"
-QUICK_CLS_CONFIG = f"{CONFIG_DIR}/multitask_cls_head_quick_test.yaml"
-QUICK_JOINT_CONFIG = f"{CONFIG_DIR}/multitask_joint_quick_test.yaml"
+# Quick test configs (3 epochs, minimal augmentation, ~30 minutes)
+QUICK_SEG_CONFIG = f"{CONFIG_DIR}/stage1_quick.yaml"
+QUICK_CLS_CONFIG = f"{CONFIG_DIR}/stage2_quick.yaml"
+QUICK_JOINT_CONFIG = f"{CONFIG_DIR}/stage3_quick.yaml"
 
-# Baseline configs (100 patients, 50 epochs, ~2-4 hours)
-BASELINE_SEG_CONFIG = f"{CONFIG_DIR}/multitask_seg_warmup.yaml"
-BASELINE_CLS_CONFIG = f"{CONFIG_DIR}/multitask_cls_head_quick_test.yaml"
-BASELINE_JOINT_CONFIG = f"{CONFIG_DIR}/multitask_joint_quick_test.yaml"
+# Baseline configs (50 epochs, moderate augmentation, ~2-4 hours)
+BASELINE_SEG_CONFIG = f"{CONFIG_DIR}/stage1_baseline.yaml"
+BASELINE_CLS_CONFIG = f"{CONFIG_DIR}/stage2_baseline.yaml"
+BASELINE_JOINT_CONFIG = f"{CONFIG_DIR}/stage3_baseline.yaml"
 
-# Production configs (988 patients, 100 epochs, ~8-12 hours)
-PRODUCTION_SEG_CONFIG = f"{CONFIG_DIR}/multitask_seg_warmup_production.yaml"
-PRODUCTION_CLS_CONFIG = f"{CONFIG_DIR}/multitask_cls_head_production.yaml"
-PRODUCTION_JOINT_CONFIG = f"{CONFIG_DIR}/multitask_joint_production.yaml"
+# Production configs (100 epochs, aggressive augmentation, ~8-12 hours)
+PRODUCTION_SEG_CONFIG = f"{CONFIG_DIR}/stage1_production.yaml"
+PRODUCTION_CLS_CONFIG = f"{CONFIG_DIR}/stage2_production.yaml"
+PRODUCTION_JOINT_CONFIG = f"{CONFIG_DIR}/stage3_production.yaml"
 
 # Timeout values (in seconds)
 QUICK_TIMEOUT_SEG = 600      # 10 minutes
@@ -422,8 +423,8 @@ class PipelineController:
             "base_filters": config['model']['base_filters'],
             "depth": config['model']['depth'],
             "in_channels": config['model']['in_channels'],
-            "seg_out_channels": 1,
-            "cls_num_classes": config['model']['num_classes']
+            "seg_out_channels": config['model']['seg_out_channels'],
+            "cls_num_classes": config['model']['cls_num_classes']
         }
         
         config_path = self.project_root / "checkpoints" / "multitask_joint" / "model_config.json"

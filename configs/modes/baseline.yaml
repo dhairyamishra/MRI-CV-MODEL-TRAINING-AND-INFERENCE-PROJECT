@@ -1,0 +1,29 @@
+# Baseline mode - Standard training (~2-4 hours)
+# Moderate epochs and augmentation for standard experiments
+
+mode: "baseline"
+
+training:
+  epochs: 50
+  batch_size: 16
+  early_stopping:
+    enabled: true
+    patience: 15
+
+# Scheduler override (T_max must match epochs)
+scheduler:
+  T_max: 50
+
+# Augmentation preset (references base/augmentation_presets.yaml)
+augmentation:
+  preset: "moderate"
+
+# W&B logging
+wandb:
+  enabled: true
+  project: "slicewise-multitask-baseline"
+
+# Checkpoint settings
+checkpoint:
+  save_frequency: 5
+  keep_last_n: 5

@@ -1,0 +1,31 @@
+# Quick test mode - Fast validation (~30 minutes)
+# Minimal epochs and augmentation for rapid testing
+
+mode: "quick_test"
+
+training:
+  epochs: 2
+  batch_size: 32
+  early_stopping:
+    enabled: false  # Too few epochs for early stopping
+
+# Model overrides for quick testing (smaller model)
+model:
+  architecture: "multitask_small"  # Use smallest architecture for fastest training
+
+# Scheduler override (T_max must match epochs)
+scheduler:
+  T_max: 2
+
+# Augmentation preset (references base/augmentation_presets.yaml)
+augmentation:
+  preset: "minimal"
+
+# W&B logging
+wandb:
+  enabled: false
+
+# Checkpoint settings
+checkpoint:
+  save_frequency: 1
+  keep_last_n: 2

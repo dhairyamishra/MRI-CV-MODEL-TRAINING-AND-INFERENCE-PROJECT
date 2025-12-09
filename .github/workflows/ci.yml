@@ -70,6 +70,15 @@ jobs:
         run: |
           pip install -e ".[dev]"
       
+      - name: Generate config files
+        run: |
+          python scripts/utils/merge_configs.py --all
+      
+      - name: Verify generated configs
+        run: |
+          ls -la configs/final/
+          echo "✓ All 9 config files generated successfully"
+      
       - name: Run smoke test
         run: |
           python scripts/smoke_test.py

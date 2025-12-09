@@ -41,8 +41,8 @@ Examples:
     parser.add_argument(
         "--config",
         type=str,
-        default="configs/multitask_cls_head_quick_test.yaml",
-        help="Path to config file"
+        default="configs/final/stage2_baseline.yaml",
+        help="Path to config file (default: configs/final/stage2_baseline.yaml)"
     )
     
     parser.add_argument(

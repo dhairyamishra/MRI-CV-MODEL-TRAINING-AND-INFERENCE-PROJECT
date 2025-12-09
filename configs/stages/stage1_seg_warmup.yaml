@@ -1,0 +1,36 @@
+# Stage 1: Segmentation Warm-up
+# Trains encoder + decoder on BraTS segmentation only
+# This stage initializes the shared encoder with segmentation task
+
+stage: 1
+name: "seg_warmup"
+description: "Segmentation warm-up - encoder + decoder initialization"
+
+# Model selection (references base/model_architectures.yaml)
+model:
+  architecture: "multitask_medium"
+
+# Data paths
+data:
+  train_dir: "data/processed/brats2d_full/train"
+  val_dir: "data/processed/brats2d_full/val"
+  test_dir: "data/processed/brats2d_full/test"
+
+# Output paths
+paths:
+  checkpoint_dir: "checkpoints/multitask_seg_warmup"
+  log_dir: "logs/multitask_seg_warmup"
+  output_dir: "outputs/multitask_seg_warmup"
+
+# Loss function
+loss:
+  name: "dice_bce"
+  dice_weight: 0.6
+  bce_weight: 0.4
+  smooth: 1.0
+
+# Early stopping (override defaults)
+training:
+  early_stopping:
+    monitor: "val_dice"
+    mode: "max"

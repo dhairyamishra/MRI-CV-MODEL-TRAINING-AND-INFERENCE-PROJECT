@@ -1,0 +1,30 @@
+# Model architecture definitions
+# Define different model size presets for multi-task learning
+
+architectures:
+  multitask_small:
+    in_channels: 1
+    seg_out_channels: 1
+    cls_num_classes: 2
+    base_filters: 16
+    depth: 2
+    cls_hidden_dim: 16
+    cls_dropout: 0.5
+  
+  multitask_medium:
+    in_channels: 1
+    seg_out_channels: 1
+    cls_num_classes: 2
+    base_filters: 32
+    depth: 4
+    cls_hidden_dim: 64
+    cls_dropout: 0.5
+  
+  multitask_large:
+    in_channels: 1
+    seg_out_channels: 1
+    cls_num_classes: 2
+    base_filters: 64
+    depth: 5
+    cls_hidden_dim: 512
+    cls_dropout: 0.5

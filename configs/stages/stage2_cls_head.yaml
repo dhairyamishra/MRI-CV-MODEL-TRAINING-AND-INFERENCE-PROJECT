@@ -1,0 +1,41 @@
+# Stage 2: Classification Head Training
+# Trains cls_head with frozen encoder on BraTS + Kaggle
+# Uses pre-trained encoder from Stage 1
+
+stage: 2
+name: "cls_head"
+description: "Classification head training - frozen encoder"
+
+# Model selection (references base/model_architectures.yaml)
+model:
+  architecture: "multitask_medium"
+
+# Data paths (multiple sources)
+data:
+  brats_train_dir: "data/processed/brats2d_full/train"
+  brats_val_dir: "data/processed/brats2d_full/val"
+  kaggle_train_dir: "data/processed/kaggle/train"
+  kaggle_val_dir: "data/processed/kaggle/val"
+
+# Output paths
+paths:
+  checkpoint_dir: "checkpoints/multitask_cls_head"
+  log_dir: "logs/multitask_cls_head"
+  output_dir: "outputs/multitask_cls_head"
+
+# Encoder initialization from Stage 1
+encoder_init:
+  path: "checkpoints/multitask_seg_warmup/best_model.pth"
+  freeze_encoder: true
+  freeze_seg_decoder: true
+
+# Loss function
+loss:
+  name: "cross_entropy"
+  label_smoothing: 0.1
+
+# Early stopping (override defaults)
+training:
+  early_stopping:
+    monitor: "val_acc"
+    mode: "max"

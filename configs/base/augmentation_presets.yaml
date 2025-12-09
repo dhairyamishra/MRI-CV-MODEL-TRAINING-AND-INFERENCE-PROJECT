@@ -1,0 +1,57 @@
+# Augmentation presets for different training modes
+# Minimal: Fast testing with basic augmentations
+# Moderate: Baseline training with standard augmentations
+# Aggressive: Production training with heavy augmentations
+
+augmentation_presets:
+  minimal:  # For quick testing
+    train:
+      enabled: false
+      random_flip_h: 0.1
+      random_flip_v: 0.1
+      random_rotate: 10
+      random_scale: 0.0
+      elastic_deform: false
+      gaussian_noise: 0.0
+      gaussian_blur: 0.0
+      brightness: 0.0
+      contrast: 0.0
+      gamma: 0.0
+    val:
+      enabled: false
+  
+  moderate:  # For baseline training
+    train:
+      enabled: true
+      random_flip_h: 0.5
+      random_flip_v: 0.5
+      random_rotate: 15
+      random_scale: 0.1
+      elastic_deform: true
+      elastic_alpha: 40
+      elastic_sigma: 4
+      gaussian_noise: 0.01
+      gaussian_blur: 0.2
+      brightness: 0.15
+      contrast: 0.15
+      gamma: 0.15
+    val:
+      enabled: false
+  
+  aggressive:  # For production training
+    train:
+      enabled: true
+      random_flip_h: 0.5
+      random_flip_v: 0.5
+      random_rotate: 20
+      random_scale: 0.15
+      elastic_deform: true
+      elastic_alpha: 50
+      elastic_sigma: 5
+      gaussian_noise: 0.02
+      gaussian_blur: 0.3
+      brightness: 0.2
+      contrast: 0.2
+      gamma: 0.2
+    val:
+      enabled: false

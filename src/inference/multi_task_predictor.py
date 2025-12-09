@@ -89,43 +89,52 @@ class MultiTaskPredictor:
         """Load multi-task model from checkpoint."""
         checkpoint_path = Path(checkpoint_path)
         
-        # Try to load config from checkpoint directory
-        try:
-            config = ModelConfig.from_checkpoint_dir(checkpoint_path.parent)
-            print(f"[OK] Loaded model config from: {checkpoint_path.parent / 'model_config.json'}")
-            
-            # Use config values if not overridden
-            if base_filters is None:
-                base_filters = config.base_filters
-            if depth is None:
-                depth = config.depth
-                
-            print(f"  Using architecture: base_filters={base_filters}, depth={depth}")
-            
-        except FileNotFoundError:
-            # Fallback to provided values or defaults
-            if base_filters is None:
-                base_filters = 64
-                print(f"⚠ No model config found, using default base_filters={base_filters}")
-            if depth is None:
-                depth = 4
-                print(f"⚠ No model config found, using default depth={depth}")
+        # Load checkpoint first to get config
+        checkpoint = torch.load(checkpoint_path, map_location=self.device, weights_only=False)
+        
+        # Try to get config from checkpoint
+        model_config = {}
+        if 'config' in checkpoint and 'model' in checkpoint['config']:
+            model_config = checkpoint['config']['model']
+            print(f"[OK] Loaded model config from checkpoint")
+        else:
+            # Try to load config from checkpoint directory
+            try:
+                config = ModelConfig.from_checkpoint_dir(checkpoint_path.parent)
+                model_config = {
+                    'in_channels': config.in_channels,
+                    'seg_out_channels': config.seg_out_channels,
+                    'cls_num_classes': config.cls_num_classes,
+                    'base_filters': config.base_filters,
+                    'depth': config.depth,
+                    'cls_hidden_dim': getattr(config, 'cls_hidden_dim', 256),
+                    'cls_dropout': getattr(config, 'cls_dropout', 0.5),
+                }
+                print(f"[OK] Loaded model config from: {checkpoint_path.parent / 'model_config.json'}")
+            except FileNotFoundError:
+                print(f"⚠ No model config found, using defaults")
+        
+        # Get model parameters (allow override from arguments)
+        in_channels = model_config.get('in_channels', 1)
+        seg_out_channels = model_config.get('seg_out_channels', 1)
+        cls_num_classes = model_config.get('cls_num_classes', 2)
+        base_filters = base_filters if base_filters is not None else model_config.get('base_filters', 32)
+        depth = depth if depth is not None else model_config.get('depth', 4)
+        cls_hidden_dim = model_config.get('cls_hidden_dim', 256)
+        cls_dropout = model_config.get('cls_dropout', 0.5)
+        
+        print(f"  Model architecture: base_filters={base_filters}, depth={depth}, cls_hidden_dim={cls_hidden_dim}")
         
         # Create model
         model = create_multi_task_model(
-            in_channels=1,
-            seg_out_channels=1,
-            cls_num_classes=2,
+            in_channels=in_channels,
+            seg_out_channels=seg_out_channels,
+            cls_num_classes=cls_num_classes,
             base_filters=base_filters,
             depth=depth,
-            bilinear=True,
-            dropout=0.0,
-            cls_hidden_dim=256,
-            cls_dropout=0.5,
+            cls_hidden_dim=cls_hidden_dim,
+            cls_dropout=cls_dropout,
         )
-        
-        # Load checkpoint
-        checkpoint = torch.load(checkpoint_path, map_location=self.device, weights_only=False)
         
         # Extract state dict
         if 'model_state_dict' in checkpoint:

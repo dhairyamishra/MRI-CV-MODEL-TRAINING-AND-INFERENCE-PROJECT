@@ -254,13 +254,13 @@ def main():
     # Create datasets
     print("\n=== Loading Datasets ===")
     train_dataset = MultiSourceDataset(
-        brats_dir=config['paths'].get('brats_train_dir'),
-        kaggle_dir=config['paths'].get('kaggle_train_dir'),
+        brats_dir=config['data'].get('brats_train_dir'),
+        kaggle_dir=config['data'].get('kaggle_train_dir'),
         transform=None,  # TODO: Add augmentation support
     )
     val_dataset = MultiSourceDataset(
-        brats_dir=config['paths'].get('brats_val_dir'),
-        kaggle_dir=config['paths'].get('kaggle_val_dir'),
+        brats_dir=config['data'].get('brats_val_dir'),
+        kaggle_dir=config['data'].get('kaggle_val_dir'),
         transform=None,
     )
     
@@ -289,10 +289,12 @@ def main():
     print("\n=== Creating Multi-Task Model ===")
     model = create_multi_task_model(
         in_channels=config['model']['in_channels'],
-        seg_out_channels=config['model']['out_channels'],
-        cls_num_classes=2,  # Binary classification
+        seg_out_channels=config['model']['seg_out_channels'],
+        cls_num_classes=config['model']['cls_num_classes'],
         base_filters=config['model']['base_filters'],
         depth=config['model']['depth'],
+        cls_hidden_dim=config['model']['cls_hidden_dim'],
+        cls_dropout=config['model']['cls_dropout'],
     )
     
     # Load encoder weights from Phase 2.1
@@ -409,7 +411,7 @@ def main():
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
     
     patience_counter = 0
-    patience = config['training']['early_stopping']['patience']
+    patience = config['training']['early_stopping'].get('patience', 10)  # Default to 10 if not specified
     
     for epoch in range(start_epoch, config['training']['epochs']):
         print(f"\n{'='*60}")
@@ -464,7 +466,7 @@ def main():
             patience_counter += 1
         
         # Save last checkpoint
-        if config['training']['save_last']:
+        if config['checkpoint'].get('save_last', True):
             save_checkpoint(
                 model=model,
                 optimizer=optimizer,

@@ -1,0 +1,60 @@
+# Stage 3: Joint Fine-Tuning
+# Trains all components with differential LR on both tasks
+# Uses pre-trained model from Stage 2
+
+stage: 3
+name: "joint"
+description: "Joint fine-tuning - all parameters unfrozen"
+
+# Model selection (references base/model_architectures.yaml)
+model:
+  architecture: "multitask_medium"
+
+# Data paths (both datasets)
+data:
+  brats_train_dir: "data/processed/brats2d_full/train"
+  brats_val_dir: "data/processed/brats2d_full/val"
+  kaggle_train_dir: "data/processed/kaggle/train"
+  kaggle_val_dir: "data/processed/kaggle/val"
+
+# Output paths
+paths:
+  checkpoint_dir: "checkpoints/multitask_joint"
+  log_dir: "logs/multitask_joint"
+  output_dir: "outputs/multitask_joint"
+
+# Model initialization from Stage 2
+init:
+  path: "checkpoints/multitask_cls_head/best_model.pth"
+  freeze_encoder: false
+  freeze_seg_decoder: false
+  freeze_cls_head: false
+
+# Multi-task loss
+loss:
+  seg_loss:
+    name: "dice_bce"
+    dice_weight: 0.6
+    bce_weight: 0.4
+  cls_loss:
+    name: "cross_entropy"
+    label_smoothing: 0.1
+  lambda_seg: 1.0
+  lambda_cls: 0.5
+
+# Differential learning rates (override base optimizer)
+optimizer:
+  encoder_lr: 0.0001      # Lower for pre-trained encoder
+  decoder_cls_lr: 0.0003  # Higher for task heads
+
+# Dataset mixing strategy
+dataset:
+  mix_datasets: true
+  brats_ratio: 0.3
+  kaggle_ratio: 0.7
+
+# Early stopping (override defaults)
+training:
+  early_stopping:
+    monitor: "val_combined"
+    mode: "max"
