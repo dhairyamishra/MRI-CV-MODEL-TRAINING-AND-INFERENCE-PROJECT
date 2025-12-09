@@ -301,9 +301,12 @@ def main():
         
         model = create_multi_task_model(
             in_channels=model_config.get('in_channels', 1),
-            cls_num_classes=model_config.get('num_classes', 2),
+            seg_out_channels=model_config.get('seg_out_channels', 1),
+            cls_num_classes=model_config.get('cls_num_classes', 2),
             base_filters=model_config.get('base_filters', 32),
-            depth=model_config.get('depth', 3),
+            depth=model_config.get('depth', 4),
+            cls_hidden_dim=model_config.get('cls_hidden_dim', 256),
+            cls_dropout=model_config.get('cls_dropout', 0.5),
         ).to(device)
         
         model.load_state_dict(checkpoint['model_state_dict'])
@@ -324,9 +327,12 @@ def main():
         
         model = create_multi_task_model(
             in_channels=model_config.get('in_channels', 1),
-            cls_num_classes=model_config.get('num_classes', 2),
+            seg_out_channels=model_config.get('seg_out_channels', 1),
+            cls_num_classes=model_config.get('cls_num_classes', 2),
             base_filters=model_config.get('base_filters', 32),
-            depth=model_config.get('depth', 3),
+            depth=model_config.get('depth', 4),
+            cls_hidden_dim=model_config.get('cls_hidden_dim', 256),
+            cls_dropout=model_config.get('cls_dropout', 0.5),
         ).to(device)
         
         model.load_state_dict(checkpoint['model_state_dict'])
@@ -347,9 +353,12 @@ def main():
         
         model = create_multi_task_model(
             in_channels=model_config.get('in_channels', 1),
-            cls_num_classes=model_config.get('num_classes', 2),
+            seg_out_channels=model_config.get('seg_out_channels', 1),
+            cls_num_classes=model_config.get('cls_num_classes', 2),
             base_filters=model_config.get('base_filters', 32),
-            depth=model_config.get('depth', 3),
+            depth=model_config.get('depth', 4),
+            cls_hidden_dim=model_config.get('cls_hidden_dim', 256),
+            cls_dropout=model_config.get('cls_dropout', 0.5),
         ).to(device)
         
         model.load_state_dict(checkpoint['model_state_dict'])

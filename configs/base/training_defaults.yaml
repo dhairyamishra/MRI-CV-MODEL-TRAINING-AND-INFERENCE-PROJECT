@@ -1,0 +1,27 @@
+# Default training hyperparameters
+# These settings are used unless overridden by stage or mode configs
+
+training:
+  num_workers: 0  # Platform-specific (see platform_overrides.yaml)
+  pin_memory: true
+  use_amp: true
+  grad_clip: 1.0
+  
+  early_stopping:
+    enabled: true
+    monitor: "val_loss"
+    mode: "min"
+    min_delta: 0.001
+
+# Default optimizer settings
+optimizer:
+  name: "adamw"
+  lr: 0.001  # Default learning rate
+  weight_decay: 0.0001
+  betas: [0.9, 0.999]
+  eps: 1.0e-6
+
+# Default scheduler settings
+scheduler:
+  name: "cosine"
+  eta_min: 1.0e-6

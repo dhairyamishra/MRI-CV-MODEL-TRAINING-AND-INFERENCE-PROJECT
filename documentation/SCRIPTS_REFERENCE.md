@@ -49,6 +49,19 @@ python scripts/run_full_pipeline.py --mode full --training-mode baseline --skip-
 
 - `python scripts/training/utils/generate_model_configs.py` - Generates YAML configuration files for multi-task training (outputs to configs/multitask_*.yaml)
 
+## ⚙️ Configuration Management
+
+- `python scripts/utils/merge_configs.py --all` - **Generates all 9 training configs** from hierarchical base configs (outputs to configs/final/, required before training)
+- `python scripts/utils/merge_configs.py --stage {1,2,3} --mode {quick,baseline,production}` - Generates single config for specific stage and mode
+- `pytest tests/test_config_generation.py -v` - **Validates config system** with 27 unit tests (deep merge, reference resolution, consistency checks)
+
+**Config System Overview:**
+- **Base configs** (5 files): `configs/base/` - Common settings, model architectures, training defaults, augmentation presets, platform overrides
+- **Stage configs** (3 files): `configs/stages/` - Stage-specific settings (seg_warmup, cls_head, joint)
+- **Mode configs** (3 files): `configs/modes/` - Mode-specific overrides (quick, baseline, production)
+- **Generated configs** (9 files): `configs/final/` - Auto-merged final configs (gitignored, regenerate with merge_configs.py)
+- **Documentation**: See `configs/README.md` and `documentation/CONFIG_REFACTORING_SUMMARY.md`
+
 ## 📊 Evaluation - Multi-Task
 
 - `python scripts/evaluation/multitask/evaluate_multitask.py [--checkpoint PATH] [--config PATH] [--output-dir DIR] [--batch-size N] [--device {cuda,cpu}]` - Comprehensive evaluation of multi-task model with Dice, IoU, Accuracy, ROC-AUC metrics (outputs to results/multitask_evaluation/)

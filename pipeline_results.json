@@ -1,15 +1,50 @@
 {
-  "start_time": "2025-12-08T16:55:36.212384",
-  "mode": "demo",
-  "training_mode": "baseline",
+  "start_time": "2025-12-08T20:20:47.749451",
+  "mode": "full",
+  "training_mode": "quick",
   "steps": {
+    "split_kaggle": {
+      "status": "success",
+      "duration_seconds": 0.27,
+      "command": "python scripts/data/splitting/split_kaggle_data.py --train 0.7 --val 0.15 --test 0.15 --seed 42"
+    },
+    "train_stage1_seg_warmup": {
+      "status": "success",
+      "duration_seconds": 147.64,
+      "command": "python scripts/training/multitask/train_multitask_seg_warmup.py --config configs/final/stage1_quick.yaml"
+    },
+    "train_stage2_cls_head": {
+      "status": "success",
+      "duration_seconds": 101.42,
+      "command": "python scripts/training/multitask/train_multitask_cls_head.py --config configs/final/stage2_quick.yaml --encoder-init C:\\--DPM-MAIN-DIR--\\windsurf_projects\\MRI-CV-MODEL-TRAINING-AND-INFERENCE-PROJECT\\checkpoints\\multitask_seg_warmup\\best_model.pth"
+    },
+    "train_stage3_joint": {
+      "status": "success",
+      "duration_seconds": 178.66,
+      "command": "python scripts/training/multitask/train_multitask_joint.py --config configs/final/stage3_quick.yaml --init-from C:\\--DPM-MAIN-DIR--\\windsurf_projects\\MRI-CV-MODEL-TRAINING-AND-INFERENCE-PROJECT\\checkpoints\\multitask_cls_head\\best_model.pth"
+    },
+    "evaluate_multitask": {
+      "status": "success",
+      "duration_seconds": 6.3,
+      "command": "python scripts/evaluation/multitask/evaluate_multitask.py --checkpoint checkpoints/multitask_joint/best_model.pth --output results/multitask_evaluation.json"
+    },
+    "generate_gradcam": {
+      "status": "success",
+      "duration_seconds": 7.09,
+      "command": "python scripts/evaluation/multitask/generate_multitask_gradcam.py --checkpoint checkpoints/multitask_joint/best_model.pth --num-samples 20 --output-dir visualizations/multitask_gradcam"
+    },
+    "compare_phases": {
+      "status": "success",
+      "duration_seconds": 4.71,
+      "command": "python scripts/evaluation/multitask/compare_all_phases.py --phase-21-checkpoint checkpoints/multitask_seg_warmup/best_model.pth --phase-22-checkpoint checkpoints/multitask_cls_head/best_model.pth --phase-23-checkpoint checkpoints/multitask_joint/best_model.pth --output results/phase_comparison.json"
+    },
     "launch_pm2_direct": {
       "status": "success",
-      "duration_seconds": 0.58,
+      "duration_seconds": 0.28,
       "command": "pm2 start configs/pm2-ecosystem/ecosystem.config.js"
     }
   },
-  "end_time": "2025-12-08T16:55:36.799393",
+  "end_time": "2025-12-08T20:28:14.128793",
   "success": true,
-  "total_duration_seconds": 0.587013
+  "total_duration_seconds": 446.37935
 }

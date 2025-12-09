@@ -49,7 +49,7 @@ class MultiTaskModel(nn.Module):
         depth: int = 4,
         bilinear: bool = True,
         dropout: float = 0.0,
-        cls_hidden_dim: int = 256,
+        cls_hidden_dim: int = 32,
         cls_dropout: float = 0.5,
     ):
         super(MultiTaskModel, self).__init__()
@@ -209,7 +209,7 @@ def create_multi_task_model(
     depth: int = 4,
     bilinear: bool = True,
     dropout: float = 0.0,
-    cls_hidden_dim: int = 256,
+    cls_hidden_dim: int = 32,
     cls_dropout: float = 0.5,
 ) -> MultiTaskModel:
     """
@@ -223,7 +223,7 @@ def create_multi_task_model(
         depth: Encoder depth (default: 4)
         bilinear: Use bilinear upsampling (default: True)
         dropout: Encoder/decoder dropout (default: 0.0)
-        cls_hidden_dim: Classification hidden dim (default: 256)
+        cls_hidden_dim: Classification hidden dim (default: 32)
         cls_dropout: Classification dropout (default: 0.5)
     
     Returns:

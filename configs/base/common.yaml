@@ -1,0 +1,23 @@
+# Common settings across ALL training runs
+# This file contains settings that should be consistent across all stages and modes
+
+# Reproducibility
+seed: 42
+device: "cuda"
+
+# CuDNN settings
+cudnn:
+  benchmark: true
+  deterministic: false
+
+# Logging defaults
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# Checkpoint defaults
+checkpoint:
+  save_best: true
+  save_last: true
+  save_optimizer: true
+  save_scheduler: true

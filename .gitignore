@@ -65,7 +65,8 @@ multitask_e2e_test_results.json
 # Python (Standard Python ignores)
 #==============================================================================
 # Byte-compiled / optimized / DLL files
-__pycache__/
+*__pycache__/
+*.pyc
 *.py[cod]
 *$py.class
 *.so
@@ -247,6 +248,9 @@ mlartifacts/
 # Keep configuration files
 !configs/**/*.yaml
 !configs/**/*.yml
+
+# But ignore generated configs (these are built from base/stages/modes)
+configs/final/
 
 # Keep documentation
 !*.md

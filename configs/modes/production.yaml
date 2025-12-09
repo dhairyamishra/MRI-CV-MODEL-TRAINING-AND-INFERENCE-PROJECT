@@ -1,0 +1,31 @@
+# Production mode - Full training (~8-12 hours)
+# Maximum epochs and aggressive augmentation for best performance
+
+mode: "production"
+
+training:
+  epochs: 100
+  batch_size: 32
+  early_stopping:
+    enabled: true
+    patience: 20
+
+# Scheduler override (T_max must match epochs)
+scheduler:
+  T_max: 100
+
+# Augmentation preset (references base/augmentation_presets.yaml)
+augmentation:
+  preset: "aggressive"
+
+# W&B logging with extra features
+wandb:
+  enabled: true
+  project: "slicewise-multitask-production"
+  log_gradients: true
+  log_frequency: 100
+
+# Checkpoint settings
+checkpoint:
+  save_frequency: 10
+  keep_last_n: 5
