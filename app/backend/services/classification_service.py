@@ -70,10 +70,25 @@ class ClassificationService:
             ClassificationResponse with prediction results
             
         Raises:
-            ValueError: If classifier not loaded
+            ValueError: If no classification model available
         """
+        # Use multi-task model if standalone classifier not available
+        if not self.model_manager.classifier_loaded and self.model_manager.multitask_loaded:
+            # Use multi-task model for classification
+            result = self.model_manager.multitask.predict_conditional(
+                image_array,
+                include_gradcam=return_gradcam
+            )
+            return ClassificationResponse(
+                predicted_class=result['classification']['predicted_class'],
+                predicted_label=result['classification']['predicted_label'],
+                confidence=result['classification']['confidence'],
+                probabilities=result['classification']['probabilities'],
+                gradcam_overlay=result.get('gradcam_overlay')
+            )
+        
         if not self.model_manager.classifier_loaded:
-            raise ValueError("Classifier not loaded")
+            raise ValueError("No classification model available")
         
         # Preprocess image
         preprocessed = preprocess_image_for_classification(image_array)
@@ -243,7 +258,8 @@ class ClassificationService:
     
     def is_available(self) -> bool:
         """Check if classification service is available."""
-        return self.model_manager.classifier_loaded
+        # Use standalone classifier if available, otherwise fall back to multi-task model
+        return self.model_manager.classifier_loaded or self.model_manager.multitask_loaded
     
     def get_model_info(self) -> Dict[str, Any]:
         """Get classifier model information."""

@@ -75,10 +75,41 @@ class SegmentationService:
             SegmentationResponse with segmentation results
             
         Raises:
-            ValueError: If segmentation model not loaded
+            ValueError: If no segmentation model available
         """
+        # Use multi-task model if standalone segmentation not available
+        if not self.model_manager.segmentation_loaded and self.model_manager.multitask_loaded:
+            # Use multi-task model for segmentation (always compute segmentation)
+            result = self.model_manager.multitask.predict_full(
+                image_array,
+                include_gradcam=False
+            )
+            
+            if result['segmentation_computed'] and result['segmentation']:
+                seg = result['segmentation']
+                return SegmentationResponse(
+                    has_tumor=seg['tumor_area_pixels'] > 0,
+                    tumor_probability=seg['tumor_percentage'] / 100.0,
+                    tumor_area_pixels=seg['tumor_area_pixels'],
+                    num_components=1,  # Multi-task doesn't provide this
+                    mask_base64=seg.get('mask_base64', ''),
+                    probability_map_base64=seg.get('prob_map_base64'),
+                    overlay_base64=seg.get('overlay_base64')
+                )
+            else:
+                # No tumor detected
+                return SegmentationResponse(
+                    has_tumor=False,
+                    tumor_probability=0.0,
+                    tumor_area_pixels=0,
+                    num_components=0,
+                    mask_base64='',
+                    probability_map_base64=None,
+                    overlay_base64=None
+                )
+        
         if not self.model_manager.segmentation_loaded:
-            raise ValueError("Segmentation model not loaded")
+            raise ValueError("No segmentation model available")
         
         # Save original image for visualization (before z-score normalization)
         image_original = self._prepare_original_for_viz(image_array)
@@ -338,7 +369,8 @@ class SegmentationService:
     
     def is_available(self) -> bool:
         """Check if segmentation service is available."""
-        return self.model_manager.segmentation_loaded
+        # Use standalone segmentation if available, otherwise fall back to multi-task model
+        return self.model_manager.segmentation_loaded or self.model_manager.multitask_loaded
     
     def get_model_info(self) -> Dict[str, Any]:
         """Get segmentation model information."""

@@ -141,7 +141,7 @@ class APIConfig(BaseModel):
     # Server settings
     host: str = "0.0.0.0"
     port: int = 8000
-    reload: bool = True
+    reload: bool = False  # Disabled for stability - manually restart when needed
     log_level: str = "info"
     
     # API metadata

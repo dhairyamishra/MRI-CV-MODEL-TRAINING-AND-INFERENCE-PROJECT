@@ -3,6 +3,8 @@ Backend starter script for PM2.
 
 This wrapper script starts the FastAPI backend using uvicorn.
 It's designed to be run by PM2 without spawning new terminal windows.
+
+Updated to use the new modular backend (main.py instead of main_v2.py).
 """
 import sys
 import os
@@ -29,9 +31,10 @@ sys.path.insert(0, project_root)
 if __name__ == "__main__":
     import uvicorn
     
+    # Use the new modular backend (main.py)
     # Disable reload on Windows when running under PM2 to prevent handle issues
     uvicorn.run(
-        "app.backend.main_v2:app",
+        "app.backend.main:app",  # Updated from main_v2 to main
         host="localhost",
         port=8000,
         reload=False,  # Disabled for PM2 compatibility on Windows
