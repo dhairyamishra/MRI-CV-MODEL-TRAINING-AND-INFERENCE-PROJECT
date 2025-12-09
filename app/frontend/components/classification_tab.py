@@ -13,10 +13,9 @@ import sys
 from PIL import Image
 
 # Import settings and utilities
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from config.settings import Colors, UIConfig
-from utils.api_client import classify_image
-from utils.image_utils import base64_to_image, image_to_bytes
+from app.frontend.config.settings import Colors, UIConfig
+from app.frontend.utils.api_client import classify_image
+from app.frontend.utils.image_utils import base64_to_image, image_to_bytes
 
 
 def render_classification_tab():

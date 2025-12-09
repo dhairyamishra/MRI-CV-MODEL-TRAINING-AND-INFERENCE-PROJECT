@@ -15,10 +15,9 @@ import sys
 from PIL import Image
 
 # Import settings and utilities
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from config.settings import UIConfig, ModelConfig, Colors
-from utils.api_client import analyze_patient_stack
-from utils.validators import validate_patient_id
+from app.frontend.config.settings import UIConfig, ModelConfig, Colors
+from app.frontend.utils.api_client import analyze_patient_stack
+from app.frontend.utils.validators import validate_patient_id
 
 
 def render_patient_tab():

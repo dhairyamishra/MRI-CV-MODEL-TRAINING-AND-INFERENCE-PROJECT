@@ -11,9 +11,8 @@ from pathlib import Path
 import sys
 
 # Import settings and utilities
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from config.settings import AppMetadata, Colors
-from utils.api_client import check_api_health, get_model_info
+from app.frontend.config.settings import AppMetadata, Colors
+from app.frontend.utils.api_client import check_api_health, get_model_info
 
 
 def render_sidebar() -> bool:
