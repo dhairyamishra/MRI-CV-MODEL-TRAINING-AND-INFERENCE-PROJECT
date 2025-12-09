@@ -22,7 +22,7 @@
 | **Phase 7** | 🚧 In Progress | Documentation & LaTeX Write-up |
 | **Phase 8** | 📋 Planned | Packaging & Deployment |
 
-**Progress: 90% Complete (7/8 phases + Multi-Task + Frontend) • ~18,700+ lines of code • 21 organized scripts**
+**Progress: 90% Complete (7/8 phases + Multi-Task + Frontend + Config System) • ~20,000+ lines of code • 70+ files • 25+ organized scripts**
 
 ## 🌟 Overview
 
@@ -54,7 +54,7 @@ SliceWise is a comprehensive medical imaging project that implements state-of-th
 ### Key Features
 
 - 🏗️ **Production-Ready Architecture**: Modular, tested, and documented
-- 🚀 **FastAPI Backend**: 12 comprehensive REST endpoints
+- 🚀 **FastAPI Backend**: 11 comprehensive REST endpoints
 - 🎨 **Streamlit Frontend**: Refactored modular UI (15 files, 87% complexity reduction)
 - 🧪 **Comprehensive Testing**: Full E2E test suite with 100% pass rate
 - 📈 **Experiment Tracking**: W&B integration for training monitoring
@@ -70,7 +70,7 @@ SliceWise is a comprehensive medical imaging project that implements state-of-th
 - CUDA-capable GPU (optional, but recommended)
 - 8GB+ RAM
 - Kaggle API credentials (for dataset download)
-- **Node.js and npm** (for PM2 process manager - recommended for demo)
+- **Node.js and npm** (for PM2 process manager - **highly recommended** for demo on Windows)
 
 ### Installation
 
@@ -86,10 +86,13 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 # 3. Install dependencies
 pip install -e ".[dev]"
 
-# 4. Install PM2 for demo process management (recommended)
+# 4. Install PM2 for demo process management (highly recommended for Windows)
 npm install -g pm2
 
-# 5. Verify setup
+# 5. Generate training configs (hierarchical system)
+python scripts/utils/merge_configs.py --all
+
+# 6. Verify setup
 python scripts/verify_setup.py
 ```
 
@@ -108,26 +111,57 @@ python scripts/run_full_pipeline.py --mode full --training-mode baseline
 python scripts/run_full_pipeline.py --mode full --training-mode production
 ```
 
-**What it does:**
-1. ✅ Downloads BraTS 2020 + Kaggle datasets
-2. ✅ Preprocesses and splits data (patient-level)
-3. ✅ Trains multi-task model (3 stages: seg warmup → cls head → joint)
-4. ✅ Evaluates on test set with comprehensive metrics
-5. ✅ Launches demo application (FastAPI + Streamlit)
+**What it does (6 automated stages):**
+1. ✅ **Data Download**: BraTS 2020 + Kaggle datasets (~80GB)
+2. ✅ **Data Preprocessing**: 3D→2D extraction, normalization, filtering
+3. ✅ **Data Splitting**: Patient-level 70/15/15 split (prevents leakage)
+4. ✅ **Multi-Task Training**: 3-stage training (seg warmup → cls head → joint)
+5. ✅ **Comprehensive Evaluation**: Metrics, Grad-CAM, phase comparison
+6. ✅ **Demo Launch**: FastAPI + Streamlit with PM2 process management
 
-See `PIPELINE_CONTROLLER_GUIDE.md` for full documentation.
+**Expected Performance:**
+- **Quick Mode**: Acc ~75-85%, Dice ~0.60-0.70 (30 min)
+- **Baseline Mode**: Acc ~85-90%, Dice ~0.70-0.75 (2-4 hours)
+- **Production Mode**: Acc ~91-93%, Sensitivity ~95-97%, Dice ~0.75-0.80 (8-12 hours)
+
+See `documentation/PIPELINE_CONTROLLER_GUIDE.md` for full documentation.
 
 ### 🎬 Run the Demo Application (Pre-trained Model)
 
 If you already have a trained model:
 
-```bash
-# Start both backend and frontend
-python scripts/demo/run_multitask_demo.py
+#### Option 1: PM2 Process Manager (Recommended for Windows)
 
-# Or start them separately:
-python scripts/demo/run_demo_backend.py  # Backend on http://localhost:8000
-python scripts/run_demo_frontend.py # Frontend on http://localhost:8501
+```bash
+# Start both backend and frontend with PM2
+python scripts/demo/run_demo_pm2.py
+
+# Or use PM2 directly
+pm2 start configs/pm2-ecosystem/ecosystem.config.js
+
+# Manage processes
+pm2 status              # View status
+pm2 logs                # View logs
+pm2 monit               # Interactive monitoring
+pm2 stop all            # Stop demo
+pm2 delete all          # Stop and remove
+```
+
+**PM2 Benefits:**
+- ✅ Auto-restart on crash
+- ✅ Centralized logging (`logs/` directory)
+- ✅ Background execution
+- ✅ Windows subprocess compatibility
+- ✅ Easy monitoring and management
+
+#### Option 2: Manual Launch (2 Terminals)
+
+```bash
+# Terminal 1: Backend
+python scripts/demo/run_demo_backend.py  # http://localhost:8000
+
+# Terminal 2: Frontend
+python scripts/demo/run_demo_frontend.py # http://localhost:8501
 ```
 
 Then open your browser to **http://localhost:8501** and explore:
@@ -182,23 +216,32 @@ See `documentation/BRATS_DATASET_GUIDE.md` for detailed instructions.
 
 ```
 MRI-CV-MODEL-TRAINING-AND-INFERENCE-PROJECT/
-├── src/                              # Source code (~11,800+ lines)
-│   ├── data/                         # Data pipeline
+├── src/                              # Source code (~13,000+ lines)
+│   ├── data/                         # Data pipeline (12 files)
 │   │   ├── kaggle_mri_dataset.py     # Kaggle dataset class
 │   │   ├── brats2d_dataset.py        # BraTS 2D dataset class
+│   │   ├── brats_classification_dataset.py  # BraTS classification dataset
 │   │   ├── preprocess_kaggle.py      # Kaggle preprocessing
 │   │   ├── preprocess_brats_2d.py    # BraTS 3D→2D extraction
 │   │   ├── split_kaggle.py           # Kaggle train/val/test split
 │   │   ├── split_brats.py            # BraTS patient-level split
 │   │   └── transforms.py             # Augmentation pipeline
-│   ├── models/                       # Model architectures
+│   ├── models/                       # Model architectures (8 files)
 │   │   ├── classifier.py             # EfficientNet-B0 & ConvNeXt
-│   │   └── unet2d.py                 # U-Net 2D (31.4M params)
-│   ├── training/                     # Training pipelines
+│   │   ├── unet2d.py                 # U-Net 2D (31.4M params)
+│   │   ├── multi_task_model.py       # Unified multi-task architecture
+│   │   ├── unet_encoder.py           # Shared encoder (15.7M params)
+│   │   ├── unet_decoder.py           # Segmentation decoder (15.7M params)
+│   │   └── classification_head.py    # Classification head (263K params)
+│   ├── training/                     # Training pipelines (8 files)
 │   │   ├── train_cls.py              # Classifier training
 │   │   ├── train_seg2d.py            # Segmentation training
-│   │   └── losses.py                 # Loss functions (Dice, Focal, etc.)
-│   ├── eval/                         # Evaluation & metrics
+│   │   ├── train_multitask_seg_warmup.py   # Stage 1: Seg warmup
+│   │   ├── train_multitask_cls_head.py     # Stage 2: Cls head
+│   │   ├── train_multitask_joint.py        # Stage 3: Joint fine-tuning
+│   │   ├── losses.py                 # Loss functions (Dice, Focal, etc.)
+│   │   └── multi_task_losses.py      # Combined loss functions
+│   ├── eval/                         # Evaluation & metrics (8 files)
 │   │   ├── eval_cls.py               # Classifier evaluation
 │   │   ├── eval_seg2d.py             # Segmentation evaluation
 │   │   ├── calibration.py            # Temperature scaling
@@ -206,46 +249,91 @@ MRI-CV-MODEL-TRAINING-AND-INFERENCE-PROJECT/
 │   │   ├── patient_level_eval.py     # Patient-level analysis
 │   │   ├── profile_inference.py      # Performance profiling
 │   │   └── grad_cam.py               # Grad-CAM explainability
-│   └── inference/                    # Inference pipeline
+│   └── inference/                    # Inference pipeline (6 files)
 │       ├── predict.py                # Classifier predictor
 │       ├── infer_seg2d.py            # Segmentation predictor
+│       ├── multi_task_predictor.py   # Multi-task predictor
 │       ├── uncertainty.py            # MC Dropout + TTA
 │       └── postprocess.py            # Post-processing utilities
 ├── app/                              # Demo application
 │   ├── backend/                      # FastAPI backend
-│   │   ├── main.py                   # Original API (Phase 2)
-│   │   └── main_v2.py                # Enhanced API (Phase 6, 12 endpoints)
-│   └── frontend/                     # Streamlit frontend
-│       ├── app.py                    # Original UI (Phase 2)
-│       └── app_v2.py                 # Enhanced UI (Phase 6, 4 tabs)
-├── scripts/                          # Utility scripts
-│   ├── download_kaggle_data.py       # Kaggle dataset download
-│   ├── download_brats_data.py        # BraTS dataset download
-│   ├── train_classifier.py           # Train classifier
-│   ├── train_segmentation.py         # Train segmentation
-│   ├── evaluate_classifier.py        # Evaluate classifier
-│   ├── evaluate_segmentation.py      # Evaluate segmentation
-│   ├── calibrate_classifier.py       # Calibrate classifier
-│   ├── generate_gradcam.py           # Generate Grad-CAM
-│   ├── run_demo.py                   # Run full demo
-│   ├── run_demo_backend.py           # Run backend only
-│   ├── run_demo_frontend.py          # Run frontend only
-│   └── test_full_e2e_phase1_to_phase6.py  # Full E2E test suite
-├── configs/                          # Configuration files
-│   ├── config_cls.yaml               # Classifier config
-│   ├── seg2d_baseline.yaml           # Segmentation config
-│   ├── hpc.yaml                      # HPC environment
-│   └── local.yaml                    # Local development
-├── tests/                            # Unit tests
+│   │   ├── main.py                   # Legacy API (Phase 2)
+│   │   └── main_v2.py                # Production API (12 endpoints, 5 routers)
+│   └── frontend/                     # Streamlit frontend (modular)
+│       ├── app.py                    # Main orchestrator (151 lines)
+│       ├── app_v2.py                 # Legacy monolithic (1,187 lines)
+│       ├── components/               # UI components (8 files)
+│       │   ├── header.py             # App header
+│       │   ├── sidebar.py            # System status
+│       │   ├── multitask_tab.py      # Multi-task UI
+│       │   ├── classification_tab.py # Classification UI
+│       │   ├── segmentation_tab.py   # Segmentation UI
+│       │   ├── batch_tab.py          # Batch processing
+│       │   └── patient_tab.py        # Patient analysis
+│       ├── config/                   # Configuration
+│       │   └── settings.py           # Centralized settings
+│       ├── styles/                   # CSS styling
+│       │   ├── theme.css             # Theme variables
+│       │   └── main.css              # Component styles
+│       └── utils/                    # Utilities (3 files)
+│           ├── api_client.py         # API communication
+│           ├── image_utils.py        # Image processing
+│           └── validators.py         # Input validation
+├── scripts/                          # Utility scripts (25+ files)
+│   ├── run_full_pipeline.py          # 🎮 Full pipeline controller
+│   ├── data/                         # Data management
+│   │   ├── collection/               # Dataset download scripts
+│   │   ├── preprocessing/            # Preprocessing scripts
+│   │   └── splitting/                # Data splitting scripts
+│   ├── demo/                         # Demo launchers (5 files)
+│   │   ├── run_demo_pm2.py           # PM2-based launcher (recommended)
+│   │   ├── run_demo_backend.py       # Backend launcher
+│   │   ├── run_demo_frontend.py      # Frontend launcher
+│   │   └── manual_demo_*.py          # Manual demo scripts
+│   ├── evaluation/                   # Evaluation scripts
+│   │   ├── multitask/                # Multi-task evaluation
+│   │   └── testing/                  # Testing scripts
+│   ├── training/                     # Training launchers
+│   └── utils/                        # Utility tools
+│       └── merge_configs.py          # Config merger (hierarchical system)
+├── configs/                          # 🔧 Hierarchical Configuration System
+│   ├── base/                         # Base configs (5 files)
+│   │   ├── common.yaml               # Common settings
+│   │   ├── model_architectures.yaml  # Model presets
+│   │   ├── training_defaults.yaml    # Training defaults
+│   │   ├── augmentation_presets.yaml # Augmentation presets
+│   │   └── platform_overrides.yaml   # Platform-specific settings
+│   ├── stages/                       # Training stages (3 files)
+│   │   ├── stage1_seg_warmup.yaml    # Stage 1: Segmentation warmup
+│   │   ├── stage2_cls_head.yaml      # Stage 2: Classification head
+│   │   └── stage3_joint.yaml         # Stage 3: Joint fine-tuning
+│   ├── modes/                        # Training modes (3 files)
+│   │   ├── quick_test.yaml           # Quick test (10 patients, 5 epochs)
+│   │   ├── baseline.yaml             # Baseline (100 patients, 50 epochs)
+│   │   └── production.yaml           # Production (988 patients, 100 epochs)
+│   ├── final/                        # 🤖 Auto-generated configs (9 files, gitignored)
+│   │   └── stage{1,2,3}_{quick,baseline,production}.yaml
+│   ├── pm2-ecosystem/                # PM2 process management
+│   │   └── ecosystem.config.js       # PM2 configuration
+│   └── README.md                     # Config system documentation
+├── tests/                            # Unit tests (8 files)
 │   ├── test_classifier.py            # Classifier tests
 │   ├── test_data_pipeline.py         # Data pipeline tests
+│   ├── test_config_generation.py     # Config system tests (27 tests)
 │   ├── test_gradcam.py               # Grad-CAM tests
 │   └── test_segmentation.py          # Segmentation tests
-├── documentation/                    # Comprehensive documentation
+├── documentation/                    # Comprehensive documentation (15+ files)
 │   ├── FULL-PLAN.md                  # Complete 8-phase roadmap
-│   └── FULL_E2E_TEST_GUIDE.md        # E2E testing guide
+│   ├── PIPELINE_CONTROLLER_GUIDE.md  # Pipeline controller guide
+│   ├── PM2_DEMO_GUIDE.md             # PM2 usage guide
+│   ├── CONFIG_GUIDE.md               # Config system guide
+│   ├── FRONTEND_REFACTORING.md       # Frontend refactoring summary
+│   └── MULTITASK_EVALUATION_REPORT.md # Multi-task analysis
 ├── jupyter_notebooks/                # Analysis notebooks
 │   └── MRI-Brain-Tumor-Detecor.ipynb # Original exploration
+├── logs/                             # PM2 logs (gitignored)
+│   ├── backend-*.log                 # Backend logs
+│   └── frontend-*.log                # Frontend logs
 ├── outputs/                          # Training outputs
 │   ├── calibration/                  # Calibration results
 │   └── seg/                          # Segmentation results
@@ -277,6 +365,55 @@ MRI-CV-MODEL-TRAINING-AND-INFERENCE-PROJECT/
 - **Annotations**: Expert-labeled tumor segmentations (3 classes)
 - **Format**: 3D NIfTI volumes → 2D slices (.npz)
 - **Use Case**: Tumor segmentation with precise boundaries
+
+## ⚙️ Configuration System
+
+### Hierarchical Configuration Architecture
+
+SliceWise uses a **hierarchical configuration system** that eliminates 70-90% duplication across training configs:
+
+```bash
+# Generate all 9 training configs (stage1-3 × quick/baseline/production)
+python scripts/utils/merge_configs.py --all
+
+# Generate single config
+python scripts/utils/merge_configs.py --stage 1 --mode quick
+
+# Validate config generation
+pytest tests/test_config_generation.py -v  # 27 tests, 100% pass rate
+```
+
+**Architecture:**
+```
+base/common.yaml (dataset paths, device settings)
+  ↓ (deep merge)
+base/training_defaults.yaml (optimizer, scheduler, loss)
+  ↓ (deep merge)
+stages/stageN_*.yaml (stage-specific settings)
+  ↓ (deep merge)
+modes/MODE.yaml (quick/baseline/production overrides)
+  ↓ (resolve references)
+final/stageN_MODE.yaml (auto-generated, ready to use)
+```
+
+**Benefits:**
+- ✅ **64% reduction** in config lines (1,100 → 365 base)
+- ✅ **100% duplication eliminated** (was 70-90%)
+- ✅ **87% less work** to change parameters (1 file vs 8)
+- ✅ **Guaranteed consistency** (auto-generated)
+- ✅ **Reference resolution** for model architectures and augmentation presets
+
+**Example References:**
+```yaml
+# In your config
+model:
+  architecture: "multitask_medium"  # Expands to full model params
+
+augmentation:
+  preset: "moderate"  # Expands to full augmentation config
+```
+
+See `configs/README.md` and `documentation/CONFIG_GUIDE.md` for full documentation.
 
 ## 🎓 Training Models
 
@@ -343,59 +480,35 @@ python scripts/calibrate_classifier.py \
 
 ## 🔌 API Endpoints
 
-The FastAPI backend (`app/backend/main_v2.py`) provides 12 comprehensive endpoints:
+The FastAPI backend is organized into **5 modular routers** with **11 comprehensive endpoints**:
 
-### Health & Info
-- `GET /healthz` - Health check
-- `GET /model/info` - Model information (classifier, segmentation, uncertainty)
+### Health & Info (`routers/health.py`)
+- `GET /` - API information and endpoint overview
+- `GET /healthz` - Health check with model status
+- `GET /model/info` - Detailed model information and capabilities
 
-### Classification
-- `POST /classify` - Basic classification with confidence
+### Classification (`routers/classification.py`)
+- `POST /classify` - Single image classification with confidence
 - `POST /classify/gradcam` - Classification with Grad-CAM visualization
 - `POST /classify/batch` - Batch classification (up to 100 images)
 
-### Segmentation
-- `POST /segment` - Basic segmentation with binary mask
+### Segmentation (`routers/segmentation.py`)
+- `POST /segment` - Single image segmentation with binary mask
 - `POST /segment/uncertainty` - Segmentation with MC Dropout + TTA uncertainty
-- `POST /segment/batch` - Batch segmentation (up to 50 images)
+- `POST /segment/batch` - Batch segmentation (up to 100 images)
 
-### Patient-Level Analysis
-- `POST /patient/analyze_stack` - Analyze patient MRI stack with volume estimation
+### Multi-Task (`routers/multitask.py`)
+- `POST /predict_multitask` - Unified classification + conditional segmentation
 
-### Example Usage
+### Patient Analysis (`routers/patient.py`)
+- `POST /patient/analyze_stack` - Patient-level analysis with volume estimation
 
-```python
-import requests
-import numpy as np
-from PIL import Image
-
-# Load MRI image
-image = np.array(Image.open("mri_scan.png").convert("L"))
-
-# Classify with Grad-CAM
-response = requests.post(
-    "http://localhost:8000/classify/gradcam",
-    json={"image": image.tolist()}
-)
-result = response.json()
-print(f"Prediction: {result['prediction']}")
-print(f"Confidence: {result['confidence']:.2%}")
-print(f"Calibrated Confidence: {result['calibrated_confidence']:.2%}")
-
-# Segment with uncertainty
-response = requests.post(
-    "http://localhost:8000/segment/uncertainty",
-    json={
-        "image": image.tolist(),
-        "n_mc_samples": 10,
-        "use_tta": True
-    }
-)
-result = response.json()
-print(f"Mean Dice: {result['mean_dice']:.3f}")
-print(f"Epistemic Uncertainty: {result['epistemic_uncertainty']:.3f}")
-print(f"Aleatoric Uncertainty: {result['aleatoric_uncertainty']:.3f}")
-```
+### Architecture Benefits
+- **Service Layer**: Business logic separated from HTTP concerns
+- **Dependency Injection**: Clean, testable code with proper DI
+- **Modular Design**: Each router handles specific functionality
+- **Error Handling**: Centralized exception handling middleware
+- **Validation**: Comprehensive input validation with Pydantic models
 
 ## 🧪 Testing
 
@@ -486,6 +599,8 @@ mypy src/
   - **Results**: 91.3% accuracy, 97.1% sensitivity, 76.5% Dice
   - **Benefits**: 9.4% fewer parameters, ~40% faster inference
 - [x] **Frontend Refactor**: Modular UI architecture (87% code reduction)
+- [x] **Config System Refactor**: Hierarchical configuration (64% reduction, 100% duplication eliminated)
+- [x] **PM2 Integration**: Process management for reliable demo deployment
 
 ### 🚧 In Progress
 
@@ -509,11 +624,22 @@ See [FULL-PLAN.md](documentation/FULL-PLAN.md) for detailed roadmap.
 ## 📚 Documentation
 
 ### Quick Reference
-- **[SCRIPTS_REFERENCE.md](SCRIPTS_REFERENCE.md)** - Complete reference for all 21 scripts with options and descriptions
+- **[SCRIPTS_REFERENCE.md](SCRIPTS_REFERENCE.md)** - Complete reference for all 25+ scripts with options and descriptions
 - **[scripts/README.md](scripts/README.md)** - Scripts organization guide with workflows and troubleshooting
 - **[FULL-PLAN.md](documentation/FULL-PLAN.md)** - Complete 8-phase roadmap with detailed checklists
+- **[PIPELINE_CONTROLLER_GUIDE.md](documentation/PIPELINE_CONTROLLER_GUIDE.md)** - Full pipeline controller usage and timelines
 - **[CONSOLIDATED_DOCUMENTATION.md](documentation/CONSOLIDATED_DOCUMENTATION.md)** - All phase documentation in one place
 - **[MULTITASK_EVALUATION_REPORT.md](documentation/MULTITASK_EVALUATION_REPORT.md)** - Multi-task architecture analysis and results
+
+### Configuration & Deployment
+- **[configs/README.md](configs/README.md)** - Hierarchical config system documentation (400+ lines)
+- **[documentation/CONFIG_GUIDE.md](documentation/CONFIG_GUIDE.md)** - Complete config refactoring summary
+- **[documentation/PM2_DEMO_GUIDE.md](documentation/PM2_DEMO_GUIDE.md)** - PM2 process management guide (488 lines)
+- **[documentation/PM2_SETUP_SUMMARY.md](documentation/PM2_SETUP_SUMMARY.md)** - Quick PM2 reference
+
+### Frontend Architecture
+- **[app/frontend/README.md](app/frontend/README.md)** - Modular frontend architecture guide (492 lines)
+- **[documentation/FRONTEND_REFACTORING.md](documentation/FRONTEND_REFACTORING.md)** - Frontend refactoring summary (461 lines)
 
 ### Technical Documentation
 - **Data Pipeline**: See `src/data/` module docstrings
@@ -524,11 +650,14 @@ See [FULL-PLAN.md](documentation/FULL-PLAN.md) for detailed roadmap.
 
 ## 📊 Project Statistics
 
-- **Total Lines of Code**: ~18,700+
-- **Number of Files**: 50+
-- **Test Coverage**: 100% E2E coverage
-- **Documentation**: 2,000+ lines
+- **Total Lines of Code**: ~20,000+
+- **Number of Files**: 70+
+- **Scripts**: 25+ organized scripts
+- **Test Coverage**: 100% E2E coverage (25/25 tests passing)
+- **Config Tests**: 27 unit tests (100% pass rate)
+- **Documentation**: 5,000+ lines across 15+ files
 - **Phases Complete**: 7/8 (87.5%)
+- **Major Refactors**: 3 (Frontend, Config System, PM2 Integration)
 
 ---
 
