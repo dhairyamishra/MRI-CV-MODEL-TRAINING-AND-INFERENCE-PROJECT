@@ -68,12 +68,12 @@ def main():
         check_models_exist()
         print()
     
-    # Path to backend
-    backend_path = project_root / "app" / "backend" / "main_v2.py"
+    # Path to backend (using new modular main.py)
+    backend_path = project_root / "app" / "backend" / "main.py"
     
     if not backend_path.exists():
         print(f"✗ Backend file not found: {backend_path}")
-        print("Please ensure main_v2.py exists in app/backend/")
+        print("Please ensure main.py exists in app/backend/")
         sys.exit(1)
     
     print("=" * 80)
@@ -92,7 +92,7 @@ def main():
         sys.executable,
         "-m",
         "uvicorn",
-        "app.backend.main_v2:app",
+        "app.backend.main:app",  # Updated from main_v2 to main
         "--host", args.host,
         "--port", str(args.port),
         "--log-level", "info"

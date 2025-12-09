@@ -9,6 +9,9 @@ module.exports = {
       autorestart: true,
       watch: false,
       max_memory_restart: '2G',
+      // Disable pidusage to avoid WMIC errors on Windows
+      disable_logs: false,
+      pmx: false,  // Disable PM2 metrics
       env: {
         PYTHONUNBUFFERED: '1'
       },
@@ -27,6 +30,9 @@ module.exports = {
       autorestart: true,
       watch: false,
       max_memory_restart: '2G',
+      // Disable pidusage to avoid WMIC errors on Windows
+      disable_logs: false,
+      pmx: false,  // Disable PM2 metrics
       env: {
         PYTHONUNBUFFERED: '1'
       },
