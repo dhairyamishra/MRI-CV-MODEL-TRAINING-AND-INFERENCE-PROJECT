@@ -16,33 +16,52 @@ When running `python scripts/run_full_pipeline.py --mode full --training-mode qu
 
 ## Solution: Use Dataset Subsets
 
-Instead of skipping BraTS entirely, we now use **intelligent subsets** based on training mode:
+Instead of skipping BraTS entirely, we now use **intelligent subsets** based on training mode.
 
-| Mode | BraTS Patients | Percentage | Purpose |
-|------|----------------|------------|---------|
-| **Quick** | 100 | ~10% | Fast testing, CI/CD |
-| **Baseline** | 300 | ~30% | Development, experiments |
-| **Production** | 988 | 100% | Full training |
+The system **dynamically calculates** the number of patients based on the actual dataset size:
+
+| Mode | Percentage | Calculation | Purpose |
+|------|------------|-------------|---------|
+| **Quick** | 5% | `max(2, int(total * 0.05))` | Fast testing, CI/CD |
+| **Baseline** | 30% | `max(50, int(total * 0.30))` | Development, experiments |
+| **Production** | 100% | All patients | Full training |
+
+### Examples:
+- **500 patients available**: Quick=25, Baseline=150, Production=500
+- **988 patients available**: Quick=49, Baseline=296, Production=988
+- **100 patients available**: Quick=5, Baseline=50, Production=100
+- **40 patients available**: Quick=2 (minimum), Baseline=50, Production=40
 
 ---
 
 ## Implementation
 
-### File: `scripts/run_full_pipeline.py` (Lines 280-290)
+### File: `scripts/run_full_pipeline.py` (Lines 280-302)
 
 ```python
-# Determine number of patients based on training mode
-# Quick mode: Use ~10% of BraTS dataset for faster loading
+# Dynamically determine number of patients based on actual dataset size
+brats_raw_dir = self.project_root / "data" / "raw" / "brats2020"
+
+# Count available BraTS patient folders
+total_patients = 0
+if brats_raw_dir.exists():
+    patient_folders = list(brats_raw_dir.glob("BraTS*"))
+    total_patients = len(patient_folders)
+    self._print_info(f"Found {total_patients} BraTS patient folders")
+else:
+    self._print_warning(f"BraTS directory not found: {brats_raw_dir}")
+    total_patients = 500  # Fallback estimate
+
+# Calculate percentages based on actual dataset size
 if self.args.training_mode == "quick":
-    num_patients = 100  # ~10% of 988 patients
-    self._print_info(f"Quick mode: Processing {num_patients} patients (~10% of dataset for faster loading)")
+    num_patients = max(2, int(total_patients * 0.05))  # 5% with minimum of 2
+    self._print_info(f"Quick mode: Processing {num_patients} patients (~5% of {total_patients} for faster loading)")
 elif self.args.training_mode == "baseline":
-    num_patients = 300  # ~30% for baseline
-    self._print_info(f"Baseline mode: Processing {num_patients} patients (~30% of dataset)")
+    num_patients = max(50, int(total_patients * 0.30))  # 30% with minimum of 50
+    self._print_info(f"Baseline mode: Processing {num_patients} patients (~30% of {total_patients})")
 else:  # production
-    num_patients = None  # Process all 988 patients
-    self._print_info("Production mode: Processing ALL patients (988)")
-```
+    num_patients = None  # Process all patients
+    self._print_info(f"Production mode: Processing ALL {total_patients} patients")
 
 The `--num-patients` parameter is then passed to the preprocessing script:
 ```python

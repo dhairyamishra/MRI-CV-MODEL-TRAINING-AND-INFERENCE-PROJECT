@@ -1,70 +1,60 @@
 {
-  "start_time": "2025-12-10T19:36:08.559503",
+  "start_time": "2025-12-10T20:34:09.319181",
   "mode": "full",
   "training_mode": "quick",
   "steps": {
-    "download_brats": {
-      "status": "success",
-      "duration_seconds": 13.74,
-      "command": "python scripts/data/collection/download_brats_data.py --version 2020"
-    },
-    "download_kaggle": {
-      "status": "success",
-      "duration_seconds": 1.28,
-      "command": "python scripts/data/collection/download_kaggle_data.py"
-    },
     "preprocess_brats": {
       "status": "success",
-      "duration_seconds": 82.05,
-      "command": "python scripts/data/preprocessing/preprocess_all_brats.py --input data/raw/brats2020 --modality flair --normalization zscore --min-tumor-pixels 100 --num-patients 100"
+      "duration_seconds": 16.71,
+      "command": "python scripts/data/preprocessing/preprocess_all_brats.py --input data/raw/brats2020 --modality flair --normalization zscore --min-tumor-pixels 100 --num-patients 24"
     },
     "preprocess_kaggle": {
       "status": "success",
-      "duration_seconds": 4.52,
+      "duration_seconds": 2.27,
       "command": "python src/data/preprocess_kaggle.py --raw-dir data/raw/kaggle_brain_mri --processed-dir data/processed/kaggle --target-size 256 256"
     },
     "split_kaggle": {
       "status": "success",
-      "duration_seconds": 0.27,
+      "duration_seconds": 0.25,
       "command": "python scripts/data/splitting/split_kaggle_data.py --train 0.7 --val 0.15 --test 0.15 --seed 42"
     },
     "train_stage1_seg_warmup": {
       "status": "success",
-      "duration_seconds": 433.78,
+      "duration_seconds": 29.0,
       "command": "python scripts/training/multitask/train_multitask_seg_warmup.py --config configs/final/stage1_quick.yaml"
     },
     "train_stage2_cls_head": {
       "status": "success",
-      "duration_seconds": 98.89,
+      "duration_seconds": 13.16,
       "command": "python scripts/training/multitask/train_multitask_cls_head.py --config configs/final/stage2_quick.yaml --encoder-init C:\\--DPM-MAIN-DIR--\\windsurf_projects\\MRI-CV-MODEL-TRAINING-AND-INFERENCE-PROJECT\\checkpoints\\multitask_seg_warmup\\best_model.pth"
     },
     "train_stage3_joint": {
       "status": "success",
-      "duration_seconds": 173.42,
+      "duration_seconds": 14.86,
       "command": "python scripts/training/multitask/train_multitask_joint.py --config configs/final/stage3_quick.yaml --init-from C:\\--DPM-MAIN-DIR--\\windsurf_projects\\MRI-CV-MODEL-TRAINING-AND-INFERENCE-PROJECT\\checkpoints\\multitask_cls_head\\best_model.pth"
     },
     "evaluate_multitask": {
       "status": "success",
-      "duration_seconds": 4.88,
+      "duration_seconds": 3.77,
       "command": "python scripts/evaluation/multitask/evaluate_multitask.py --checkpoint checkpoints/multitask_joint/best_model.pth --output results/multitask_evaluation.json"
     },
     "generate_gradcam": {
       "status": "success",
-      "duration_seconds": 6.86,
+      "duration_seconds": 6.65,
       "command": "python scripts/evaluation/multitask/generate_multitask_gradcam.py --checkpoint checkpoints/multitask_joint/best_model.pth --num-samples 20 --output-dir visualizations/multitask_gradcam"
     },
     "compare_phases": {
       "status": "success",
-      "duration_seconds": 4.9,
+      "duration_seconds": 3.54,
       "command": "python scripts/evaluation/multitask/compare_all_phases.py --phase-21-checkpoint checkpoints/multitask_seg_warmup/best_model.pth --phase-22-checkpoint checkpoints/multitask_cls_head/best_model.pth --phase-23-checkpoint checkpoints/multitask_joint/best_model.pth --output results/phase_comparison.json"
     },
     "launch_pm2_direct": {
       "status": "success",
-      "duration_seconds": 0.3,
+      "duration_seconds": 0.54,
       "command": "pm2 start configs/pm2-ecosystem/ecosystem.config.js"
     }
   },
-  "end_time": "2025-12-10T19:49:59.963233",
+  "end_time": "2025-12-10T20:35:46.136715",
   "success": true,
-  "total_duration_seconds": 831.403736
+  "total_duration_seconds": 96.817538
 }

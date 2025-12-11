@@ -243,29 +243,52 @@ class PipelineController:
         brats_dir = self.project_root / "data" / "raw" / "brats2020"
         kaggle_dir = self.project_root / "data" / "raw" / "kaggle_brain_mri"
         
-        if brats_dir.exists() and kaggle_dir.exists():
-            self._print_warning("Data directories already exist. Skipping download.")
-            user_input = input("Do you want to re-download? (y/N): ").strip().lower()
-            if user_input != 'y':
-                return True
+        # Check BraTS dataset
+        download_brats = True
+        if brats_dir.exists():
+            brats_folders = list(brats_dir.glob("BraTS*"))
+            if len(brats_folders) > 0:
+                self._print_warning(f"BraTS dataset already exists ({len(brats_folders)} patient folders found)")
+                user_input = input("Do you want to re-download BraTS? (y/N): ").strip().lower()
+                download_brats = (user_input == 'y')
         
-        # Download BraTS dataset
-        self._print_info("Downloading BraTS 2020 dataset (~15GB, may take 10-30 minutes)...")
-        if not self._run_command(
-            ["python", "scripts/data/collection/download_brats_data.py", "--version", "2020"],
-            "download_brats",
-            timeout=3600  # 1 hour timeout
-        ):
-            return False
+        # Check Kaggle dataset
+        download_kaggle = True
+        if kaggle_dir.exists():
+            yes_dir = kaggle_dir / "yes"
+            no_dir = kaggle_dir / "no"
+            if yes_dir.exists() and no_dir.exists():
+                yes_count = len(list(yes_dir.glob("*.jpg")))
+                no_count = len(list(no_dir.glob("*.jpg")))
+                total_images = yes_count + no_count
+                if total_images > 0:
+                    self._print_warning(f"Kaggle MRI dataset already exists ({total_images} images found)")
+                    user_input = input("Do you want to re-download Kaggle dataset? (y/N): ").strip().lower()
+                    download_kaggle = (user_input == 'y')
         
-        # Download Kaggle dataset
-        self._print_info("Downloading Kaggle brain MRI dataset (~500MB, may take 2-5 minutes)...")
-        if not self._run_command(
-            ["python", "scripts/data/collection/download_kaggle_data.py"],
-            "download_kaggle",
-            timeout=600  # 10 minutes timeout
-        ):
-            return False
+        # Download BraTS dataset if needed
+        if download_brats:
+            self._print_info("Downloading BraTS 2020 dataset (~15GB, may take 10-30 minutes)...")
+            if not self._run_command(
+                ["python", "scripts/data/collection/download_brats_data.py", "--version", "2020"],
+                "download_brats",
+                timeout=3600  # 1 hour timeout
+            ):
+                return False
+        else:
+            self._print_info("Skipping BraTS download (using existing data)")
+        
+        # Download Kaggle dataset if needed
+        if download_kaggle:
+            self._print_info("Downloading Kaggle brain MRI dataset (~500MB, may take 2-5 minutes)...")
+            if not self._run_command(
+                ["python", "scripts/data/collection/download_kaggle_data.py"],
+                "download_kaggle",
+                timeout=600  # 10 minutes timeout
+            ):
+                return False
+        else:
+            self._print_info("Skipping Kaggle download (using existing data)")
         
         return True
     
@@ -277,50 +300,90 @@ class PipelineController:
             self._print_warning("Skipping data preprocessing (--skip-preprocessing flag)")
             return True
         
-        # Determine number of patients based on training mode
-        # Quick mode: Use ~10% of BraTS dataset for faster loading
+        # Dynamically determine number of patients based on actual dataset size
+        brats_raw_dir = self.project_root / "data" / "raw" / "brats2020"
+        
+        # Count available BraTS patient folders
+        total_patients = 0
+        if brats_raw_dir.exists():
+            patient_folders = list(brats_raw_dir.glob("BraTS*"))
+            total_patients = len(patient_folders)
+            self._print_info(f"Found {total_patients} BraTS patient folders")
+        else:
+            self._print_warning(f"BraTS directory not found: {brats_raw_dir}")
+            total_patients = 500  # Fallback estimate
+        
+        # Calculate percentages based on actual dataset size
         if self.args.training_mode == "quick":
-            num_patients = 100  # ~10% of 988 patients
-            self._print_info(f"Quick mode: Processing {num_patients} patients (~10% of dataset for faster loading)")
+            num_patients = max(2, int(total_patients * 0.05))  # 5% with minimum of 2
+            self._print_info(f"Quick mode: Processing {num_patients} patients (~5% of {total_patients} for faster loading)")
         elif self.args.training_mode == "baseline":
-            num_patients = 300  # ~30% for baseline
-            self._print_info(f"Baseline mode: Processing {num_patients} patients (~30% of dataset)")
+            num_patients = max(50, int(total_patients * 0.30))  # 30% with minimum of 50
+            self._print_info(f"Baseline mode: Processing {num_patients} patients (~30% of {total_patients})")
         else:  # production
-            num_patients = None  # Process all 988 patients
-            self._print_info("Production mode: Processing ALL patients (988)")
+            num_patients = None  # Process all patients
+            self._print_info(f"Production mode: Processing ALL {total_patients} patients")
         
-        # Preprocess BraTS data
-        # Build preprocessing command
-        cmd = ["python", "scripts/data/preprocessing/preprocess_all_brats.py"]
+        # Check for existing preprocessed BraTS data
+        brats_processed_dir = self.project_root / "data" / "processed" / "brats2d_full"
+        preprocess_brats = True
+        if brats_processed_dir.exists():
+            # Count existing processed files to detect stale data
+            existing_train = list((brats_processed_dir / "train").glob("*.npz")) if (brats_processed_dir / "train").exists() else []
+            if len(existing_train) > 0:
+                self._print_warning(f"BraTS preprocessed data already exists ({len(existing_train)} train files)")
+                self._print_warning(f"Current mode will process {num_patients} patients, but existing data may have different count")
+                user_input = input("Do you want to re-preprocess BraTS? (y/N): ").strip().lower()
+                preprocess_brats = (user_input == 'y')
         
-        # Add preprocessing options
-        cmd.extend([
-            "--input", "data/raw/brats2020",  # Specify input directory
-            "--modality", "flair",
-            "--normalization", "zscore",  # Correct argument name
-            "--min-tumor-pixels", "100"
-        ])
+        # Check for existing preprocessed Kaggle data
+        kaggle_processed_dir = self.project_root / "data" / "processed" / "kaggle"
+        preprocess_kaggle = True
+        if kaggle_processed_dir.exists():
+            existing_train = list((kaggle_processed_dir / "train").glob("*.npz")) if (kaggle_processed_dir / "train").exists() else []
+            if len(existing_train) > 0:
+                self._print_warning(f"Kaggle preprocessed data already exists ({len(existing_train)} train files)")
+                user_input = input("Do you want to re-preprocess Kaggle dataset? (y/N): ").strip().lower()
+                preprocess_kaggle = (user_input == 'y')
         
-        if num_patients:
-            cmd.extend(["--num-patients", str(num_patients)])  # Correct argument name
+        # Preprocess BraTS data if needed
+        if preprocess_brats:
+            # Build preprocessing command
+            cmd = ["python", "scripts/data/preprocessing/preprocess_all_brats.py"]
+            
+            # Add preprocessing options
+            cmd.extend([
+                "--input", "data/raw/brats2020",  # Specify input directory
+                "--modality", "flair",
+                "--normalization", "zscore",  # Correct argument name
+                "--min-tumor-pixels", "100"
+            ])
+            
+            if num_patients:
+                cmd.extend(["--num-patients", str(num_patients)])  # Correct argument name
+            
+            self._print_info(f"Preprocessing BraTS data (3D→2D conversion, normalization)...")
+            timeout = 300 if self.args.training_mode == "quick" else 7200  # 5 min or 2 hours
+            
+            if not self._run_command(cmd, "preprocess_brats", timeout=timeout):
+                return False
+        else:
+            self._print_info("Skipping BraTS preprocessing (using existing data)")
         
-        self._print_info(f"Preprocessing BraTS data (3D→2D conversion, normalization)...")
-        timeout = 300 if self.args.training_mode == "quick" else 7200  # 5 min or 2 hours
-        
-        if not self._run_command(cmd, "preprocess_brats", timeout=timeout):
-            return False
-        
-        # Preprocess Kaggle data (JPG → NPZ conversion)
-        self._print_info("Preprocessing Kaggle data (JPG→NPZ conversion, normalization)...")
-        if not self._run_command(
-            ["python", "src/data/preprocess_kaggle.py",
-             "--raw-dir", "data/raw/kaggle_brain_mri",
-             "--processed-dir", "data/processed/kaggle",
-             "--target-size", "256", "256"],
-            "preprocess_kaggle",
-            timeout=300  # 5 minutes should be enough for 245 images
-        ):
-            return False
+        # Preprocess Kaggle data if needed
+        if preprocess_kaggle:
+            self._print_info("Preprocessing Kaggle data (JPG→NPZ conversion, normalization)...")
+            if not self._run_command(
+                ["python", "src/data/preprocess_kaggle.py",
+                 "--raw-dir", "data/raw/kaggle_brain_mri",
+                 "--processed-dir", "data/processed/kaggle",
+                 "--target-size", "256", "256"],
+                "preprocess_kaggle",
+                timeout=300  # 5 minutes should be enough for 245 images
+            ):
+                return False
+        else:
+            self._print_info("Skipping Kaggle preprocessing (using existing data)")
         
         return True
     
