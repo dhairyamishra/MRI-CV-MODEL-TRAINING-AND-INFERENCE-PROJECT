@@ -72,41 +72,44 @@ cmd.extend(["--num-patients", str(num_patients)])
 
 ## Benefits
 
-### Quick Mode (100 patients):
-- ✅ **Faster preprocessing**: ~10-15 minutes vs 2-4 hours
-- ✅ **Faster training**: Less data to load per epoch
-- ✅ **Still representative**: 100 patients is enough for testing
+### Quick Mode (5% = 24 patients for 496 total, or 49 for 988 total):
+- ✅ **Ultra-fast preprocessing**: ~2-3 minutes vs 2-4 hours
+- ✅ **Faster training**: Minimal data to load per epoch
+- ✅ **Still representative**: 24-49 patients is enough for pipeline testing
 - ✅ **Full pipeline**: Tests all 3 stages (seg warmup, cls head, joint)
-- ✅ **Both datasets**: Uses BraTS (100) + Kaggle (245)
+- ✅ **Both datasets**: Uses BraTS (5%) + Kaggle (245)
+- ✅ **Dynamic scaling**: Adapts to any dataset size automatically
 
-### Baseline Mode (300 patients):
+### Baseline Mode (30% = 148 patients for 496 total, or 296 for 988 total):
 - ✅ **Better results**: More data than quick mode
-- ✅ **Reasonable time**: ~1-2 hours preprocessing
+- ✅ **Reasonable time**: ~30-60 minutes preprocessing
 - ✅ **Good for development**: Balance between speed and quality
+- ✅ **Dynamic scaling**: Automatically calculates 30% of available patients
 
-### Production Mode (988 patients):
+### Production Mode (100% = all available patients):
 - ✅ **Best results**: Full dataset
 - ✅ **Publication-ready**: Complete training
 - ✅ **Long but thorough**: 2-4 hours preprocessing
+- ✅ **Adapts to dataset**: Works with any BraTS version (2020, 2021, custom)
 
 ---
 
 ## Expected Timeline
 
-### Quick Mode (~30-45 minutes total):
+### Quick Mode (~10-15 minutes total) ⚡:
 ```
-Step 1: Download BraTS + Kaggle          → 10-30 min (one-time)
-Step 2: Preprocess 100 BraTS + Kaggle    → 10-15 min
+Step 1: Download BraTS + Kaggle          → 10-30 min (one-time, skipped if exists)
+Step 2: Preprocess 5% BraTS + Kaggle     → 2-3 min (24 patients for 496 total)
 Step 3: Split data                        → <1 min
-Step 4: Multi-task training (3 stages)    → 10-15 min
+Step 4: Multi-task training (3 stages)    → 5-10 min
 Step 5: Evaluation                        → 2-5 min
 Step 6: Demo launch                       → instant
 ```
 
 ### Baseline Mode (~2-4 hours total):
 ```
-Step 1: Download BraTS + Kaggle          → 10-30 min (one-time)
-Step 2: Preprocess 300 BraTS + Kaggle    → 30-60 min
+Step 1: Download BraTS + Kaggle          → 10-30 min (one-time, skipped if exists)
+Step 2: Preprocess 30% BraTS + Kaggle    → 30-60 min (148 patients for 496 total)
 Step 3: Split data                        → <1 min
 Step 4: Multi-task training (3 stages)    → 1-2 hours
 Step 5: Evaluation                        → 10-15 min
@@ -115,8 +118,8 @@ Step 6: Demo launch                       → instant
 
 ### Production Mode (~8-12 hours total):
 ```
-Step 1: Download BraTS + Kaggle          → 10-30 min (one-time)
-Step 2: Preprocess 988 BraTS + Kaggle    → 2-4 hours
+Step 1: Download BraTS + Kaggle          → 10-30 min (one-time, skipped if exists)
+Step 2: Preprocess 100% BraTS + Kaggle   → 2-4 hours (496 or 988 patients)
 Step 3: Split data                        → <1 min
 Step 4: Multi-task training (3 stages)    → 4-6 hours
 Step 5: Evaluation                        → 30-60 min
@@ -128,13 +131,13 @@ Step 6: Demo launch                       → instant
 ## Usage
 
 ```bash
-# Quick mode - 100 BraTS patients (~10%)
+# Quick mode - 5% of BraTS patients (min 2, e.g., 24 for 496 total)
 python scripts/run_full_pipeline.py --mode full --training-mode quick
 
-# Baseline mode - 300 BraTS patients (~30%)
+# Baseline mode - 30% of BraTS patients (min 50, e.g., 148 for 496 total)
 python scripts/run_full_pipeline.py --mode full --training-mode baseline
 
-# Production mode - 988 BraTS patients (100%)
+# Production mode - 100% of BraTS patients (all available)
 python scripts/run_full_pipeline.py --mode full --training-mode production
 ```
 
@@ -163,51 +166,60 @@ python scripts/run_full_pipeline.py --mode full --skip-preprocessing
 - Not representative of full system
 
 ### ✅ Current Approach (Implemented):
-- Use 10% of BraTS in quick mode
+- Use 5% of BraTS in quick mode (with minimum of 2 patients)
+- Dynamic scaling based on actual dataset size
 - Train full multi-task model
 - Test complete pipeline
 - Representative subset
-- Much faster than full dataset
+- 2x faster than previous 10% approach
 
 ---
 
 ## Performance Comparison
 
-| Metric | Quick (100) | Baseline (300) | Production (988) |
-|--------|-------------|----------------|------------------|
-| **Preprocessing Time** | 10-15 min | 30-60 min | 2-4 hours |
-| **Training Time** | 10-15 min | 1-2 hours | 4-6 hours |
-| **Total Time** | 30-45 min | 2-4 hours | 8-12 hours |
-| **BraTS Slices** | ~5,000 | ~15,000 | ~50,000 |
+| Metric | Quick (5%) | Baseline (30%) | Production (100%) |
+|--------|------------|----------------|-------------------|
+| **BraTS Patients** | 24 (496 total) | 148 (496 total) | 496 (all) |
+| **Preprocessing Time** | 2-3 min | 30-60 min | 2-4 hours |
+| **Training Time** | 5-10 min | 1-2 hours | 4-6 hours |
+| **Total Time** | 10-15 min | 2-4 hours | 8-12 hours |
+| **BraTS Slices** | ~1,200 | ~7,400 | ~24,800 |
 | **Kaggle Images** | 245 | 245 | 245 |
 | **Model Type** | Multi-task | Multi-task | Multi-task |
 | **Use Case** | Testing, CI/CD | Development | Production |
+| **Dynamic Scaling** | ✅ Yes | ✅ Yes | ✅ Yes |
 
 ---
 
 ## Technical Details
 
 ### BraTS Dataset Structure:
-- Total patients: 988
+- Total patients: 496 (typical) or 988 (full BraTS 2020)
 - Average slices per patient: ~50-60
-- Total slices (approx): ~50,000
+- Total slices (approx): ~24,800 (496) or ~50,000 (988)
 
-### Quick Mode (100 patients):
-- Slices: ~5,000-6,000
+### Quick Mode (5% with minimum 2 patients):
+- Patients: 24 (for 496 total) or 49 (for 988 total)
+- Slices: ~1,200-2,400
 - Enough for: Testing all pipeline stages
-- Training time: Reasonable for quick iteration
+- Training time: Ultra-fast for quick iteration (5-10 min)
+- **2x faster** than previous 10% approach
 
-### Baseline Mode (300 patients):
-- Slices: ~15,000-18,000
+### Baseline Mode (30% with minimum 50 patients):
+- Patients: 148 (for 496 total) or 296 (for 988 total)
+- Slices: ~7,400-15,000
 - Enough for: Good model performance
-- Training time: Acceptable for development
+- Training time: Acceptable for development (1-2 hours)
 
-### Production Mode (988 patients):
-- Slices: ~50,000
+### Production Mode (100% of available patients):
+- Patients: All available (496, 988, or custom)
+- Slices: ~24,800-50,000+
 - Enough for: Best model performance
-- Training time: Long but necessary for publication
+- Training time: Long but necessary for publication (4-6 hours)
+- **Adapts to any dataset size automatically**
 
 ---
 
-**Status**: ✅ Implemented and optimized  
-**Impact**: 10x faster quick mode while maintaining full pipeline testing
+**Status**: ✅ Implemented and optimized (December 10, 2025)  
+**Impact**: 2x faster quick mode (5% vs 10%) while maintaining full pipeline testing  
+**Key Feature**: Dynamic scaling adapts to any dataset size automatically

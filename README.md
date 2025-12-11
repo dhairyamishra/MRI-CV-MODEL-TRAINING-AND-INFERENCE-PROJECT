@@ -22,7 +22,7 @@
 | **Phase 7** | 🚧 In Progress | Documentation & LaTeX Write-up |
 | **Phase 8** | 📋 Planned | Packaging & Deployment |
 
-**Progress: 90% Complete (7/8 phases + Multi-Task + Frontend + Config System) • ~20,000+ lines of code • 70+ files • 25+ organized scripts**
+**Progress: 90% Complete (7/8 phases + Multi-Task + Frontend + Config System + Automated Pipeline) • ~20,000+ lines of code • 70+ files • 25+ organized scripts**
 
 ## 🌟 Overview
 
@@ -61,7 +61,10 @@ SliceWise is a comprehensive medical imaging project that implements state-of-th
 - 🔧 **Flexible Configuration**: YAML-based configs for all components
 - ⚡ **High Performance**: 2,500+ images/sec throughput, <1ms latency
 - 🎯 **Educational**: Extensive documentation and code comments
-- 📦 **Organized Scripts**: 21 scripts organized by functionality
+- 📦 **Organized Scripts**: 25+ scripts organized by functionality
+- 🎮 **Automated Pipeline**: ONE command from data to demo (6 steps)
+- 🎯 **Smart Prompts**: Only 4 conditional Y/N prompts (if data exists)
+- 📊 **Dynamic Scaling**: Auto-calculates dataset percentages (5%/30%/100%)
 
 ## 🚀 Quick Start
 
@@ -96,35 +99,48 @@ python scripts/utils/merge_configs.py --all
 python scripts/verify_setup.py
 ```
 
-### 🎮 Full Pipeline Controller (RECOMMENDED)
+### 🎮 Full Pipeline Controller (RECOMMENDED) ⚡
 
-The easiest way to train and deploy the complete multi-task model:
+The easiest way to train and deploy the complete multi-task model - **ONE COMMAND**:
 
 ```bash
-# Quick test (10 patients, 5 epochs, ~30 minutes)
+# Quick test (5% data = 24 patients, 2 epochs, ~10-15 minutes) ⚡
 python scripts/run_full_pipeline.py --mode full --training-mode quick
 
-# Baseline training (100 patients, 50 epochs, ~2-4 hours)
+# Baseline training (30% data = 148 patients, 50 epochs, ~2-4 hours)
 python scripts/run_full_pipeline.py --mode full --training-mode baseline
 
-# Production training (988 patients, 100 epochs, ~8-12 hours)
+# Production training (100% data = 496 patients, 100 epochs, ~8-12 hours)
 python scripts/run_full_pipeline.py --mode full --training-mode production
 ```
 
 **What it does (6 automated stages):**
-1. ✅ **Data Download**: BraTS 2020 + Kaggle datasets (~80GB)
-2. ✅ **Data Preprocessing**: 3D→2D extraction, normalization, filtering
+1. ✅ **Data Download**: BraTS 2020 + Kaggle datasets (with smart Y/N prompts if exists)
+2. ✅ **Data Preprocessing**: 3D→2D extraction, normalization, filtering (dynamic scaling)
 3. ✅ **Data Splitting**: Patient-level 70/15/15 split (prevents leakage)
 4. ✅ **Multi-Task Training**: 3-stage training (seg warmup → cls head → joint)
 5. ✅ **Comprehensive Evaluation**: Metrics, Grad-CAM, phase comparison
 6. ✅ **Demo Launch**: FastAPI + Streamlit with PM2 process management
 
-**Expected Performance:**
-- **Quick Mode**: Acc ~75-85%, Dice ~0.60-0.70 (30 min)
-- **Baseline Mode**: Acc ~85-90%, Dice ~0.70-0.75 (2-4 hours)
-- **Production Mode**: Acc ~91-93%, Sensitivity ~95-97%, Dice ~0.75-0.80 (8-12 hours)
+**Smart User Interaction** (only if data exists):
+- Re-download BraTS? (y/N)
+- Re-download Kaggle? (y/N)
+- Re-preprocess BraTS? (y/N)
+- Re-preprocess Kaggle? (y/N)
 
-See `documentation/PIPELINE_CONTROLLER_GUIDE.md` for full documentation.
+**Everything else**: Fully automated!
+
+**Expected Performance:**
+- **Quick Mode**: Acc ~75-85%, Dice ~0.60-0.70 (**~10-15 min** - 2x faster!) ⚡
+- **Baseline Mode**: Acc ~85-90%, Dice ~0.70-0.75 (~2-4 hours)
+- **Production Mode**: Acc ~91-93%, Sensitivity ~95-97%, Dice ~0.75-0.80 (~8-12 hours)
+
+**Dynamic Dataset Scaling**:
+- Quick: 5% of available patients (min 2)
+- Baseline: 30% of available patients (min 50)
+- Production: 100% of available patients
+
+See `scripts/README.md` and `scripts/FULL_PIPELINE_SUMMARY.md` for full documentation.
 
 ### 🎬 Run the Demo Application (Pre-trained Model)
 
@@ -308,9 +324,9 @@ MRI-CV-MODEL-TRAINING-AND-INFERENCE-PROJECT/
 │   │   ├── stage2_cls_head.yaml      # Stage 2: Classification head
 │   │   └── stage3_joint.yaml         # Stage 3: Joint fine-tuning
 │   ├── modes/                        # Training modes (3 files)
-│   │   ├── quick_test.yaml           # Quick test (10 patients, 5 epochs)
-│   │   ├── baseline.yaml             # Baseline (100 patients, 50 epochs)
-│   │   └── production.yaml           # Production (988 patients, 100 epochs)
+│   │   ├── quick_test.yaml           # Quick test (5% data, 2 epochs)
+│   │   ├── baseline.yaml             # Baseline (30% data, 50 epochs)
+│   │   └── production.yaml           # Production (100% data, 100 epochs)
 │   ├── final/                        # 🤖 Auto-generated configs (9 files, gitignored)
 │   │   └── stage{1,2,3}_{quick,baseline,production}.yaml
 │   ├── pm2-ecosystem/                # PM2 process management
@@ -601,6 +617,11 @@ mypy src/
 - [x] **Frontend Refactor**: Modular UI architecture (87% code reduction)
 - [x] **Config System Refactor**: Hierarchical configuration (64% reduction, 100% duplication eliminated)
 - [x] **PM2 Integration**: Process management for reliable demo deployment
+- [x] **Automated Pipeline Controller**: ONE command full pipeline with smart prompts and dynamic scaling
+  - 6-step automation (download → preprocess → split → train → evaluate → demo)
+  - Smart Y/N prompts (only for existing data)
+  - Dynamic dataset scaling (5%/30%/100% based on mode)
+  - Quick mode optimized to 5% (min 2 patients) - 2x faster!
 
 ### 🚧 In Progress
 
@@ -624,12 +645,13 @@ See [FULL-PLAN.md](documentation/FULL-PLAN.md) for detailed roadmap.
 ## 📚 Documentation
 
 ### Quick Reference
-- **[SCRIPTS_REFERENCE.md](SCRIPTS_REFERENCE.md)** - Complete reference for all 25+ scripts with options and descriptions
-- **[scripts/README.md](scripts/README.md)** - Scripts organization guide with workflows and troubleshooting
+- **[scripts/README.md](scripts/README.md)** - Complete scripts reference with automated pipeline guide (updated Dec 10, 2025)
+- **[scripts/FULL_PIPELINE_SUMMARY.md](scripts/FULL_PIPELINE_SUMMARY.md)** - Quick pipeline reference with examples
+- **[SCRIPTS_REFERENCE.md](SCRIPTS_REFERENCE.md)** - Detailed reference for all 25+ scripts
 - **[FULL-PLAN.md](documentation/FULL-PLAN.md)** - Complete 8-phase roadmap with detailed checklists
-- **[PIPELINE_CONTROLLER_GUIDE.md](documentation/PIPELINE_CONTROLLER_GUIDE.md)** - Full pipeline controller usage and timelines
 - **[CONSOLIDATED_DOCUMENTATION.md](documentation/CONSOLIDATED_DOCUMENTATION.md)** - All phase documentation in one place
 - **[MULTITASK_EVALUATION_REPORT.md](documentation/MULTITASK_EVALUATION_REPORT.md)** - Multi-task architecture analysis and results
+- **[documentation/DATASET_LOADING_OPTIMIZATION.md](documentation/DATASET_LOADING_OPTIMIZATION.md)** - Dynamic dataset scaling guide
 
 ### Configuration & Deployment
 - **[configs/README.md](configs/README.md)** - Hierarchical config system documentation (400+ lines)
@@ -658,6 +680,15 @@ See [FULL-PLAN.md](documentation/FULL-PLAN.md) for detailed roadmap.
 - **Documentation**: 5,000+ lines across 15+ files
 - **Phases Complete**: 7/8 (87.5%)
 - **Major Refactors**: 3 (Frontend, Config System, PM2 Integration)
+- **Automation**: 1 command, 6 steps, 4 conditional prompts
+- **Quick Mode**: 2x faster (5% data, ~10-15 min)
+
+**Recent Updates (December 10, 2025)**:
+- ⚡ Quick mode optimized to 5% dataset (min 2 patients) - 2x faster!
+- 🎯 Smart Y/N prompts (only for existing data)
+- 📊 Dynamic dataset scaling (adapts to any dataset size)
+- 🔧 Individual download/preprocessing controls
+- 📝 Comprehensive documentation updates
 
 ---
 

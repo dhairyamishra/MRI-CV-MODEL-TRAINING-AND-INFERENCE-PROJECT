@@ -10,92 +10,95 @@ You now have a **complete, production-ready pipeline controller** that automates
 
 ### 📦 New Files Created
 
-1. **`scripts/run_full_pipeline.py`** (700+ lines)
-   - Comprehensive pipeline orchestrator
+1. **`scripts/run_full_pipeline.py`** (800+ lines)
+   - Comprehensive pipeline orchestrator with 6 automated steps
    - Colored terminal output with progress tracking
+   - Smart Y/N prompts (only for existing data)
+   - Dynamic dataset scaling (5%/30%/100%)
+   - PM2 integration for demo management
    - Automatic error handling and recovery
    - JSON results logging
 
-2. **`configs/multitask_seg_warmup_production.yaml`**
-   - Production config for Stage 1 (100 epochs)
-   - Full dataset (988 patients)
-   - Advanced augmentation
+2. **Hierarchical Config System** (auto-generated)
+   - `configs/base/` - Common settings, model architectures, augmentation presets
+   - `configs/stages/` - Stage-specific configs (seg_warmup, cls_head, joint)
+   - `configs/modes/` - Training modes (quick_test, baseline, production)
+   - `configs/final/` - 9 generated configs (gitignored)
+   - `scripts/utils/merge_configs.py` - Config generation tool
 
-3. **`configs/multitask_cls_head_production.yaml`**
-   - Production config for Stage 2 (50 epochs)
-   - Classification head training
-   - Label smoothing
-
-4. **`configs/multitask_joint_production.yaml`**
-   - Production config for Stage 3 (50 epochs)
-   - Joint fine-tuning with differential LR
-   - Mixed dataset batching
-
-5. **`PIPELINE_CONTROLLER_GUIDE.md`** (500+ lines)
-   - Complete usage documentation
-   - Troubleshooting guide
-   - Performance expectations
-
-6. **`FULL_PIPELINE_SUMMARY.md`** (this file)
-   - Quick reference summary
+3. **Documentation Updates**
+   - `scripts/README.md` - Complete scripts reference
+   - `documentation/DATASET_LOADING_OPTIMIZATION.md` - Dynamic scaling guide
+   - `documentation/BUGFIX_KAGGLE_PREPROCESSING.md` - Bug fixes
+   - `FULL_PIPELINE_SUMMARY.md` - This file (updated Dec 10, 2025)
 
 ---
 
 ## 🚀 How to Use
 
-### Option 1: Quick Test (Recommended First)
+### Option 1: Quick Test (Recommended First) ⚡
 
 ```bash
 python scripts/run_full_pipeline.py --mode full --training-mode quick
 ```
 
 **What happens:**
-- Downloads ~15GB BraTS + 500MB Kaggle data
-- Processes 10 patients → ~500 slices
-- Trains 3 stages (5 epochs each) → ~30 minutes total
-- Evaluates on test set
-- Launches demo application
+- **Smart Prompts**: Only asks Y/N if data already exists (4 prompts max)
+- **Downloads**: ~15GB BraTS + 500MB Kaggle (skipped if exists)
+- **Processes**: 5% of dataset (24 patients for 496 total) → ~1,200 slices
+- **Trains**: 3 stages (2 epochs each) → ~5-10 minutes total
+- **Evaluates**: Test set metrics + 20 Grad-CAM samples
+- **Launches**: Demo with PM2 (auto-restart, logging)
 
 **Expected Results:**
 - Classification Accuracy: ~75-85%
 - Segmentation Dice: ~0.60-0.70
-- Total Time: ~30 minutes
+- **Total Time: ~10-15 minutes** (2x faster than before!)
+
+**User Interaction** (only if data exists):
+1. Re-download BraTS? (y/N)
+2. Re-download Kaggle? (y/N)
+3. Re-preprocess BraTS? (y/N)
+4. Re-preprocess Kaggle? (y/N)
+
+**Everything else**: Fully automated!
 
 ### Option 2: Baseline Training
 
 ```bash
-python scripts/run_full_pipeline.py --mode full --training-mode baseline --skip-download
+python scripts/run_full_pipeline.py --mode full --training-mode baseline
 ```
 
 **What happens:**
-- Uses existing downloaded data
-- Processes 100 patients → ~5,000 slices
-- Trains 3 stages (50 epochs total) → ~2-4 hours
-- Comprehensive evaluation
-- Launches demo
+- **Smart Prompts**: Asks about re-downloading/re-preprocessing if data exists
+- **Processes**: 30% of dataset (148 patients for 496 total) → ~7,400 slices
+- **Trains**: 3 stages (50 epochs total) → ~1-2 hours
+- **Evaluates**: Comprehensive metrics + 50 Grad-CAM samples
+- **Launches**: Demo with PM2
 
 **Expected Results:**
 - Classification Accuracy: ~85-90%
 - Segmentation Dice: ~0.70-0.75
-- Total Time: ~2-4 hours
+- **Total Time: ~2-4 hours**
 
 ### Option 3: Production Training
 
 ```bash
-python scripts/run_full_pipeline.py --mode full --training-mode production --skip-download
+python scripts/run_full_pipeline.py --mode full --training-mode production
 ```
 
 **What happens:**
-- Uses all 988 patients → ~50,000 slices
-- Trains 3 stages (200 epochs total) → ~8-12 hours
-- Full evaluation with 50 Grad-CAM samples
-- Launches production demo
+- **Smart Prompts**: Asks about re-downloading/re-preprocessing if data exists
+- **Processes**: 100% of dataset (all 496 patients) → ~24,800 slices
+- **Trains**: 3 stages (100 epochs total) → ~4-6 hours
+- **Evaluates**: Full evaluation with 50 Grad-CAM samples
+- **Launches**: Production demo with PM2
 
 **Expected Results:**
 - Classification Accuracy: ~91-93%
 - Classification Sensitivity: ~95-97%
 - Segmentation Dice: ~0.75-0.80
-- Total Time: ~8-12 hours
+- **Total Time: ~8-12 hours**
 
 ---
 
@@ -199,23 +202,27 @@ project_root/
 
 ## 📈 Performance Metrics
 
-### Quick Mode (10 patients, 5 epochs)
+### Quick Mode (5% = 24 patients, 2 epochs) ⚡
 | Metric | Value | Purpose |
-|--------|-------|---------|
-| Training Time | ~30 min | Smoke test |
+|--------|-------|---------|  
+| BraTS Patients | 24 (~5%) | Ultra-fast testing |
+| Training Time | **~10-15 min** | Smoke test |
 | Classification Acc | ~75-85% | Verify pipeline |
 | Segmentation Dice | ~0.60-0.70 | Debug issues |
+| User Prompts | 0-4 (conditional) | Only if data exists |
 
-### Baseline Mode (100 patients, 50 epochs)
+### Baseline Mode (30% = 148 patients, 50 epochs)
 | Metric | Value | Purpose |
 |--------|-------|---------|
+| BraTS Patients | 148 (~30%) | Development |
 | Training Time | ~2-4 hrs | Experiments |
 | Classification Acc | ~85-90% | Hyperparameter tuning |
 | Segmentation Dice | ~0.70-0.75 | Baseline comparison |
 
-### Production Mode (988 patients, 100 epochs)
+### Production Mode (100% = 496 patients, 100 epochs)
 | Metric | Value | Purpose |
 |--------|-------|---------|
+| BraTS Patients | 496 (100%) | Full training |
 | Training Time | ~8-12 hrs | Final model |
 | Classification Acc | ~91-93% | Production deployment |
 | Classification Sensitivity | ~95-97% | Clinical use |
@@ -242,19 +249,35 @@ optimizer:
 
 ### Change Dataset Size
 
+**Automatic (Recommended)**:
 ```bash
-# Process only 50 patients
+# Quick mode automatically uses 5% (min 2 patients)
+python scripts/run_full_pipeline.py --mode full --training-mode quick
+
+# Baseline mode automatically uses 30% (min 50 patients)
+python scripts/run_full_pipeline.py --mode full --training-mode baseline
+```
+
+**Manual Override**:
+```bash
+# Process specific number of patients
 python scripts/data/preprocessing/preprocess_all_brats.py --num-patients 50
+
+# Then skip preprocessing in pipeline
+python scripts/run_full_pipeline.py --mode full --skip-preprocessing
 ```
 
 ### Skip Stages
 
 ```bash
-# Only run training and evaluation (skip data prep)
-python scripts/run_full_pipeline.py --mode train-eval --training-mode baseline
+# Skip download (use existing data)
+python scripts/run_full_pipeline.py --mode full --training-mode quick --skip-download
 
-# Only launch demo (skip everything else)
-python scripts/run_full_pipeline.py --mode demo
+# Skip preprocessing (use existing processed data)
+python scripts/run_full_pipeline.py --mode full --training-mode quick --skip-preprocessing
+
+# Skip both download and preprocessing
+python scripts/run_full_pipeline.py --mode full --training-mode quick --skip-download --skip-preprocessing
 ```
 
 ---
@@ -304,11 +327,14 @@ cat ~/.kaggle/kaggle.json
 
 ## 📚 Additional Documentation
 
-- **Full Guide**: `PIPELINE_CONTROLLER_GUIDE.md` (500+ lines)
-- **Scripts Reference**: `SCRIPTS_REFERENCE.md` (all 21+ scripts)
+- **Scripts Reference**: `scripts/README.md` (comprehensive guide, updated Dec 10, 2025)
+- **Dataset Optimization**: `documentation/DATASET_LOADING_OPTIMIZATION.md`
+- **Config System**: `configs/README.md` (hierarchical config guide)
+- **Bug Fixes**: `documentation/BUGFIX_KAGGLE_PREPROCESSING.md`
 - **Multi-Task Architecture**: `documentation/PHASE1_COMPLETE.md`
 - **Training Strategy**: `documentation/MULTITASK_EVALUATION_REPORT.md`
 - **Demo Application**: `documentation/PHASE6_COMPLETE.md`
+- **PM2 Integration**: `documentation/PM2_DEMO_GUIDE.md`
 
 ---
 
@@ -318,11 +344,14 @@ By creating this pipeline, you now have:
 
 1. ✅ **Complete MLOps Pipeline**: Data → Training → Evaluation → Deployment
 2. ✅ **Production-Ready Code**: Error handling, logging, monitoring
-3. ✅ **Flexible Configuration**: YAML configs for all hyperparameters
-4. ✅ **Automated Orchestration**: Single command for entire workflow
-5. ✅ **Best Practices**: Patient-level splitting, mixed precision, early stopping
-6. ✅ **Comprehensive Evaluation**: Multiple metrics, visualizations, comparisons
-7. ✅ **Interactive Demo**: FastAPI + Streamlit for real-time inference
+3. ✅ **Flexible Configuration**: Hierarchical YAML configs (auto-generated)
+4. ✅ **Automated Orchestration**: ONE command for entire workflow
+5. ✅ **Smart User Interaction**: Only 4 conditional Y/N prompts
+6. ✅ **Dynamic Scaling**: 5%/30%/100% based on training mode
+7. ✅ **Best Practices**: Patient-level splitting, mixed precision, early stopping
+8. ✅ **Comprehensive Evaluation**: Multiple metrics, visualizations, comparisons
+9. ✅ **Interactive Demo**: FastAPI + Streamlit with PM2 management
+10. ✅ **Ultra-Fast Testing**: Quick mode in ~10-15 minutes (2x faster!)
 
 ---
 
@@ -375,8 +404,15 @@ You now have a **complete, production-ready, end-to-end deep learning pipeline**
 
 **Ready for:** Research papers, production deployment, portfolio projects, clinical trials
 
+**Recent Updates (Dec 10, 2025)**:
+- ⚡ Quick mode optimized to 5% (min 2 patients) - 2x faster!
+- 🎯 Smart Y/N prompts (only for existing data)
+- 📊 Dynamic dataset scaling (adapts to any dataset size)
+- 🔧 Individual download/preprocessing controls
+- 📝 Comprehensive documentation updates
+
 ---
 
 **Happy Training! 🚀**
 
-*SliceWise Team - December 7, 2025*
+*SliceWise Team - Last Updated: December 10, 2025*

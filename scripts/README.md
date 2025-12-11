@@ -8,10 +8,16 @@ This directory contains all executable scripts for the **SliceWise MRI Brain Tum
 
 **Most Common Commands** (run from project root):
 ```bash
+# 🚀 AUTOMATED FULL PIPELINE (Recommended)
+python scripts/run_full_pipeline.py --mode full --training-mode quick
+# Modes: quick (5% data, ~10 min), baseline (30% data, ~2-4 hrs), production (100% data, ~8-12 hrs)
+
 # 🎬 Launch Demo
 python scripts/demo/run_multitask_demo.py
+# Or with PM2 (recommended):
+pm2 start configs/pm2-ecosystem/ecosystem.config.js
 
-# 🏋️ Training (3-stage pipeline)
+# 🏋️ Manual Training (3-stage pipeline)
 python scripts/training/multitask/train_multitask_seg_warmup.py
 python scripts/training/multitask/train_multitask_cls_head.py --encoder-init checkpoints/multitask_seg_warmup/best_model.pth
 python scripts/training/multitask/train_multitask_joint.py --init-from checkpoints/multitask_cls_head/best_model.pth
@@ -23,9 +29,9 @@ python scripts/evaluation/multitask/generate_multitask_gradcam.py --num-samples 
 # 🧪 Testing
 python scripts/evaluation/testing/test_multitask_e2e.py
 
-# 📦 Data Pipeline
+# 📦 Manual Data Pipeline
 python scripts/data/collection/download_brats_data.py
-python scripts/data/preprocessing/preprocess_all_brats.py
+python scripts/data/preprocessing/preprocess_all_brats.py --num-patients 25
 python scripts/data/splitting/split_brats_data.py
 ```
 
@@ -35,19 +41,72 @@ python scripts/data/splitting/split_brats_data.py
 
 ```
 scripts/
+├── run_full_pipeline.py    # 🚀 AUTOMATED PIPELINE CONTROLLER (NEW)
 ├── data/                    # Data pipeline scripts
 │   ├── collection/         # Raw data acquisition
 │   ├── preprocessing/      # Data transformation and preparation
 │   └── splitting/          # Train/validation/test splitting
 ├── training/               # Model training scripts
 │   ├── multitask/          # Multi-task learning pipelines
-│   └── utils/              # Training utilities
+│   └── utils/              # Training utilities & config generation
 ├── evaluation/             # Model evaluation and testing
 │   ├── multitask/          # Multi-task model evaluation
 │   └── testing/            # End-to-end and component testing
 ├── demo/                   # Demo and application launchers
 └── debug/                  # Debugging and diagnostic tools
 ```
+
+## 🚀 Automated Pipeline Controller (NEW)
+
+### `run_full_pipeline.py`
+**Purpose**: One-command automated pipeline from data download to demo launch.
+
+**Features**:
+- ✅ **6-Step Automation**: Download → Preprocess → Split → Train → Evaluate → Demo
+- ✅ **3 Training Modes**: Quick (5%), Baseline (30%), Production (100%)
+- ✅ **Smart Prompts**: Only asks Y/N for re-downloading/re-preprocessing existing data
+- ✅ **Dynamic Scaling**: Automatically calculates dataset percentages
+- ✅ **PM2 Integration**: Robust process management for demo
+- ✅ **Error Handling**: Automatic retry and graceful fallbacks
+
+**Usage**:
+```bash
+# Quick mode (5% data, ~10 minutes total)
+python scripts/run_full_pipeline.py --mode full --training-mode quick
+
+# Baseline mode (30% data, ~2-4 hours)
+python scripts/run_full_pipeline.py --mode full --training-mode baseline
+
+# Production mode (100% data, ~8-12 hours)
+python scripts/run_full_pipeline.py --mode full --training-mode production
+
+# Skip specific steps
+python scripts/run_full_pipeline.py --mode full --training-mode quick --skip-download
+python scripts/run_full_pipeline.py --mode full --training-mode quick --skip-preprocessing
+```
+
+**Training Mode Comparison**:
+
+| Mode | BraTS Patients | Kaggle Images | Preprocessing | Training | Total Time |
+|------|----------------|---------------|---------------|----------|------------|
+| **Quick** | 5% (min 2) | 245 | ~2-3 min | ~5 min | ~10-15 min |
+| **Baseline** | 30% (min 50) | 245 | ~30-60 min | ~1-2 hrs | ~2-4 hrs |
+| **Production** | 100% | 245 | ~2-4 hrs | ~4-6 hrs | ~8-12 hrs |
+
+**Example (496 patients available)**:
+- Quick: 24 patients (~1,200 slices)
+- Baseline: 148 patients (~7,400 slices)
+- Production: 496 patients (~24,800 slices)
+
+**User Prompts** (only if data exists):
+1. Re-download BraTS? (y/N)
+2. Re-download Kaggle? (y/N)
+3. Re-preprocess BraTS? (y/N)
+4. Re-preprocess Kaggle? (y/N)
+
+**Everything Else**: Fully automated!
+
+---
 
 ## 📊 Scripts by Category
 
@@ -75,13 +134,21 @@ python scripts/data/collection/download_kaggle_data.py
 
 | Script | Description | Input | Output | Runtime |
 |--------|-------------|-------|--------|---------|
-| `preprocess_all_brats.py` | 3D→2D conversion, normalization | BraTS NIfTI files | 2D slices + metadata | 5-15 min |
+| `preprocess_all_brats.py` | 3D→2D conversion, normalization | BraTS NIfTI files | 2D slices + metadata | 2-240 min* |
 | `export_dataset_examples.py` | Create visualization samples | Processed data | PNG examples + JSON | 2-5 min |
+
+*Runtime depends on `--num-patients`: 2 patients (~2 min), 100 patients (~15 min), 988 patients (~4 hrs)
 
 **Usage**:
 ```bash
-# Preprocess BraTS data (988 patients)
+# Preprocess all patients (default: 988)
 python scripts/data/preprocessing/preprocess_all_brats.py
+
+# Preprocess specific number of patients
+python scripts/data/preprocessing/preprocess_all_brats.py --num-patients 25
+
+# Quick test (10 patients)
+python scripts/data/preprocessing/preprocess_all_brats.py --num-patients 10
 
 # Export dataset examples for visualization
 python scripts/data/preprocessing/export_dataset_examples.py
@@ -236,21 +303,37 @@ python scripts/debug/debug_multitask_data.py
 
 ## 🚀 Quick Start Workflows
 
-### **Complete Pipeline (New Users)**
+### **Complete Pipeline (New Users) - AUTOMATED** ⭐
+```bash
+# ONE COMMAND - Full pipeline from scratch to demo
+python scripts/run_full_pipeline.py --mode full --training-mode quick
+
+# That's it! The script will:
+# 1. Download BraTS + Kaggle datasets (with Y/N prompts if exists)
+# 2. Preprocess 5% of data (~24 patients for 496 total)
+# 3. Split into train/val/test
+# 4. Train 3-stage multi-task model
+# 5. Evaluate and generate visualizations
+# 6. Launch demo with PM2
+#
+# Total time: ~10-15 minutes
+```
+
+### **Complete Pipeline (Manual Control)**
 ```bash
 # 1. Data acquisition
 python scripts/data/collection/download_brats_data.py
 python scripts/data/collection/download_kaggle_data.py
 
 # 2. Data preparation
-python scripts/data/preprocessing/preprocess_all_brats.py
+python scripts/data/preprocessing/preprocess_all_brats.py --num-patients 25
 python scripts/data/splitting/split_brats_data.py
 python scripts/data/splitting/split_kaggle_data.py
 
 # 3. Training (3 stages)
-python scripts/training/multitask/train_multitask_seg_warmup.py
-python scripts/training/multitask/train_multitask_cls_head.py
-python scripts/training/multitask/train_multitask_joint.py
+python scripts/training/multitask/train_multitask_seg_warmup.py --config configs/final/stage1_quick.yaml
+python scripts/training/multitask/train_multitask_cls_head.py --config configs/final/stage2_quick.yaml
+python scripts/training/multitask/train_multitask_joint.py --config configs/final/stage3_quick.yaml
 
 # 4. Evaluation
 python scripts/evaluation/multitask/evaluate_multitask.py
@@ -260,6 +343,8 @@ python scripts/evaluation/testing/test_multitask_e2e.py
 
 # 6. Demo
 python scripts/demo/run_multitask_demo.py
+# Or with PM2:
+pm2 start configs/pm2-ecosystem/ecosystem.config.js
 ```
 
 ### **Resume Training (Existing Data)**
@@ -273,8 +358,15 @@ python scripts/evaluation/multitask/evaluate_multitask.py
 
 ### **Demo Only (Pre-trained Models)**
 ```bash
-# Launch demo with pre-trained models
+# Launch demo with pre-trained models (manual)
 python scripts/demo/run_multitask_demo.py
+
+# Or with PM2 (recommended - auto-restart, logging)
+pm2 start configs/pm2-ecosystem/ecosystem.config.js
+pm2 status              # Check status
+pm2 logs                # View logs
+pm2 stop all            # Stop demo
+pm2 delete all          # Remove from PM2
 ```
 
 ## 📋 Prerequisites
@@ -328,10 +420,39 @@ checkpoints/
 ## 🔧 Configuration
 
 ### **Training Configs**
-Located in `configs/` directory:
-- `config_multitask_seg_warmup.yaml`
-- `config_multitask_cls_head.yaml`
-- `config_multitask_joint.yaml`
+
+**Hierarchical Config System** (auto-generated):
+```
+configs/
+├── base/                    # Base configurations
+│   ├── common.yaml         # Common settings (seed, device, logging)
+│   ├── training_defaults.yaml  # Default training params
+│   ├── model_architectures.yaml  # Model presets
+│   └── augmentation_presets.yaml  # Augmentation configs
+├── stages/                  # Stage-specific configs
+│   ├── stage1_seg_warmup.yaml
+│   ├── stage2_cls_head.yaml
+│   └── stage3_joint.yaml
+├── modes/                   # Training mode configs
+│   ├── quick_test.yaml     # 5% data, 2 epochs
+│   ├── baseline.yaml       # 30% data, 50 epochs
+│   └── production.yaml     # 100% data, 100 epochs
+└── final/                   # Generated configs (gitignored)
+    ├── stage1_quick.yaml
+    ├── stage2_quick.yaml
+    ├── stage3_quick.yaml
+    ├── stage1_baseline.yaml
+    └── ... (9 total)
+```
+
+**Generate configs**:
+```bash
+# Generate all 9 configs
+python scripts/utils/merge_configs.py --all
+
+# Generate single config
+python scripts/utils/merge_configs.py --stage 1 --mode quick
+```
 
 ### **Environment Variables**
 ```bash
@@ -425,6 +546,8 @@ When adding new scripts:
 
 ---
 
-**Last Updated**: December 7, 2025
-**Project Phase**: Multi-Task Integration Complete
-**Total Scripts**: 21 organized scripts
+**Last Updated**: December 10, 2025  
+**Project Phase**: Automated Pipeline Complete  
+**Total Scripts**: 22+ organized scripts  
+**Key Addition**: `run_full_pipeline.py` - One-command automation  
+**Optimization**: Quick mode now uses 5% data (min 2 patients) for ultra-fast testing
