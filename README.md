@@ -182,13 +182,13 @@ mv kaggle.json ~/.kaggle/
 chmod 600 ~/.kaggle/kaggle.json
 
 # 2. Download dataset (245 images)
-python scripts/download_kaggle_data.py
+python scripts/data/collection/download_kaggle_data.py
 
 # 3. Preprocess to .npz format
 python src/data/preprocess_kaggle.py
 
 # 4. Create train/val/test splits
-python src/data/split_kaggle.py
+python scripts/data/splitting/split_kaggle_data.py
 
 # Done! Dataset ready at data/processed/kaggle/{train,val,test}/
 ```
@@ -199,13 +199,13 @@ python src/data/split_kaggle.py
 
 ```bash
 # 1. Download BraTS 2020 dataset (988 patients, ~80GB)
-python scripts/download_brats_data.py
+python scripts/data/collection/download_brats_data.py
 
 # 2. Preprocess 3D volumes to 2D slices
-python scripts/preprocess_all_brats.py
+python scripts/data/preprocessing/preprocess_all_brats.py
 
 # 3. Create patient-level splits (prevents data leakage)
-python src/data/split_brats.py
+python scripts/data/splitting/split_brats_data.py
 
 # Done! Dataset ready at data/processed/brats2d/{train,val,test}/
 ```

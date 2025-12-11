@@ -241,7 +241,7 @@ class PipelineController:
         
         # Check if data already exists
         brats_dir = self.project_root / "data" / "raw" / "brats2020"
-        kaggle_dir = self.project_root / "data" / "raw" / "kaggle"
+        kaggle_dir = self.project_root / "data" / "raw" / "kaggle_brain_mri"
         
         if brats_dir.exists() and kaggle_dir.exists():
             self._print_warning("Data directories already exist. Skipping download.")
@@ -278,16 +278,18 @@ class PipelineController:
             return True
         
         # Determine number of patients based on training mode
+        # Quick mode: Use ~10% of BraTS dataset for faster loading
         if self.args.training_mode == "quick":
-            num_patients = 10
-            self._print_info(f"Quick mode: Processing {num_patients} patients")
+            num_patients = 100  # ~10% of 988 patients
+            self._print_info(f"Quick mode: Processing {num_patients} patients (~10% of dataset for faster loading)")
         elif self.args.training_mode == "baseline":
-            num_patients = 100
-            self._print_info(f"Baseline mode: Processing {num_patients} patients")
+            num_patients = 300  # ~30% for baseline
+            self._print_info(f"Baseline mode: Processing {num_patients} patients (~30% of dataset)")
         else:  # production
-            num_patients = None  # Process all patients
+            num_patients = None  # Process all 988 patients
             self._print_info("Production mode: Processing ALL patients (988)")
         
+        # Preprocess BraTS data
         # Build preprocessing command
         cmd = ["python", "scripts/data/preprocessing/preprocess_all_brats.py"]
         
@@ -306,6 +308,18 @@ class PipelineController:
         timeout = 300 if self.args.training_mode == "quick" else 7200  # 5 min or 2 hours
         
         if not self._run_command(cmd, "preprocess_brats", timeout=timeout):
+            return False
+        
+        # Preprocess Kaggle data (JPG → NPZ conversion)
+        self._print_info("Preprocessing Kaggle data (JPG→NPZ conversion, normalization)...")
+        if not self._run_command(
+            ["python", "src/data/preprocess_kaggle.py",
+             "--raw-dir", "data/raw/kaggle_brain_mri",
+             "--processed-dir", "data/processed/kaggle",
+             "--target-size", "256", "256"],
+            "preprocess_kaggle",
+            timeout=300  # 5 minutes should be enough for 245 images
+        ):
             return False
         
         return True
