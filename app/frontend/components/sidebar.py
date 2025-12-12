@@ -46,53 +46,51 @@ def render_sidebar() -> bool:
         if health and health['status'] in ['healthy', 'no_models_loaded']:
             st.success("[OK] API Connected")
             
-            # Show model status in 3 columns (Multi-Task, Classifier, Segmentation)
-            col1, col2, col3 = st.columns(3)
+            # Show model status - Multi-Task only (Classifier and Segmentation hidden for presentation)
+            st.markdown("**Multi-Task Model**")
+            if health.get('multitask_loaded', False):
+                st.markdown("✅ [OK]")
+                st.markdown(
+                    f'<span style="color: {Colors.SUCCESS_GREEN}; font-size: 0.8rem;">Loaded and Ready</span>',
+                    unsafe_allow_html=True
+                )
+            else:
+                st.markdown("✗")
+                st.markdown(
+                    f'<span style="color: {Colors.DANGER_RED}; font-size: 0.8rem;">Not loaded</span>',
+                    unsafe_allow_html=True
+                )
             
-            with col1:
-                st.markdown("**Multi-Task**")
-                if health.get('multitask_loaded', False):
-                    st.markdown("[OK]")
-                    st.markdown(
-                        f'<span style="color: {Colors.SUCCESS_GREEN}; font-size: 0.8rem;">Loaded</span>',
-                        unsafe_allow_html=True
-                    )
-                else:
-                    st.markdown("✗")
-                    st.markdown(
-                        f'<span style="color: {Colors.DANGER_RED}; font-size: 0.8rem;">Not loaded</span>',
-                        unsafe_allow_html=True
-                    )
-            
-            with col2:
-                st.markdown("**Classifier**")
-                if health['classifier_loaded']:
-                    st.markdown("[OK]")
-                    st.markdown(
-                        f'<span style="color: {Colors.SUCCESS_GREEN}; font-size: 0.8rem;">Loaded</span>',
-                        unsafe_allow_html=True
-                    )
-                else:
-                    st.markdown("✗")
-                    st.markdown(
-                        f'<span style="color: {Colors.DANGER_RED}; font-size: 0.8rem;">Not loaded</span>',
-                        unsafe_allow_html=True
-                    )
-            
-            with col3:
-                st.markdown("**Segmentation**")
-                if health['segmentation_loaded']:
-                    st.markdown("[OK]")
-                    st.markdown(
-                        f'<span style="color: {Colors.SUCCESS_GREEN}; font-size: 0.8rem;">Loaded</span>',
-                        unsafe_allow_html=True
-                    )
-                else:
-                    st.markdown("✗")
-                    st.markdown(
-                        f'<span style="color: {Colors.DANGER_RED}; font-size: 0.8rem;">Not loaded</span>',
-                        unsafe_allow_html=True
-                    )
+            # Hidden for presentation - models not ready
+            # with col2:
+            #     st.markdown("**Classifier**")
+            #     if health['classifier_loaded']:
+            #         st.markdown("[OK]")
+            #         st.markdown(
+            #             f'<span style="color: {Colors.SUCCESS_GREEN}; font-size: 0.8rem;">Loaded</span>',
+            #             unsafe_allow_html=True
+            #         )
+            #     else:
+            #         st.markdown("✗")
+            #         st.markdown(
+            #             f'<span style="color: {Colors.DANGER_RED}; font-size: 0.8rem;">Not loaded</span>',
+            #             unsafe_allow_html=True
+            #         )
+            # 
+            # with col3:
+            #     st.markdown("**Segmentation**")
+            #     if health['segmentation_loaded']:
+            #         st.markdown("[OK]")
+            #         st.markdown(
+            #             f'<span style="color: {Colors.SUCCESS_GREEN}; font-size: 0.8rem;">Loaded</span>',
+            #             unsafe_allow_html=True
+            #         )
+            #     else:
+            #         st.markdown("✗")
+            #         st.markdown(
+            #             f'<span style="color: {Colors.DANGER_RED}; font-size: 0.8rem;">Not loaded</span>',
+            #             unsafe_allow_html=True
+            #         )
             
             # Additional features
             st.markdown("")  # Spacing
@@ -131,21 +129,22 @@ def render_sidebar() -> bool:
                             st.write(f"- Sensitivity: {perf.get('classification_sensitivity', 0)*100:.1f}%")
                             st.write(f"- Dice Score: {perf.get('segmentation_dice', 0)*100:.1f}%")
                 
-                # Classifier Details
-                if model_info.get('classifier'):
-                    with st.expander("Classifier Details"):
-                        cls_info = model_info['classifier']
-                        st.write(f"**Architecture:** {cls_info.get('architecture', 'N/A')}")
-                        st.write(f"**Classes:** {', '.join(cls_info.get('class_names', []))}")
-                        st.write(f"**Calibrated:** {'Yes' if cls_info.get('calibrated') else 'No'}")
-                
-                # Segmentation Details
-                if model_info.get('segmentation'):
-                    with st.expander("Segmentation Details"):
-                        seg_info = model_info['segmentation']
-                        st.write(f"**Architecture:** {seg_info.get('architecture', 'N/A')}")
-                        st.write(f"**Parameters:** {seg_info.get('parameters', 'N/A')}")
-                        st.write(f"**Uncertainty:** {'Yes' if seg_info.get('uncertainty_estimation') else 'No'}")
+                # Hidden for presentation - models not ready
+                # # Classifier Details
+                # if model_info.get('classifier'):
+                #     with st.expander("Classifier Details"):
+                #         cls_info = model_info['classifier']
+                #         st.write(f"**Architecture:** {cls_info.get('architecture', 'N/A')}")
+                #         st.write(f"**Classes:** {', '.join(cls_info.get('class_names', []))}")
+                #         st.write(f"**Calibrated:** {'Yes' if cls_info.get('calibrated') else 'No'}")
+                # 
+                # # Segmentation Details
+                # if model_info.get('segmentation'):
+                #     with st.expander("Segmentation Details"):
+                #         seg_info = model_info['segmentation']
+                #         st.write(f"**Architecture:** {seg_info.get('architecture', 'N/A')}")
+                #         st.write(f"**Parameters:** {seg_info.get('parameters', 'N/A')}")
+                #         st.write(f"**Uncertainty:** {'Yes' if seg_info.get('uncertainty_estimation') else 'No'}")
                 
                 # Available Features
                 features = model_info.get('features', [])
