@@ -1,9 +1,9 @@
 {
   "index": 13,
   "source": "kaggle",
-  "filename": "no_13 no.npz",
-  "label": 0,
-  "label_name": "no_tumor",
+  "filename": "yes_Y111.npz",
+  "label": 1,
+  "label_name": "tumor",
   "shape": [
     1,
     256,
@@ -12,15 +12,15 @@
   "dtype": "float32",
   "value_range": [
     0.0,
-    0.9597670435905457
+    1.0
   ],
   "original_metadata": {
-    "image_id": "13 no",
-    "class": "no",
-    "label": 0,
+    "image_id": "Y111",
+    "class": "yes",
+    "label": 1,
     "original_size": [
-      168,
-      300
+      324,
+      272
     ],
     "target_size": [
       256,

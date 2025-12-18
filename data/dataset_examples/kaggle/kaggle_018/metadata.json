@@ -1,7 +1,7 @@
 {
   "index": 18,
   "source": "kaggle",
-  "filename": "no_19 no.npz",
+  "filename": "no_13 no.npz",
   "label": 0,
   "label_name": "no_tumor",
   "shape": [
@@ -12,15 +12,15 @@
   "dtype": "float32",
   "value_range": [
     0.0,
-    0.998046875
+    0.9597670435905457
   ],
   "original_metadata": {
-    "image_id": "19 no",
+    "image_id": "13 no",
     "class": "no",
     "label": 0,
     "original_size": [
-      200,
-      200
+      168,
+      300
     ],
     "target_size": [
       256,

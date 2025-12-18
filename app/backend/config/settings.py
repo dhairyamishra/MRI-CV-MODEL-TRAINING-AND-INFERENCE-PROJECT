@@ -21,15 +21,15 @@ PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 class ModelPaths(BaseModel):
     """Model checkpoint paths."""
     
-    # Multi-task model (priority)
-    multitask_checkpoint: Path = PROJECT_ROOT / "checkpoints" / "multitask_joint" / "best_model.pth"
+    # Multi-task model (priority) - Using 1000-epoch trained model
+    multitask_checkpoint: Path = PROJECT_ROOT / "checkpoints" / "1000_epoch_multitask_joint" / "best_model.pth"
     
-    # Standalone models
-    classifier_checkpoint: Path = PROJECT_ROOT / "checkpoints" / "cls" / "best_model.pth"
-    segmentation_checkpoint: Path = PROJECT_ROOT / "checkpoints" / "seg" / "best_model.pth"
+    # Standalone models - Using production checkpoints
+    classifier_checkpoint: Path = PROJECT_ROOT / "checkpoints" / "cls_production" / "best_model.pth"
+    segmentation_checkpoint: Path = PROJECT_ROOT / "checkpoints" / "seg_production" / "best_model.pth"
     
     # Calibration
-    calibration_checkpoint: Path = PROJECT_ROOT / "checkpoints" / "cls" / "temperature_scaler.pth"
+    calibration_checkpoint: Path = PROJECT_ROOT / "checkpoints" / "cls_production" / "temperature_scaler.pth"
     
     class Config:
         arbitrary_types_allowed = True

@@ -290,7 +290,7 @@ def create_comparison_grid(
 
 def export_dataset_examples(
     kaggle_dir: str = "data/processed/kaggle",
-    brats_dir: str = "data/processed/brats2d",
+    brats_dir: str = "data/processed/brats2d_full",
     output_dir: str = "data/dataset_examples",
     num_samples: int = 20,
     kaggle_with_tumor: int = 20,
@@ -483,7 +483,7 @@ Examples:
     parser.add_argument(
         "--brats-dir",
         type=str,
-        default="data/processed/brats2d",
+        default="data/processed/brats2d_full",
         help="BraTS processed data directory"
     )
     

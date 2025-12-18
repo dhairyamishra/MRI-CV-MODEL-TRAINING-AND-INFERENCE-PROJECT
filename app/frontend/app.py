@@ -109,11 +109,11 @@ def main():
         """)
         return
     
-    # Create main tabs (Classification and Segmentation hidden for presentation)
-    tab1, tab2, tab3 = st.tabs([
+    # Create main tabs (All tabs enabled with production models)
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "🎯 Multi-Task",
-        # "🔍 Classification",  # Hidden - model not ready
-        # "🎨 Segmentation",     # Hidden - model not ready
+        "🔍 Classification",
+        "🎨 Segmentation",
         "📦 Batch Processing",
         "👤 Patient Analysis"
     ])
@@ -122,16 +122,16 @@ def main():
     with tab1:
         render_multitask_tab()
     
-    # with tab2:
-    #     render_classification_tab()
-    
-    # with tab3:
-    #     render_segmentation_tab()
-    
     with tab2:
-        render_batch_tab()
+        render_classification_tab()
     
     with tab3:
+        render_segmentation_tab()
+    
+    with tab4:
+        render_batch_tab()
+    
+    with tab5:
         render_patient_tab()
     
     # Footer

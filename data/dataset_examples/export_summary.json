@@ -1,13 +1,13 @@
 {
   "kaggle": {
     "total_exported": 30,
-    "with_tumor": 10,
-    "without_tumor": 20,
+    "with_tumor": 15,
+    "without_tumor": 15,
     "output_dir": "C:\\--DPM-MAIN-DIR--\\windsurf_projects\\MRI-CV-MODEL-TRAINING-AND-INFERENCE-PROJECT\\data\\dataset_examples\\kaggle"
   },
   "brats": {
-    "total_exported": 10,
-    "with_tumor": 10,
+    "total_exported": 15,
+    "with_tumor": 15,
     "without_tumor": 0,
     "output_dir": "C:\\--DPM-MAIN-DIR--\\windsurf_projects\\MRI-CV-MODEL-TRAINING-AND-INFERENCE-PROJECT\\data\\dataset_examples\\brats"
   },
