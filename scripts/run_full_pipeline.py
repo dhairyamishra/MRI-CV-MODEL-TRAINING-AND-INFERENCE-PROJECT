@@ -4,6 +4,7 @@ Full End-to-End Multi-Task Pipeline Controller
 This script orchestrates the complete pipeline for training and deploying
 the multi-task brain tumor detection model:
 
+0. Configuration Generation (merge hierarchical configs into final configs)
 1. Data Download (BraTS + Kaggle datasets)
 2. Data Preprocessing (3D→2D conversion, normalization)
 3. Data Splitting (patient-level train/val/test)
@@ -28,7 +29,7 @@ Usage:
     python scripts/run_full_pipeline.py --mode demo
 
 Author: SliceWise Team
-Date: December 7, 2025
+Date: December 19, 2025
 """
 
 import argparse
@@ -230,6 +231,72 @@ class PipelineController:
         else:
             self._print_warning(f"{description} not found: {file_path}")
             return False
+    
+    def run_config_generation(self) -> bool:
+        """Step 0: Generate configuration files from hierarchical config system."""
+        self._print_step(0, self._get_total_steps(), "Configuration Generation")
+        
+        # Check if configs/final directory exists and has configs
+        final_config_dir = self.project_root / "configs" / "final"
+        
+        # Check if all required configs exist
+        required_configs = [
+            "stage1_quick.yaml",
+            "stage2_quick.yaml", 
+            "stage3_quick.yaml",
+            "stage1_baseline.yaml",
+            "stage2_baseline.yaml",
+            "stage3_baseline.yaml",
+            "stage1_production.yaml",
+            "stage2_production.yaml",
+            "stage3_production.yaml"
+        ]
+        
+        all_exist = True
+        if final_config_dir.exists():
+            for config_name in required_configs:
+                if not (final_config_dir / config_name).exists():
+                    all_exist = False
+                    break
+        else:
+            all_exist = False
+        
+        if all_exist:
+            self._print_info("All configuration files already exist in configs/final/")
+            user_input = input("Do you want to regenerate configs? (y/N): ").strip().lower()
+            if user_input != 'y':
+                self._print_info("Skipping config generation (using existing configs)")
+                return True
+        
+        # Generate configs using merge_configs.py
+        self._print_info("Generating final configuration files from hierarchical config system...")
+        self._print_info("This merges base/stages/modes configs into configs/final/")
+        
+        if not self._run_command(
+            ["python", "scripts/utils/merge_configs.py", "--all"],
+            "generate_configs",
+            timeout=60  # 1 minute timeout
+        ):
+            self._print_error("Failed to generate configuration files")
+            self._print_info("")
+            self._print_info("You can manually generate configs with:")
+            self._print_info("  python scripts/utils/merge_configs.py --all")
+            return False
+        
+        # Verify configs were created
+        missing_configs = []
+        for config_name in required_configs:
+            if not (final_config_dir / config_name).exists():
+                missing_configs.append(config_name)
+        
+        if missing_configs:
+            self._print_error(f"Config generation completed but {len(missing_configs)} configs are missing:")
+            for config in missing_configs:
+                self._print_error(f"  - {config}")
+            return False
+        
+        self._print_success(f"Successfully generated {len(required_configs)} configuration files")
+        return True
     
     def run_data_download(self) -> bool:
         """Step 1: Download datasets."""
@@ -643,13 +710,13 @@ class PipelineController:
     def _get_total_steps(self) -> int:
         """Get total number of steps based on mode."""
         if self.args.mode == "full":
-            return 7  # Added export_examples step
+            return 7  # Config gen + download + preprocess + split + train + eval + demo
         elif self.args.mode == "data-only":
-            return 4  # Added export_examples step
+            return 4  # Config gen + download + preprocess + split
         elif self.args.mode == "train-eval":
-            return 2
+            return 3  # Config gen + train + eval
         elif self.args.mode == "demo":
-            return 1
+            return 1  # Just demo (no config gen needed)
         return 0
     
     def run(self):
@@ -662,8 +729,9 @@ class PipelineController:
         success = True
         
         if self.args.mode == "full":
-            # Full pipeline: data → training → evaluation → demo
+            # Full pipeline: config gen → data → training → evaluation → demo
             success = (
+                self.run_config_generation() and
                 self.run_data_download() and
                 self.run_data_preprocessing() and
                 self.run_data_splitting() and
@@ -673,22 +741,24 @@ class PipelineController:
             )
         
         elif self.args.mode == "data-only":
-            # Only data preparation
+            # Only data preparation (with config gen)
             success = (
+                self.run_config_generation() and
                 self.run_data_download() and
                 self.run_data_preprocessing() and
                 self.run_data_splitting()
             )
         
         elif self.args.mode == "train-eval":
-            # Only training and evaluation
+            # Only training and evaluation (with config gen)
             success = (
+                self.run_config_generation() and
                 self.run_multitask_training() and
                 self.run_evaluation()
             )
         
         elif self.args.mode == "demo":
-            # Only demo application
+            # Only demo application (no config gen needed)
             success = self.run_demo()
         
         # Print final summary
