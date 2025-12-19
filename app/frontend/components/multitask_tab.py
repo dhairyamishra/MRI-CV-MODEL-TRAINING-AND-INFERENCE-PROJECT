@@ -143,9 +143,9 @@ def _run_prediction(image: Image.Image, include_gradcam: bool):
         # Segmentation results
         _render_segmentation_results(result, image)
         
-        # Grad-CAM visualization
-        if include_gradcam and result.get('gradcam_overlay'):
-            _render_gradcam(result)
+        # Grad-CAM visualization (DISABLED: Already shown in comprehensive view)
+        # if include_gradcam and result.get('gradcam_overlay'):
+        #     _render_gradcam(result)
         
         # Comprehensive comparison
         if result['segmentation_computed'] and result['segmentation'].get('mask_available'):
@@ -283,25 +283,25 @@ def _render_comprehensive_view(original_image: Image.Image, result: dict, includ
     
     seg_result = result['segmentation']
     overlay_img = base64_to_image(seg_result['overlay_base64'])
-    prob_map_img = base64_to_image(seg_result['prob_map_base64'])
+    # prob_map_img = base64_to_image(seg_result['prob_map_base64'])  # DISABLED: Redundant with Grad-CAM and binary mask
     
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3 = st.columns(3)  # Changed from 4 to 3 columns
     with col1:
         st.markdown("**Original**")
-        st.image(original_image, width=UIConfig.IMAGE_WIDTH_SMALL)
+        st.image(original_image, width=UIConfig.IMAGE_WIDTH_MEDIUM)  # Larger width for 3 columns
     with col2:
         st.markdown("**Grad-CAM**")
         if include_gradcam and result.get('gradcam_overlay'):
             gradcam_img = base64_to_image(result['gradcam_overlay'])
-            st.image(gradcam_img, width=UIConfig.IMAGE_WIDTH_SMALL)
+            st.image(gradcam_img, width=UIConfig.IMAGE_WIDTH_MEDIUM)  # Larger width for 3 columns
         else:
             st.info("Enable Grad-CAM")
     with col3:
         st.markdown("**Segmentation**")
-        st.image(overlay_img, width=UIConfig.IMAGE_WIDTH_SMALL)
-    with col4:
-        st.markdown("**Probability Map**")
-        st.image(prob_map_img, width=UIConfig.IMAGE_WIDTH_SMALL)
+        st.image(overlay_img, width=UIConfig.IMAGE_WIDTH_MEDIUM)  # Larger width for 3 columns
+    # with col4:  # DISABLED: Probability map removed for cleaner UI
+    #     st.markdown("**Probability Map**")
+    #     st.image(prob_map_img, width=UIConfig.IMAGE_WIDTH_SMALL)
 
 
 def _render_clinical_interpretation(tumor_prob: float):

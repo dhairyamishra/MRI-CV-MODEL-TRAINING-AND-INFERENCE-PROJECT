@@ -517,7 +517,8 @@ class MultiTaskPredictor:
     def predict_with_gradcam(
         self,
         image: np.ndarray,
-        target_class: Optional[int] = None
+        target_class: Optional[int] = None,
+        use_brain_mask: bool = True
     ) -> Dict[str, any]:
         """
         Run prediction with Grad-CAM visualization.
@@ -525,6 +526,7 @@ class MultiTaskPredictor:
         Args:
             image: Input image as numpy array
             target_class: Target class for Grad-CAM (None = predicted class)
+            use_brain_mask: Whether to apply brain masking to eliminate background artifacts
         
         Returns:
             result: Dictionary with predictions and Grad-CAM heatmap
@@ -552,18 +554,53 @@ class MultiTaskPredictor:
         tensor, image_original = self.preprocess_image(image, normalize_method='z_score')
         tensor = tensor.to(self.device)
         
-        # Generate Grad-CAM
+        # Detect brain mask to eliminate background artifacts
+        brain_mask = None
+        if use_brain_mask:
+            print("[INFO] 🧠 Detecting brain boundary for Grad-CAM masking...")
+            brain_mask = self._detect_skull_boundary(image_original)
+            
+            if brain_mask is not None:
+                print(f"[INFO] ✅ Brain mask detected (coverage: {brain_mask.sum()/brain_mask.size*100:.1f}%)")
+                
+                # Apply brain mask to input tensor BEFORE Grad-CAM computation
+                # This zeros out background gradients
+                brain_mask_tensor = torch.from_numpy(brain_mask).float().to(self.device)
+                brain_mask_tensor = brain_mask_tensor.unsqueeze(0).unsqueeze(0)  # (1, 1, H, W)
+                tensor_masked = tensor * brain_mask_tensor
+                
+                print("[INFO] 🎯 Applying brain mask to input (zeros out background gradients)")
+            else:
+                print("[INFO] ⚠️  Brain mask detection failed, using full image")
+                tensor_masked = tensor
+        else:
+            tensor_masked = tensor
+        
+        # Generate Grad-CAM on masked input
         self.model.train()  # Need gradients
-        cam = self._gradcam.generate_cam(tensor, target_class)
+        cam = self._gradcam.generate_cam(tensor_masked, target_class)
         self.model.eval()
+        
+        # Apply brain mask to CAM output for clean visualization
+        if use_brain_mask and brain_mask is not None:
+            print("[INFO] 🎨 Masking Grad-CAM heatmap (removes background artifacts)")
+            # Resize brain mask to match CAM dimensions (CAM is lower resolution from bottleneck)
+            cam_h, cam_w = cam.shape
+            if brain_mask.shape != cam.shape:
+                brain_mask_resized = cv2.resize(brain_mask, (cam_w, cam_h), interpolation=cv2.INTER_NEAREST)
+                print(f"[DEBUG] Resized brain mask from {brain_mask.shape} to {brain_mask_resized.shape} to match CAM")
+            else:
+                brain_mask_resized = brain_mask
+            cam = cam * brain_mask_resized
         
         # Run normal prediction
         result = self.predict_single(image, do_seg=True, do_cls=True)
         
-        # Add Grad-CAM heatmap
+        # Add Grad-CAM heatmap and metadata
         result['gradcam'] = {
             'heatmap': cam,
-            'target_class': target_class if target_class is not None else result['classification']['predicted_class']
+            'target_class': target_class if target_class is not None else result['classification']['predicted_class'],
+            'brain_masked': brain_mask is not None if use_brain_mask else False
         }
         
         return result
@@ -571,7 +608,8 @@ class MultiTaskPredictor:
     def predict_full(
         self,
         image: np.ndarray,
-        include_gradcam: bool = True
+        include_gradcam: bool = True,
+        use_brain_mask_for_gradcam: bool = True
     ) -> Dict[str, any]:
         """
         Run comprehensive prediction with all features.
@@ -585,6 +623,7 @@ class MultiTaskPredictor:
         Args:
             image: Input image as numpy array
             include_gradcam: Whether to include Grad-CAM
+            use_brain_mask_for_gradcam: Whether to apply brain masking to Grad-CAM
         
         Returns:
             result: Comprehensive prediction dictionary
@@ -594,7 +633,7 @@ class MultiTaskPredictor:
         
         # Add Grad-CAM if requested
         if include_gradcam:
-            gradcam_result = self.predict_with_gradcam(image)
+            gradcam_result = self.predict_with_gradcam(image, use_brain_mask=use_brain_mask_for_gradcam)
             result['gradcam'] = gradcam_result['gradcam']
         
         return result

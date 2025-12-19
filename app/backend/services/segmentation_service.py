@@ -159,7 +159,15 @@ class SegmentationService:
         
         # Create visualizations using ORIGINAL image (not z-score normalized)
         mask_base64 = numpy_to_base64_png(binary_mask * 255)
-        prob_map_base64 = numpy_to_base64_png(prob_map)
+        
+        # Apply binary mask to probability map (only show probabilities where tumor detected)
+        prob_map_masked = prob_map * binary_mask
+        
+        # Create colorful probability map heatmap (like Grad-CAM)
+        prob_map_uint8 = np.uint8(255 * prob_map_masked)
+        prob_map_colored = cv2.applyColorMap(prob_map_uint8, cv2.COLORMAP_JET)
+        prob_map_colored = cv2.cvtColor(prob_map_colored, cv2.COLOR_BGR2RGB)
+        prob_map_base64 = numpy_to_base64_png(prob_map_colored)
         
         overlay_base64 = None
         if return_overlay:
@@ -243,8 +251,22 @@ class SegmentationService:
         
         # Create visualizations using ORIGINAL image
         mask_base64 = numpy_to_base64_png(binary_mask * 255)
-        prob_map_base64 = numpy_to_base64_png((result['mean'] * 255).astype(np.uint8))
-        uncertainty_base64 = numpy_to_base64_png((result['epistemic'] * 255).astype(np.uint8))
+        
+        # Apply binary mask to mean prediction (only show probabilities where tumor detected)
+        mean_masked = result['mean'] * binary_mask
+        
+        # Create colorful probability map (mean prediction)
+        mean_uint8 = np.uint8(255 * mean_masked)
+        mean_colored = cv2.applyColorMap(mean_uint8, cv2.COLORMAP_JET)
+        mean_colored = cv2.cvtColor(mean_colored, cv2.COLOR_BGR2RGB)
+        prob_map_base64 = numpy_to_base64_png(mean_colored)
+        
+        # Create colorful uncertainty map (epistemic uncertainty)
+        epistemic_uint8 = np.uint8(255 * result['epistemic'])
+        epistemic_colored = cv2.applyColorMap(epistemic_uint8, cv2.COLORMAP_VIRIDIS)
+        epistemic_colored = cv2.cvtColor(epistemic_colored, cv2.COLOR_BGR2RGB)
+        uncertainty_base64 = numpy_to_base64_png(epistemic_colored)
+        
         overlay_base64 = numpy_to_base64_png(create_overlay(image_original, binary_mask))
         
         return SegmentationResponse(

@@ -190,9 +190,15 @@ class MultiTaskService:
             print(f"[DEBUG]   - prob_map range: [{prob_map.min():.3f}, {prob_map.max():.3f}]")
             print(f"[DEBUG]   - prob_map mean: {prob_map.mean():.3f}")
             
-            # Scale probability map to 0-255 for display
-            prob_map_display = (prob_map * 255).astype(np.uint8)
-            print(f"[DEBUG]   - prob_map_display range: [{prob_map_display.min()}, {prob_map_display.max()}]")
+            # Apply binary mask to probability map (only show probabilities where tumor detected)
+            prob_map_masked = prob_map * mask
+            print(f"[DEBUG]   - prob_map_masked range: [{prob_map_masked.min():.3f}, {prob_map_masked.max():.3f}]")
+            
+            # Create colorful probability map heatmap (like Grad-CAM)
+            prob_map_uint8 = np.uint8(255 * prob_map_masked)
+            prob_map_colored = cv2.applyColorMap(prob_map_uint8, cv2.COLORMAP_JET)
+            prob_map_display = cv2.cvtColor(prob_map_colored, cv2.COLOR_BGR2RGB)
+            print(f"[DEBUG]   - prob_map_display shape: {prob_map_display.shape}")
             
             response["segmentation"] = {
                 "mask_available": True,
@@ -221,36 +227,42 @@ class MultiTaskService:
     def _create_gradcam_overlay(
         self,
         image_original: np.ndarray,
-        heatmap: np.ndarray
+        heatmap: np.ndarray,
+        alpha: float = 0.5
     ) -> np.ndarray:
         """
         Create Grad-CAM overlay visualization.
         
-        Extracted from main_v2.py (lines 944-957).
+        Uses cv2.addWeighted for cleaner blending (matches test script style).
         
         Args:
             image_original: Original image (normalized to [0, 1])
             heatmap: Grad-CAM heatmap
+            alpha: Blending factor for heatmap (default: 0.5)
         
         Returns:
             Grad-CAM overlay as RGB uint8 array
         """
+        # Normalize image to [0, 255]
+        img_normalized = ((image_original - image_original.min()) / 
+                         (image_original.max() - image_original.min() + 1e-8) * 255)
+        img_uint8 = np.uint8(img_normalized)
+        
+        # Convert grayscale to RGB
+        img_rgb = cv2.cvtColor(img_uint8, cv2.COLOR_GRAY2RGB)
+        
         # Resize heatmap to match image size
-        heatmap_resized = cv2.resize(
-            heatmap,
-            (image_original.shape[1], image_original.shape[0])
-        )
+        h, w = image_original.shape
+        heatmap_resized = cv2.resize(heatmap, (w, h))
         
-        # Create colored heatmap
-        heatmap_colored = plt.cm.jet(heatmap_resized)[:, :, :3]  # RGB
-        heatmap_colored = (heatmap_colored * 255).astype(np.uint8)
+        # Convert heatmap to colored visualization using OpenCV
+        cam_uint8 = np.uint8(255 * heatmap_resized)
+        heatmap_colored = cv2.applyColorMap(cam_uint8, cv2.COLORMAP_JET)
+        heatmap_colored = cv2.cvtColor(heatmap_colored, cv2.COLOR_BGR2RGB)
         
-        # Blend with original
-        image_rgb = np.stack([image_original] * 3, axis=-1)
-        if image_rgb.max() <= 1.0:
-            image_rgb = (image_rgb * 255).astype(np.uint8)
+        # Blend images using cv2.addWeighted for cleaner result
+        gradcam_overlay = cv2.addWeighted(img_rgb, 1 - alpha, heatmap_colored, alpha, 0)
         
-        gradcam_overlay = ((1 - 0.4) * image_rgb + 0.4 * heatmap_colored).astype(np.uint8)
         return gradcam_overlay
     
     # ========================================================================
