@@ -21,8 +21,8 @@ PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 class ModelPaths(BaseModel):
     """Model checkpoint paths."""
     
-    # Multi-task model (priority) - Using 1000-epoch trained model
-    multitask_checkpoint: Path = PROJECT_ROOT / "checkpoints" / "1000_epoch_multitask_joint" / "best_model.pth"
+    # Multi-task model (priority) - Using pipeline-trained model with skull boundary detection
+    multitask_checkpoint: Path = PROJECT_ROOT / "checkpoints" / "multitask_joint" / "best_model.pth"
     
     # Standalone models - Using production checkpoints
     classifier_checkpoint: Path = PROJECT_ROOT / "checkpoints" / "cls_production" / "best_model.pth"

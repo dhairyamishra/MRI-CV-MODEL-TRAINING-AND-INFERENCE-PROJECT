@@ -170,16 +170,36 @@ class MultiTaskService:
             mask = result['segmentation']['mask']
             prob_map = result['segmentation']['prob_map']
             
+            print(f"[DEBUG] Multitask service - preparing response:")
+            print(f"[DEBUG]   - mask unique: {np.unique(mask)}")
+            print(f"[DEBUG]   - mask shape: {mask.shape}")
+            print(f"[DEBUG]   - mask sum: {mask.sum()}")
+            
             # Create overlay
             image_original = result['image_original']
             overlay = create_overlay(image_original, mask, alpha=0.4)
+            
+            # Scale mask to 0-255 for display
+            mask_display = (mask * 255).astype(np.uint8)
+            print(f"[DEBUG]   - mask_display unique: {np.unique(mask_display)}")
+            print(f"[DEBUG]   - mask_display[100,100]: {mask_display[100, 100]}")
+            
+            # Debug probability map
+            print(f"[DEBUG]   - prob_map shape: {prob_map.shape}")
+            print(f"[DEBUG]   - prob_map dtype: {prob_map.dtype}")
+            print(f"[DEBUG]   - prob_map range: [{prob_map.min():.3f}, {prob_map.max():.3f}]")
+            print(f"[DEBUG]   - prob_map mean: {prob_map.mean():.3f}")
+            
+            # Scale probability map to 0-255 for display
+            prob_map_display = (prob_map * 255).astype(np.uint8)
+            print(f"[DEBUG]   - prob_map_display range: [{prob_map_display.min()}, {prob_map_display.max()}]")
             
             response["segmentation"] = {
                 "mask_available": True,
                 "tumor_area_pixels": result['segmentation']['tumor_area_pixels'],
                 "tumor_percentage": result['segmentation']['tumor_percentage'],
-                "mask_base64": numpy_to_base64_png(mask),
-                "prob_map_base64": numpy_to_base64_png(prob_map),
+                "mask_base64": numpy_to_base64_png(mask_display),
+                "prob_map_base64": numpy_to_base64_png(prob_map_display),
                 "overlay_base64": numpy_to_base64_png(overlay)
             }
         else:

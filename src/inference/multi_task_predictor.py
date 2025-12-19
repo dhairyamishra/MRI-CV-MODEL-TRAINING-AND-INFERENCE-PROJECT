@@ -1,16 +1,32 @@
 """
-Multi-Task Predictor for Joint Segmentation and Classification.
+Multi-task predictor for simultaneous classification and segmentation.
 
-This module provides a unified inference interface for the multi-task model
-that performs both tumor classification and segmentation in a single forward pass.
-
-Key Features:
-- Single forward pass for both tasks (~40% faster than separate models)
-- Conditional segmentation (only compute if tumor probability >= threshold)
-- Grad-CAM visualization support
-- Flexible preprocessing and post-processing
-- Batch inference support
+This module provides the MultiTaskPredictor class that handles predictions
+using the unified multi-task model (classification + segmentation).
 """
+
+import torch
+import torch.nn as nn
+import numpy as np
+from typing import Dict, List, Tuple, Optional
+from pathlib import Path
+import json
+import sys
+
+# Add project root to path for brain mask utilities
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+
+try:
+    from app.backend.utils.image_processing import (
+        compute_brain_mask_from_image,
+        apply_brain_mask_to_prediction,
+        detect_background_padding
+    )
+    BRAIN_MASK_AVAILABLE = True
+except ImportError:
+    BRAIN_MASK_AVAILABLE = False
+    print("Warning: Brain mask utilities not available in multi-task predictor")
 
 import sys
 from pathlib import Path
@@ -272,6 +288,90 @@ class MultiTaskPredictor:
             prob_map = seg_probs.squeeze().cpu().numpy()
             binary_mask = seg_mask.squeeze().cpu().numpy()
             
+            print(f"\n[DEBUG] === Multi-Task Segmentation Debug ===")
+            print(f"[DEBUG] Image original range: [{image_original.min():.3f}, {image_original.max():.3f}]")
+            print(f"[DEBUG] Model output - prob_map range: [{prob_map.min():.3f}, {prob_map.max():.3f}]")
+            print(f"[DEBUG] Model output - binary_mask unique: {np.unique(binary_mask)}")
+            print(f"[DEBUG] Model output - tumor pixels: {binary_mask.sum()}/{binary_mask.size} ({binary_mask.sum()/binary_mask.size*100:.1f}%)")
+            
+            # Fix inverted masks for Kaggle data using skull boundary detection
+            if detect_background_padding(image_original):
+                print(f"[DEBUG] Background padding detected - applying skull boundary detection...")
+                
+                # Detect skull boundary using circular Hough transform
+                skull_mask = self._detect_skull_boundary(image_original)
+                
+                if skull_mask is not None:
+                    print(f"[DEBUG] Skull boundary detected successfully")
+                    
+                    # Check if model output is inverted by comparing with skull mask
+                    # The skull mask defines the brain region (inside = 1, outside = 0)
+                    background_region = (skull_mask == 0)
+                    brain_region = (skull_mask == 1)
+                    
+                    if background_region.sum() > 0 and brain_region.sum() > 0:
+                        avg_prob_background = prob_map[background_region].mean()
+                        avg_prob_brain = prob_map[brain_region].mean()
+                        avg_mask_background = binary_mask[background_region].mean()
+                        avg_mask_brain = binary_mask[brain_region].mean()
+                        
+                        print(f"[DEBUG] Model predictions:")
+                        print(f"[DEBUG]   - Avg prob in background: {avg_prob_background:.3f}")
+                        print(f"[DEBUG]   - Avg prob in brain: {avg_prob_brain:.3f}")
+                        print(f"[DEBUG]   - Avg mask in background: {avg_mask_background:.3f}")
+                        print(f"[DEBUG]   - Avg mask in brain: {avg_mask_brain:.3f}")
+                        
+                        # Check if binary mask is inverted
+                        # If more 1s in background than brain, it's inverted
+                        if avg_mask_background > avg_mask_brain:
+                            print(f"[INFO] ⚠️  Detected inverted mask - INVERTING output")
+                            # Invert the predictions
+                            prob_map = 1.0 - prob_map
+                            binary_mask = 1.0 - binary_mask
+                            print(f"[INFO] ✅ Mask inverted successfully")
+                            print(f"[DEBUG] After inversion:")
+                            print(f"[DEBUG]   - Avg mask in background: {(1.0 - avg_mask_background):.3f}")
+                            print(f"[DEBUG]   - Avg mask in brain: {(1.0 - avg_mask_brain):.3f}")
+                        else:
+                            print(f"[DEBUG] Mask orientation looks correct")
+                    
+                    # Apply skull mask to zero out background
+                    if BRAIN_MASK_AVAILABLE:
+                        prob_map = apply_brain_mask_to_prediction(prob_map, skull_mask)
+                        binary_mask = apply_brain_mask_to_prediction(binary_mask, skull_mask)
+                    else:
+                        prob_map = prob_map * skull_mask
+                        binary_mask = binary_mask * skull_mask
+                    print(f"[INFO] Skull boundary mask applied")
+                else:
+                    print(f"[DEBUG] Skull boundary detection failed - using fallback")
+                    # Fallback to simple thresholding
+                    image_u8 = (image_original * 255).astype(np.uint8)
+                    simple_mask = (image_u8 > 30).astype(np.uint8)
+                    
+                    # Check for inversion
+                    background_region = (simple_mask == 0)
+                    brain_region = (simple_mask == 1)
+                    if background_region.sum() > 0 and brain_region.sum() > 0:
+                        avg_mask_background = binary_mask[background_region].mean()
+                        avg_mask_brain = binary_mask[brain_region].mean()
+                        if avg_mask_background > avg_mask_brain:
+                            prob_map = 1.0 - prob_map
+                            binary_mask = 1.0 - binary_mask
+                            print(f"[INFO] Mask inverted (fallback)")
+                    
+                    if BRAIN_MASK_AVAILABLE:
+                        prob_map = apply_brain_mask_to_prediction(prob_map, simple_mask)
+                        binary_mask = apply_brain_mask_to_prediction(binary_mask, simple_mask)
+                    else:
+                        prob_map = prob_map * simple_mask
+                        binary_mask = binary_mask * simple_mask
+                    print(f"[INFO] Simple threshold mask applied (fallback)")
+            else:
+                print(f"[DEBUG] No background padding detected - skipping brain mask")
+            
+            print(f"[DEBUG] === End Debug ===\n")
+            
             # Calculate tumor statistics
             tumor_pixels = int(binary_mask.sum())
             total_pixels = binary_mask.size
@@ -498,6 +598,77 @@ class MultiTaskPredictor:
             result['gradcam'] = gradcam_result['gradcam']
         
         return result
+    
+    def _detect_skull_boundary(self, image: np.ndarray) -> Optional[np.ndarray]:
+        """
+        Detect the skull boundary using circular contour detection.
+        
+        This finds the largest circular/elliptical contour in the image,
+        which typically corresponds to the skull boundary in MRI scans.
+        
+        Args:
+            image: Input image normalized to [0, 1]
+        
+        Returns:
+            Binary mask with 1 inside skull, 0 outside, or None if detection fails
+        """
+        try:
+            # Convert to uint8
+            image_u8 = (image * 255).astype(np.uint8)
+            
+            # Apply threshold to get binary image
+            # Use a low threshold to capture the brain region
+            _, binary = cv2.threshold(image_u8, 30, 255, cv2.THRESH_BINARY)
+            
+            # Apply morphological operations to clean up
+            kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+            binary = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel, iterations=3)
+            binary = cv2.morphologyEx(binary, cv2.MORPH_OPEN, kernel, iterations=2)
+            
+            # Find contours
+            contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            
+            if not contours:
+                return None
+            
+            # Find the largest contour (should be the skull)
+            largest_contour = max(contours, key=cv2.contourArea)
+            
+            # Check if contour is large enough (at least 20% of image)
+            contour_area = cv2.contourArea(largest_contour)
+            image_area = image.shape[0] * image.shape[1]
+            if contour_area < 0.2 * image_area:
+                print(f"[DEBUG] Largest contour too small: {contour_area/image_area*100:.1f}% of image")
+                return None
+            
+            # Create mask from contour
+            mask = np.zeros(image.shape, dtype=np.uint8)
+            cv2.drawContours(mask, [largest_contour], -1, 1, thickness=cv2.FILLED)
+            
+            # Apply additional morphological closing to ensure solid interior
+            kernel_large = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (11, 11))
+            mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel_large, iterations=2)
+            
+            # Fill any remaining holes
+            h, w = mask.shape
+            flood_mask = np.zeros((h + 2, w + 2), np.uint8)
+            mask_inv = 1 - mask
+            cv2.floodFill(mask_inv, flood_mask, (0, 0), 1)
+            mask = 1 - mask_inv
+            
+            coverage = mask.sum() / mask.size
+            print(f"[DEBUG] Skull mask coverage: {coverage*100:.1f}%")
+            
+            # Sanity check: mask should cover 30-90% of image
+            if coverage < 0.3 or coverage > 0.9:
+                print(f"[DEBUG] Skull mask coverage out of range: {coverage*100:.1f}%")
+                return None
+            
+            return mask
+            
+        except Exception as e:
+            print(f"[DEBUG] Skull boundary detection failed: {e}")
+            return None
     
     def get_model_info(self) -> Dict[str, any]:
         """Get model information and statistics."""

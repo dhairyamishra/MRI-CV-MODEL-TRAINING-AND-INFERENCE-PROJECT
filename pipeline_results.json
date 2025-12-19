@@ -1,70 +1,70 @@
 {
-  "start_time": "2025-12-19T10:37:43.139785",
+  "start_time": "2025-12-19T13:50:43.483160",
   "mode": "full",
   "training_mode": "quick",
   "steps": {
     "preprocess_brats": {
       "status": "success",
-      "duration_seconds": 10.67,
+      "duration_seconds": 10.62,
       "command": "python src/data/preprocess_brats_2d.py --input data/raw/brats2020 --output data/processed/brats2d --modality flair --normalize zscore --min-tumor-pixels 100 --save-all-slices --no-tumor-sample-rate 0.3 --max-patients 24"
     },
     "preprocess_kaggle": {
       "status": "success",
-      "duration_seconds": 2.76,
+      "duration_seconds": 2.95,
       "command": "python src/data/preprocess_kaggle.py --raw-dir data/raw/kaggle_brain_mri --processed-dir data/processed/kaggle --target-size 256 256"
     },
     "split_brats": {
       "status": "success",
-      "duration_seconds": 0.82,
+      "duration_seconds": 0.9,
       "command": "python src/data/split_brats.py --input data/processed/brats2d --train-ratio 0.7 --val-ratio 0.15 --test-ratio 0.15 --seed 42"
     },
     "split_kaggle": {
       "status": "success",
-      "duration_seconds": 0.28,
+      "duration_seconds": 0.27,
       "command": "python scripts/data/splitting/split_kaggle_data.py --train 0.7 --val 0.15 --test 0.15 --seed 42"
     },
     "export_examples": {
       "status": "success",
-      "duration_seconds": 2.19,
+      "duration_seconds": 2.28,
       "command": "python scripts/data/preprocessing/export_dataset_examples.py --kaggle-with-tumor 10 --kaggle-without-tumor 10 --brats-with-tumor 10 --brats-without-tumor 10"
     },
     "train_stage1_seg_warmup": {
       "status": "success",
-      "duration_seconds": 36.03,
+      "duration_seconds": 33.13,
       "command": "python scripts/training/multitask/train_multitask_seg_warmup.py --config configs/final/stage1_quick.yaml"
     },
     "train_stage2_cls_head": {
       "status": "success",
-      "duration_seconds": 13.93,
+      "duration_seconds": 14.35,
       "command": "python scripts/training/multitask/train_multitask_cls_head.py --config configs/final/stage2_quick.yaml --encoder-init C:\\--DPM-MAIN-DIR--\\windsurf_projects\\MRI-CV-MODEL-TRAINING-AND-INFERENCE-PROJECT\\checkpoints\\multitask_seg_warmup\\best_model.pth"
     },
     "train_stage3_joint": {
       "status": "success",
-      "duration_seconds": 24.72,
+      "duration_seconds": 16.94,
       "command": "python scripts/training/multitask/train_multitask_joint.py --config configs/final/stage3_quick.yaml --init-from C:\\--DPM-MAIN-DIR--\\windsurf_projects\\MRI-CV-MODEL-TRAINING-AND-INFERENCE-PROJECT\\checkpoints\\multitask_cls_head\\best_model.pth"
     },
     "evaluate_multitask": {
       "status": "success",
-      "duration_seconds": 6.44,
+      "duration_seconds": 11.26,
       "command": "python scripts/evaluation/multitask/evaluate_multitask.py --checkpoint checkpoints/multitask_joint/best_model.pth --output results/multitask_evaluation.json"
     },
     "generate_gradcam": {
       "status": "success",
-      "duration_seconds": 10.25,
+      "duration_seconds": 7.95,
       "command": "python scripts/evaluation/multitask/generate_multitask_gradcam.py --checkpoint checkpoints/multitask_joint/best_model.pth --num-samples 20 --output-dir visualizations/multitask_gradcam"
     },
     "compare_phases": {
       "status": "success",
-      "duration_seconds": 7.76,
+      "duration_seconds": 5.89,
       "command": "python scripts/evaluation/multitask/compare_all_phases.py --phase-21-checkpoint checkpoints/multitask_seg_warmup/best_model.pth --phase-22-checkpoint checkpoints/multitask_cls_head/best_model.pth --phase-23-checkpoint checkpoints/multitask_joint/best_model.pth --output results/phase_comparison.json"
     },
     "launch_pm2_direct": {
       "status": "success",
-      "duration_seconds": 0.38,
+      "duration_seconds": 0.24,
       "command": "pm2 start configs/pm2-ecosystem/ecosystem.config.js"
     }
   },
-  "end_time": "2025-12-19T10:39:43.025563",
+  "end_time": "2025-12-19T13:52:34.974499",
   "success": true,
-  "total_duration_seconds": 119.885787
+  "total_duration_seconds": 111.491343
 }

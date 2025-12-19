@@ -15,7 +15,12 @@ import time
 
 from app.backend.services.model_loader import ModelManager
 from app.backend.models.responses import SegmentationResponse, BatchResponse
-from app.backend.utils.image_processing import preprocess_image_for_segmentation
+from app.backend.utils.image_processing import (
+    preprocess_image_for_segmentation,
+    compute_brain_mask_from_image,
+    apply_brain_mask_to_prediction,
+    detect_background_padding
+)
 from app.backend.utils.visualization import numpy_to_base64_png, create_overlay
 from src.inference.postprocess import postprocess_mask
 from app.backend.config.settings import settings
@@ -114,6 +119,13 @@ class SegmentationService:
         # Save original image for visualization (before z-score normalization)
         image_original = self._prepare_original_for_viz(image_array)
         
+        # Compute brain mask if image has background padding
+        brain_mask = None
+        if detect_background_padding(image_original):
+            brain_mask = compute_brain_mask_from_image(image_array)
+            if brain_mask is not None:
+                print(f"[INFO] Brain mask applied (detected background padding)")
+        
         # Preprocess image for segmentation (applies z-score normalization)
         preprocessed = preprocess_image_for_segmentation(image_array)
         
@@ -121,6 +133,11 @@ class SegmentationService:
         result = self.model_manager.segmentation.predict_slice(preprocessed)
         prob_map = result.get('prob', result['mask'])
         binary_mask = result['mask']
+        
+        # Apply brain mask to predictions (zeros out background)
+        if brain_mask is not None:
+            prob_map = apply_brain_mask_to_prediction(prob_map, brain_mask)
+            binary_mask = apply_brain_mask_to_prediction(binary_mask, brain_mask)
         
         # Apply post-processing if requested
         if apply_postprocessing:
@@ -196,12 +213,26 @@ class SegmentationService:
         # Save original image for visualization
         image_original = self._prepare_original_for_viz(image_array)
         
+        # Compute brain mask if needed
+        brain_mask = None
+        if detect_background_padding(image_original):
+            brain_mask = compute_brain_mask_from_image(image_array)
+            if brain_mask is not None:
+                print(f"[INFO] Brain mask applied for uncertainty estimation")
+        
         # Preprocess image for segmentation
         preprocessed = preprocess_image_for_segmentation(image_array)
         
         # Run uncertainty estimation
         image_tensor = torch.from_numpy(preprocessed).unsqueeze(0).unsqueeze(0).float()
         result = self.model_manager.uncertainty.predict_with_uncertainty(image_tensor)
+        
+        # Apply brain mask to predictions
+        if brain_mask is not None:
+            result['mean'] = apply_brain_mask_to_prediction(result['mean'], brain_mask)
+            result['epistemic'] = apply_brain_mask_to_prediction(result['epistemic'], brain_mask)
+            result['aleatoric'] = apply_brain_mask_to_prediction(result['aleatoric'], brain_mask)
+            result['std'] = apply_brain_mask_to_prediction(result['std'], brain_mask)
         
         # Apply post-processing
         binary_mask, stats = postprocess_mask(
@@ -269,6 +300,14 @@ class SegmentationService:
         total_tumor_area = 0
         
         for idx, image_array in enumerate(images):
+            # Prepare original for visualization
+            image_original = self._prepare_original_for_viz(image_array)
+            
+            # Compute brain mask if needed
+            brain_mask = None
+            if detect_background_padding(image_original):
+                brain_mask = compute_brain_mask_from_image(image_array)
+            
             # Preprocess
             preprocessed = preprocess_image_for_segmentation(image_array)
             
@@ -276,6 +315,12 @@ class SegmentationService:
             result = self.model_manager.segmentation.predict_slice(preprocessed)
             prob_map = result.get('prob', result['mask'])
             binary_mask = result['mask']
+            
+            # Apply brain mask
+            if brain_mask is not None:
+                prob_map = apply_brain_mask_to_prediction(prob_map, brain_mask)
+                binary_mask = apply_brain_mask_to_prediction(binary_mask, brain_mask)
+            
             binary_mask, stats = postprocess_mask(
                 prob_map,
                 threshold=threshold,
