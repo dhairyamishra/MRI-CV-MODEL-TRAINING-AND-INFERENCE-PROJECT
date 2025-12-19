@@ -10,6 +10,7 @@ Extracted from main_v2.py segmentation endpoints (lines 575-790).
 
 import numpy as np
 import torch
+import cv2
 from typing import Dict, Any, List, Optional
 import time
 
