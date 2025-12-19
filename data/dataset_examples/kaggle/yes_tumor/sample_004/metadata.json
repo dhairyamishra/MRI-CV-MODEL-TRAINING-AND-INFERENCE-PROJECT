@@ -1,7 +1,7 @@
 {
   "index": 4,
   "source": "kaggle",
-  "filename": "yes_Y105.npz",
+  "filename": "Y102.jpg",
   "label": 1,
   "label_name": "tumor",
   "shape": [
@@ -11,25 +11,11 @@
   ],
   "dtype": "float32",
   "value_range": [
-    -1.966671347618103,
-    1.659348487854004
+    0.01568627543747425,
+    1.0
   ],
   "original_metadata": {
-    "image_id": "Y105",
-    "class": "yes",
-    "label": 1,
-    "target_size": [
-      256,
-      256
-    ],
-    "source": "kaggle_brain_mri",
-    "robust_masking": true,
-    "mask_quality": {
-      "area_fraction": 0.609466552734375,
-      "border_fraction": 0.0546875,
-      "num_components": 1,
-      "passed": true,
-      "reason": "passed"
-    }
+    "source": "raw_jpg",
+    "original_file": "Y102.jpg"
   }
 }

@@ -297,21 +297,21 @@ def create_comparison_grid(
 
 
 def export_dataset_examples(
-    kaggle_dir: str = "data/processed/kaggle",
-    brats_dir: str = "data/processed/brats2d",
+    kaggle_dir: str = "data/raw/kaggle_brain_mri",
+    brats_dir: str = "data/raw/brats2020",
     output_dir: str = "data/dataset_examples",
     num_samples: int = 20,
-    kaggle_with_tumor: int = 20,
-    kaggle_without_tumor: int = 20,
-    brats_with_tumor: int = 20,
-    brats_without_tumor: int = 20,
+    kaggle_with_tumor: int = 10,
+    kaggle_without_tumor: int = 10,
+    brats_with_tumor: int = 10,
+    brats_without_tumor: int = 10,
 ):
     """
-    Export examples from both datasets.
+    Export examples from RAW datasets (before preprocessing).
     
     Args:
-        kaggle_dir: Kaggle processed data directory
-        brats_dir: BraTS processed data directory
+        kaggle_dir: Kaggle RAW data directory (JPG files)
+        brats_dir: BraTS RAW data directory (NIfTI files)
         output_dir: Output directory for examples
         num_samples: Total number of samples to export per dataset
         kaggle_with_tumor: Number of Kaggle samples with tumor
@@ -320,7 +320,7 @@ def export_dataset_examples(
         brats_without_tumor: Number of BraTS samples without tumor
     """
     print("=" * 70)
-    print("Dataset Examples Export")
+    print("Dataset Examples Export (from RAW data)")
     print("=" * 70)
     
     kaggle_path = Path(kaggle_dir)
@@ -336,106 +336,200 @@ def export_dataset_examples(
     brats_output.mkdir(exist_ok=True)
     
     print(f"\nConfiguration:")
-    print(f"  Kaggle dir: {kaggle_path}")
-    print(f"  BraTS dir:  {brats_path}")
-    print(f"  Output dir: {output_path}")
-    print(f"  Samples per dataset: {num_samples}")
+    print(f"  Kaggle RAW dir: {kaggle_path}")
+    print(f"  BraTS RAW dir:  {brats_path}")
+    print(f"  Output dir:     {output_path}")
     
     # ========== Process Kaggle Dataset ==========
-    print("\n[Processing Kaggle Dataset]")
+    print("\n[Processing Kaggle Dataset from RAW JPG files]")
     
     kaggle_samples = []
     
     if kaggle_path.exists():
-        # Find files from train/val/test subdirectories
-        yes_files = []
-        no_files = []
-        for subdir in ['train', 'val', 'test']:
-            subdir_path = kaggle_path / subdir
-            if subdir_path.exists():
-                yes_files.extend(sorted(subdir_path.glob("yes_*.npz")))
-                no_files.extend(sorted(subdir_path.glob("no_*.npz")))
+        # Find RAW JPG files in yes/ and no/ subdirectories
+        yes_dir = kaggle_path / "yes"
+        no_dir = kaggle_path / "no"
         
-        print(f"  Found: {len(yes_files)} tumor, {len(no_files)} no-tumor samples")
+        yes_files = sorted(yes_dir.glob("*.jpg")) if yes_dir.exists() else []
+        no_files = sorted(no_dir.glob("*.jpg")) if no_dir.exists() else []
         
-        # Sample with tumor
+        print(f"  Found: {len(yes_files)} tumor, {len(no_files)} no-tumor RAW JPG files")
+        
+        # Sample with tumor - convert JPG to npz format for compatibility
         print(f"  Exporting {kaggle_with_tumor} tumor samples...")
-        for i, npz_file in enumerate(yes_files[:kaggle_with_tumor]):
-            sample = load_kaggle_sample(npz_file)
-            kaggle_samples.append(sample)
-            save_kaggle_example(sample, kaggle_output, i, has_tumor=True)
+        for i, jpg_file in enumerate(yes_files[:kaggle_with_tumor]):
+            # Load JPG and convert to npz-like format
+            img = cv2.imread(str(jpg_file), cv2.IMREAD_GRAYSCALE)
+            if img is not None:
+                # Resize to 256x256
+                img = cv2.resize(img, (256, 256))
+                # Normalize to [0, 1] and add channel dimension
+                img_normalized = img.astype(np.float32) / 255.0
+                img_normalized = np.expand_dims(img_normalized, axis=0)  # (1, H, W)
+                
+                sample = {
+                    'image': img_normalized,
+                    'label': 1,
+                    'metadata': {'source': 'raw_jpg', 'original_file': jpg_file.name},
+                    'source': 'kaggle',
+                    'filename': jpg_file.name,
+                }
+                kaggle_samples.append(sample)
+                save_kaggle_example(sample, kaggle_output, i, has_tumor=True)
         
         # Sample without tumor
         print(f"  Exporting {kaggle_without_tumor} no-tumor samples...")
-        for i, npz_file in enumerate(no_files[:kaggle_without_tumor]):
-            sample = load_kaggle_sample(npz_file)
-            kaggle_samples.append(sample)
-            save_kaggle_example(sample, kaggle_output, i, has_tumor=False)
+        for i, jpg_file in enumerate(no_files[:kaggle_without_tumor]):
+            img = cv2.imread(str(jpg_file), cv2.IMREAD_GRAYSCALE)
+            if img is not None:
+                img = cv2.resize(img, (256, 256))
+                img_normalized = img.astype(np.float32) / 255.0
+                img_normalized = np.expand_dims(img_normalized, axis=0)
+                
+                sample = {
+                    'image': img_normalized,
+                    'label': 0,
+                    'metadata': {'source': 'raw_jpg', 'original_file': jpg_file.name},
+                    'source': 'kaggle',
+                    'filename': jpg_file.name,
+                }
+                kaggle_samples.append(sample)
+                save_kaggle_example(sample, kaggle_output, i, has_tumor=False)
         
         print(f"  [OK] Exported {len(kaggle_samples)} Kaggle samples")
     else:
         print(f"  ⚠️  Kaggle directory not found: {kaggle_path}")
     
     # ========== Process BraTS Dataset ==========
-    print("\n[Processing BraTS Dataset]")
+    print("\n[Processing BraTS Dataset from RAW NIfTI files]")
     
     brats_samples = []
     
     if brats_path.exists():
-        # Find all files from train/val/test subdirectories
-        all_files = []
-        for subdir in ['train', 'val', 'test']:
-            subdir_path = brats_path / subdir
-            if subdir_path.exists():
-                all_files.extend(sorted(subdir_path.glob("*.npz")))
+        # Find patient directories
+        patient_dirs = sorted([d for d in brats_path.iterdir() if d.is_dir() and d.name.startswith('BraTS')])
         
-        print(f"  Found: {len(all_files)} total slices")
-        print(f"  Categorizing by tumor presence (this may take a moment)...")
+        print(f"  Found: {len(patient_dirs)} patient directories")
+        print(f"  Extracting slices with/without tumors...")
         
-        # Separate by tumor presence
-        tumor_files = []
-        no_tumor_files = []
+        # We'll extract middle slices from volumes
+        tumor_samples_collected = 0
+        no_tumor_samples_collected = 0
         
-        from tqdm import tqdm
-        for npz_file in tqdm(all_files, desc="  Scanning", leave=False):
+        for patient_dir in tqdm(patient_dirs, desc="  Scanning patients"):
+            if tumor_samples_collected >= brats_with_tumor and no_tumor_samples_collected >= brats_without_tumor:
+                break
+            
             try:
-                # Only load metadata, not the full image data
-                with np.load(npz_file, allow_pickle=True) as data:
-                    metadata = data['metadata'].item() if 'metadata' in data else {}
+                # Find FLAIR and segmentation files
+                flair_file = None
+                seg_file = None
+                
+                for ext in ['.nii.gz', '.nii']:
+                    if flair_file is None:
+                        matches = list(patient_dir.glob(f"*_flair{ext}"))
+                        if matches:
+                            flair_file = matches[0]
+                    if seg_file is None:
+                        matches = list(patient_dir.glob(f"*_seg{ext}"))
+                        if matches:
+                            seg_file = matches[0]
+                
+                if flair_file is None or seg_file is None:
+                    continue
+                
+                # Load volumes (only import nibabel when needed)
+                import nibabel as nib
+                flair_vol = nib.load(str(flair_file)).get_fdata()
+                seg_vol = nib.load(str(seg_file)).get_fdata()
+                
+                # Get middle slice
+                mid_slice = flair_vol.shape[2] // 2
+                
+                # Try a few slices around the middle
+                for slice_offset in [0, -5, 5, -10, 10]:
+                    slice_idx = mid_slice + slice_offset
+                    if slice_idx < 0 or slice_idx >= flair_vol.shape[2]:
+                        continue
                     
-                    if metadata.get('has_tumor', False):
-                        tumor_files.append(npz_file)
-                    else:
-                        no_tumor_files.append(npz_file)
+                    img_slice = flair_vol[:, :, slice_idx]
+                    seg_slice = seg_vol[:, :, slice_idx]
                     
-                    # Early exit if we have enough samples
-                    if len(tumor_files) >= brats_with_tumor and len(no_tumor_files) >= brats_without_tumor:
+                    has_tumor_flag = np.sum(seg_slice > 0) >= 100
+                    
+                    # Collect tumor sample
+                    if has_tumor_flag and tumor_samples_collected < brats_with_tumor:
+                        # Normalize and resize
+                        img_min, img_max = img_slice.min(), img_slice.max()
+                        if img_max > img_min:
+                            img_norm = ((img_slice - img_min) / (img_max - img_min) * 255).astype(np.uint8)
+                        else:
+                            img_norm = np.zeros_like(img_slice, dtype=np.uint8)
+                        
+                        img_norm = cv2.resize(img_norm, (256, 256))
+                        seg_norm = cv2.resize((seg_slice > 0).astype(np.uint8) * 255, (256, 256), interpolation=cv2.INTER_NEAREST)
+                        
+                        # Convert to npz-like format
+                        img_final = (img_norm.astype(np.float32) / 255.0)
+                        img_final = np.expand_dims(img_final, axis=0)
+                        seg_final = np.expand_dims(seg_norm, axis=0)
+                        
+                        sample = {
+                            'image': img_final,
+                            'mask': seg_final,
+                            'metadata': {
+                                'source': 'raw_nifti',
+                                'patient_id': patient_dir.name,
+                                'slice_idx': slice_idx,
+                                'modality': 'flair',
+                                'has_tumor': True,
+                                'tumor_pixels': int(np.sum(seg_norm > 0))
+                            },
+                            'source': 'brats',
+                            'filename': f"{patient_dir.name}_slice{slice_idx:03d}.npz",
+                        }
+                        brats_samples.append(sample)
+                        save_brats_example(sample, brats_output, tumor_samples_collected, has_tumor=True)
+                        tumor_samples_collected += 1
                         break
-            except Exception:
+                    
+                    # Collect no-tumor sample
+                    elif not has_tumor_flag and no_tumor_samples_collected < brats_without_tumor:
+                        img_min, img_max = img_slice.min(), img_slice.max()
+                        if img_max > img_min:
+                            img_norm = ((img_slice - img_min) / (img_max - img_min) * 255).astype(np.uint8)
+                        else:
+                            img_norm = np.zeros_like(img_slice, dtype=np.uint8)
+                        
+                        img_norm = cv2.resize(img_norm, (256, 256))
+                        
+                        img_final = (img_norm.astype(np.float32) / 255.0)
+                        img_final = np.expand_dims(img_final, axis=0)
+                        
+                        sample = {
+                            'image': img_final,
+                            'mask': None,
+                            'metadata': {
+                                'source': 'raw_nifti',
+                                'patient_id': patient_dir.name,
+                                'slice_idx': slice_idx,
+                                'modality': 'flair',
+                                'has_tumor': False,
+                                'tumor_pixels': 0
+                            },
+                            'source': 'brats',
+                            'filename': f"{patient_dir.name}_slice{slice_idx:03d}.npz",
+                        }
+                        brats_samples.append(sample)
+                        save_brats_example(sample, brats_output, no_tumor_samples_collected, has_tumor=False)
+                        no_tumor_samples_collected += 1
+                        break
+                        
+            except Exception as e:
+                print(f"    ⚠️  Failed to process {patient_dir.name}: {e}")
                 continue
         
-        print(f"  Categorized: {len(tumor_files)} tumor, {len(no_tumor_files)} no-tumor")
-        
-        # Sample with tumor
-        actual_tumor = min(brats_with_tumor, len(tumor_files))
-        print(f"  Exporting {actual_tumor} tumor samples...")
-        for i, npz_file in enumerate(tumor_files[:actual_tumor]):
-            sample = load_brats_sample(npz_file)
-            brats_samples.append(sample)
-            save_brats_example(sample, brats_output, i, has_tumor=True)
-        
-        # Sample without tumor (if available)
-        if len(no_tumor_files) > 0:
-            actual_no_tumor = min(brats_without_tumor, len(no_tumor_files))
-            print(f"  Exporting {actual_no_tumor} no-tumor samples...")
-            for i, npz_file in enumerate(no_tumor_files[:actual_no_tumor]):
-                sample = load_brats_sample(npz_file)
-                brats_samples.append(sample)
-                save_brats_example(sample, brats_output, i, has_tumor=False)
-        else:
-            print(f"  ℹ️  No no-tumor samples found (BraTS preprocessing filters empty slices)")
-        
-        print(f"  [OK] Exported {len(brats_samples)} BraTS samples")
+        print(f"  [OK] Exported {len(brats_samples)} BraTS samples ({tumor_samples_collected} tumor, {no_tumor_samples_collected} no-tumor)")
     else:
         print(f"  ⚠️  BraTS directory not found: {brats_path}")
     
@@ -509,15 +603,15 @@ Examples:
     parser.add_argument(
         "--kaggle-dir",
         type=str,
-        default="data/processed/kaggle",
-        help="Kaggle processed data directory"
+        default="data/raw/kaggle_brain_mri",
+        help="Kaggle RAW data directory (JPG files)"
     )
     
     parser.add_argument(
         "--brats-dir",
         type=str,
-        default="data/processed/brats2d",
-        help="BraTS processed data directory"
+        default="data/raw/brats2020",
+        help="BraTS RAW data directory (NIfTI files)"
     )
     
     parser.add_argument(
@@ -537,29 +631,29 @@ Examples:
     parser.add_argument(
         "--kaggle-with-tumor",
         type=int,
-        default=20,
-        help="Kaggle samples with tumor (default: 20)"
+        default=10,
+        help="Kaggle samples with tumor (default: 10)"
     )
     
     parser.add_argument(
         "--kaggle-without-tumor",
         type=int,
-        default=20,
-        help="Kaggle samples without tumor (default: 20)"
+        default=10,
+        help="Kaggle samples without tumor (default: 10)"
     )
     
     parser.add_argument(
         "--brats-with-tumor",
         type=int,
-        default=20,
-        help="BraTS samples with tumor (default: 20)"
+        default=10,
+        help="BraTS samples with tumor (default: 10)"
     )
     
     parser.add_argument(
         "--brats-without-tumor",
         type=int,
-        default=20,
-        help="BraTS samples without tumor (default: 20)"
+        default=10,
+        help="BraTS samples without tumor (default: 10)"
     )
     
     args = parser.parse_args()

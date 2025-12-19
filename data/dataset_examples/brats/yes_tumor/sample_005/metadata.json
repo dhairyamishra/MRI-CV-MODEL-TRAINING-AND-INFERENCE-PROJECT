@@ -1,11 +1,11 @@
 {
   "index": 5,
   "source": "brats",
-  "filename": "BraTS20_Training_010_slice_075.npz",
+  "filename": "BraTS20_Training_007_slice077.npz",
   "has_tumor": true,
-  "tumor_pixels": 598,
-  "patient_id": "BraTS20_Training_010",
-  "slice_idx": 75,
+  "tumor_pixels": 480,
+  "patient_id": "BraTS20_Training_007",
+  "slice_idx": 77,
   "modality": "flair",
   "shape": [
     1,
@@ -14,31 +14,16 @@
   ],
   "dtype": "float32",
   "value_range": [
-    -0.39425384998321533,
-    5.876645565032959
+    0.0,
+    0.8784313797950745
   ],
-  "normalization": "zscore",
+  "normalization": "unknown",
   "original_metadata": {
-    "patient_id": "BraTS20_Training_010",
-    "slice_idx": 75,
+    "source": "raw_nifti",
+    "patient_id": "BraTS20_Training_007",
+    "slice_idx": 77,
     "modality": "flair",
-    "original_shape": [
-      240,
-      240,
-      155
-    ],
     "has_tumor": true,
-    "tumor_pixels": 598,
-    "normalize_method": "zscore",
-    "pixdim": [
-      1.0,
-      1.0,
-      1.0,
-      1.0,
-      0.0,
-      0.0,
-      0.0,
-      0.0
-    ]
+    "tumor_pixels": 480
   }
 }
