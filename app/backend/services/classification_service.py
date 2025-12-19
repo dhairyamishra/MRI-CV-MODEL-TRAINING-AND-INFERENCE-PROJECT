@@ -16,7 +16,7 @@ import time
 from app.backend.services.model_loader import ModelManager
 from app.backend.models.responses import ClassificationResponse, BatchResponse
 from app.backend.utils.image_processing import preprocess_image_for_classification
-from app.backend.utils.visualization import numpy_to_base64_png
+from app.backend.utils.visualization import numpy_to_base64_png, create_gradcam_overlay
 from src.eval.grad_cam import visualize_single_image
 
 
@@ -75,17 +75,43 @@ class ClassificationService:
         # Use multi-task model if standalone classifier not available
         if not self.model_manager.classifier_loaded and self.model_manager.multitask_loaded:
             # Use multi-task model for classification
-            result = self.model_manager.multitask.predict_conditional(
-                image_array,
-                include_gradcam=return_gradcam
-            )
-            return ClassificationResponse(
-                predicted_class=result['classification']['predicted_class'],
-                predicted_label=result['classification']['predicted_label'],
-                confidence=result['classification']['confidence'],
-                probabilities=result['classification']['probabilities'],
-                gradcam_overlay=result.get('gradcam_overlay')
-            )
+            if return_gradcam:
+                # Use predict_with_gradcam for Grad-CAM visualization
+                result = self.model_manager.multitask.predict_with_gradcam(
+                    image_array,
+                    use_brain_mask=True
+                )
+                # Create Grad-CAM overlay from heatmap
+                gradcam_base64 = None
+                if result.get('gradcam', {}).get('heatmap') is not None:
+                    heatmap = result['gradcam']['heatmap']
+                    # Normalize image to [0, 1] for overlay creation
+                    image_normalized = image_array.astype(np.float32)
+                    if image_normalized.max() > 1.0:
+                        image_normalized = image_normalized / 255.0
+                    # Create overlay
+                    overlay = create_gradcam_overlay(image_normalized, heatmap, alpha=0.5)
+                    gradcam_base64 = numpy_to_base64_png(overlay)
+                
+                return ClassificationResponse(
+                    predicted_class=result['classification']['predicted_class'],
+                    predicted_label=result['classification']['predicted_label'],
+                    confidence=result['classification']['confidence'],
+                    probabilities=result['classification']['probabilities'],
+                    gradcam_overlay=gradcam_base64
+                )
+            else:
+                # Use predict_conditional for regular classification
+                result = self.model_manager.multitask.predict_conditional(
+                    image_array,
+                    return_logits=False
+                )
+                return ClassificationResponse(
+                    predicted_class=result['classification']['predicted_class'],
+                    predicted_label=result['classification']['predicted_label'],
+                    confidence=result['classification']['confidence'],
+                    probabilities=result['classification']['probabilities']
+                )
         
         if not self.model_manager.classifier_loaded:
             raise ValueError("No classification model available")
