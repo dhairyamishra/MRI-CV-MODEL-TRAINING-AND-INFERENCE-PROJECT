@@ -125,12 +125,28 @@ def compute_brain_mask(
     # Step 3: Otsu thresholding (automatic, adaptive)
     _, thresh = cv2.threshold(img_blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     
-    # Ensure foreground is the bright region (check mean intensity)
+    # Improved inversion check: ensure foreground is the bright region
+    # Use multiple criteria to determine correct orientation
     if img_blur[thresh == 255].size > 0 and img_blur[thresh == 0].size > 0:
         mean_fg = img_blur[thresh == 255].mean()
         mean_bg = img_blur[thresh == 0].mean()
-        if mean_fg < mean_bg:
+        area_fg = (thresh == 255).sum() / thresh.size
+        
+        # Invert if:
+        # 1. Foreground is darker than background, OR
+        # 2. Foreground is >90% of image (likely inverted)
+        should_invert = (mean_fg < mean_bg) or (area_fg > 0.90)
+        
+        if should_invert:
             thresh = cv2.bitwise_not(thresh)
+            
+            # Re-check after inversion - if still >90%, something is wrong
+            area_fg_after = (thresh == 255).sum() / thresh.size
+            if area_fg_after > 0.95:
+                # Image is too uniform, use a more conservative threshold
+                # Use median as threshold instead of Otsu
+                median_val = np.median(img_blur)
+                _, thresh = cv2.threshold(img_blur, int(median_val * 1.2), 255, cv2.THRESH_BINARY)
     
     # Step 4: Morphological closing to connect brain regions
     if close_kernel_size > 1:

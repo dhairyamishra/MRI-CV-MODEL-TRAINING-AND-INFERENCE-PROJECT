@@ -12,9 +12,9 @@ model:
 
 # Data paths
 data:
-  train_dir: "data/processed/brats2d_full/train"
-  val_dir: "data/processed/brats2d_full/val"
-  test_dir: "data/processed/brats2d_full/test"
+  train_dir: "data/processed/brats2d/train"
+  val_dir: "data/processed/brats2d/val"
+  test_dir: "data/processed/brats2d/test"
 
 # Output paths
 paths:

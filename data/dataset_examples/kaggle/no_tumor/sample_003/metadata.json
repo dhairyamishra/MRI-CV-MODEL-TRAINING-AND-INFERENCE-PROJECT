@@ -1,0 +1,35 @@
+{
+  "index": 3,
+  "source": "kaggle",
+  "filename": "no_15 no.npz",
+  "label": 0,
+  "label_name": "no_tumor",
+  "shape": [
+    1,
+    256,
+    256
+  ],
+  "dtype": "float32",
+  "value_range": [
+    -2.5458664894104004,
+    2.6448917388916016
+  ],
+  "original_metadata": {
+    "image_id": "15 no",
+    "class": "no",
+    "label": 0,
+    "target_size": [
+      256,
+      256
+    ],
+    "source": "kaggle_brain_mri",
+    "robust_masking": true,
+    "mask_quality": {
+      "area_fraction": 0.6896514892578125,
+      "border_fraction": 0.2119140625,
+      "num_components": 5,
+      "passed": true,
+      "reason": "passed"
+    }
+  }
+}

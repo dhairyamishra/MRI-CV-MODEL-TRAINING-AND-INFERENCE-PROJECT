@@ -105,7 +105,8 @@ def process_patient(
     target_size: Optional[Tuple[int, int]] = None,
     normalize_method: str = "zscore",
     min_tumor_pixels: int = 100,
-    save_all_slices: bool = False,
+    save_all_slices: bool = True,
+    no_tumor_sample_rate: float = 0.3,
 ) -> int:
     """
     Process a single patient's data.
@@ -118,6 +119,7 @@ def process_patient(
         normalize_method: Intensity normalization method
         min_tumor_pixels: Minimum tumor pixels to keep a slice
         save_all_slices: If True, save all slices; if False, only with tumor
+        no_tumor_sample_rate: Fraction of no-tumor slices to keep (0.0-1.0)
     
     Returns:
         Number of slices saved
@@ -177,9 +179,20 @@ def process_patient(
         image_slice = image_volume[:, :, slice_idx]  # (H, W)
         mask_slice = mask_volume[:, :, slice_idx]    # (H, W)
         
-        # Filter out empty slices if requested
-        if not save_all_slices and not has_tumor(mask_slice, min_tumor_pixels):
-            continue
+        # Check if slice has tumor
+        slice_has_tumor = has_tumor(mask_slice, min_tumor_pixels)
+        
+        # Filter logic
+        if not save_all_slices:
+            # Old behavior: only save tumor slices
+            if not slice_has_tumor:
+                continue
+        else:
+            # New behavior: save all tumor slices, sample no-tumor slices
+            if not slice_has_tumor:
+                # Randomly sample no-tumor slices based on sample rate
+                if np.random.random() > no_tumor_sample_rate:
+                    continue
         
         # Resize if needed
         if target_size is not None:
@@ -241,7 +254,8 @@ def preprocess_brats_dataset(
     target_size: Optional[Tuple[int, int]] = (256, 256),
     normalize_method: str = "zscore",
     min_tumor_pixels: int = 100,
-    save_all_slices: bool = False,
+    save_all_slices: bool = True,
+    no_tumor_sample_rate: float = 0.3,
     max_patients: Optional[int] = None,
 ):
     """
@@ -254,7 +268,8 @@ def preprocess_brats_dataset(
         target_size: Resize slices to (H, W)
         normalize_method: Intensity normalization method
         min_tumor_pixels: Minimum tumor pixels to keep a slice
-        save_all_slices: If True, save all slices
+        save_all_slices: If True, save all slices (with sampling for no-tumor)
+        no_tumor_sample_rate: Fraction of no-tumor slices to keep (default: 0.3 = 30%)
         max_patients: Maximum patients to process (for testing)
     """
     print("=" * 70)
@@ -279,6 +294,8 @@ def preprocess_brats_dataset(
     print(f"  Normalization: {normalize_method}")
     print(f"  Min tumor pixels: {min_tumor_pixels}")
     print(f"  Save all slices: {save_all_slices}")
+    if save_all_slices:
+        print(f"  No-tumor sample rate: {no_tumor_sample_rate*100:.0f}% (keep ~{no_tumor_sample_rate*100:.0f}% of no-tumor slices)")
     
     # Find all patient directories
     patient_dirs = sorted([
@@ -289,9 +306,16 @@ def preprocess_brats_dataset(
     # Filter out parent directories (keep only those with .nii files)
     patient_dirs = [d for d in patient_dirs if len(list(d.glob("*.nii*"))) > 0]
     
+    # Random sampling of patients if max_patients is specified
     if max_patients:
-        patient_dirs = patient_dirs[:max_patients]
-        print(f"  Processing: First {max_patients} patients (testing mode)")
+        if max_patients < len(patient_dirs):
+            # Randomly sample patients instead of taking first N
+            np.random.seed(42)  # For reproducibility
+            patient_dirs = list(np.random.choice(patient_dirs, size=max_patients, replace=False))
+            print(f"  Processing: Randomly sampled {max_patients} patients (testing mode)")
+        else:
+            patient_dirs = patient_dirs[:max_patients]
+            print(f"  Processing: First {max_patients} patients (testing mode)")
     
     print(f"\nFound {len(patient_dirs)} patient folders")
     
@@ -314,6 +338,7 @@ def preprocess_brats_dataset(
                 normalize_method=normalize_method,
                 min_tumor_pixels=min_tumor_pixels,
                 save_all_slices=save_all_slices,
+                no_tumor_sample_rate=no_tumor_sample_rate,
             )
             
             if slices_saved > 0:
@@ -423,7 +448,15 @@ Examples:
     parser.add_argument(
         "--save-all-slices",
         action="store_true",
-        help="Save all slices, not just those with tumors",
+        default=True,
+        help="Save all slices (tumor + sampled no-tumor), not just tumor slices",
+    )
+    
+    parser.add_argument(
+        "--no-tumor-sample-rate",
+        type=float,
+        default=0.3,
+        help="Fraction of no-tumor slices to keep (0.0-1.0, default: 0.3 = 30%%)",
     )
     
     parser.add_argument(
@@ -443,6 +476,7 @@ Examples:
         normalize_method=args.normalize,
         min_tumor_pixels=args.min_tumor_pixels,
         save_all_slices=args.save_all_slices,
+        no_tumor_sample_rate=args.no_tumor_sample_rate,
         max_patients=args.max_patients,
     )
 

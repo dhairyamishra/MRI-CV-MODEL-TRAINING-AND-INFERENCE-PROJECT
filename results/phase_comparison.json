@@ -1,31 +1,43 @@
 [
   {
     "phase": "Phase 2.1 (Seg Only)",
-    "segmentation": null,
+    "segmentation": {
+      "dice": 0.5865046394650232,
+      "dice_std": 0.3423219169225976,
+      "iou": 0.4937630477361381,
+      "iou_std": 0.33255669807650906,
+      "n_samples": 22
+    },
     "classification": null
   },
   {
     "phase": "Phase 2.2 (Cls Only)",
     "segmentation": null,
     "classification": {
-      "accuracy": 0.6153846153846154,
-      "precision": 0.6153846153846154,
+      "accuracy": 0.6596306068601583,
+      "precision": 0.6596306068601583,
       "recall": 1.0,
-      "f1": 0.7619047619047619,
-      "roc_auc": 0.17777777777777776,
-      "n_samples": 39
+      "f1": 0.794912559618442,
+      "roc_auc": 0.7615503875968992,
+      "n_samples": 379
     }
   },
   {
     "phase": "Phase 2.3 (Multi-Task)",
-    "segmentation": null,
+    "segmentation": {
+      "dice": 0.36701520465695386,
+      "dice_std": 0.3068329589007193,
+      "iou": 0.2711836571424184,
+      "iou_std": 0.2503102434013005,
+      "n_samples": 22
+    },
     "classification": {
-      "accuracy": 0.6153846153846154,
-      "precision": 0.6153846153846154,
+      "accuracy": 0.7598944591029023,
+      "precision": 0.7331378299120235,
       "recall": 1.0,
-      "f1": 0.7619047619047619,
-      "roc_auc": 0.6305555555555555,
-      "n_samples": 39
+      "f1": 0.8460236886632826,
+      "roc_auc": 0.862077519379845,
+      "n_samples": 379
     }
   }
 ]

@@ -12,8 +12,8 @@ model:
 
 # Data paths (multiple sources)
 data:
-  brats_train_dir: "data/processed/brats2d_full/train"
-  brats_val_dir: "data/processed/brats2d_full/val"
+  brats_train_dir: "data/processed/brats2d/train"
+  brats_val_dir: "data/processed/brats2d/val"
   kaggle_train_dir: "data/processed/kaggle/train"
   kaggle_val_dir: "data/processed/kaggle/val"
 

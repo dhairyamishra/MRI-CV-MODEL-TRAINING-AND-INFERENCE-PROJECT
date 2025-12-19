@@ -325,7 +325,7 @@ class PipelineController:
             self._print_info(f"Production mode: Processing ALL {total_patients} patients")
         
         # Check for existing preprocessed BraTS data
-        brats_processed_dir = self.project_root / "data" / "processed" / "brats2d_full"
+        brats_processed_dir = self.project_root / "data" / "processed" / "brats2d"
         preprocess_brats = True
         if brats_processed_dir.exists():
             # Count existing processed files to detect stale data
@@ -348,19 +348,22 @@ class PipelineController:
         
         # Preprocess BraTS data if needed
         if preprocess_brats:
-            # Build preprocessing command
-            cmd = ["python", "scripts/data/preprocessing/preprocess_all_brats.py"]
+            # Build preprocessing command - use direct script with new no-tumor slice support
+            cmd = ["python", "src/data/preprocess_brats_2d.py"]
             
             # Add preprocessing options
             cmd.extend([
-                "--input", "data/raw/brats2020",  # Specify input directory
+                "--input", "data/raw/brats2020",
+                "--output", "data/processed/brats2d",
                 "--modality", "flair",
-                "--normalization", "zscore",  # Correct argument name
-                "--min-tumor-pixels", "100"
+                "--normalize", "zscore",
+                "--min-tumor-pixels", "100",
+                "--save-all-slices",  # NEW: Save tumor + no-tumor slices
+                "--no-tumor-sample-rate", "0.3"  # NEW: Keep 30% of no-tumor slices
             ])
             
             if num_patients:
-                cmd.extend(["--num-patients", str(num_patients)])  # Correct argument name
+                cmd.extend(["--max-patients", str(num_patients)])
             
             self._print_info(f"Preprocessing BraTS data (3D→2D conversion, normalization)...")
             timeout = 300 if self.args.training_mode == "quick" else 7200  # 5 min or 2 hours
@@ -391,9 +394,19 @@ class PipelineController:
         """Step 3: Split datasets into train/val/test."""
         self._print_step(3, self._get_total_steps(), "Data Splitting")
         
-        # BraTS data is already split by preprocess_all_brats.py
-        self._print_info("BraTS data already split by preprocessing step")
-        self._print_success("BraTS splits: train/val/test (70/15/15)")
+        # Split BraTS data (patient-level splitting)
+        self._print_info("Splitting BraTS data (patient-level, 70/15/15)...")
+        if not self._run_command(
+            ["python", "src/data/split_brats.py",
+             "--input", "data/processed/brats2d",
+             "--train-ratio", "0.7",
+             "--val-ratio", "0.15",
+             "--test-ratio", "0.15",
+             "--seed", "42"],
+            "split_brats",
+            timeout=300
+        ):
+            return False
         
         # Split Kaggle data
         self._print_info("Splitting Kaggle data (patient-level, 70/15/15)...")
@@ -407,6 +420,19 @@ class PipelineController:
             timeout=300
         ):
             return False
+        
+        # Generate example dataset for testing
+        self._print_info("Generating example dataset for demo testing...")
+        if not self._run_command(
+            ["python", "scripts/data/preprocessing/export_dataset_examples.py",
+             "--kaggle-with-tumor", "10",
+             "--kaggle-without-tumor", "10", 
+             "--brats-with-tumor", "10",
+             "--brats-without-tumor", "10"],
+            "export_examples",
+            timeout=600  # 10 minutes should be enough
+        ):
+            self._print_warning("Example dataset generation failed, but continuing...")
         
         return True
     
@@ -617,9 +643,9 @@ class PipelineController:
     def _get_total_steps(self) -> int:
         """Get total number of steps based on mode."""
         if self.args.mode == "full":
-            return 6
+            return 7  # Added export_examples step
         elif self.args.mode == "data-only":
-            return 3
+            return 4  # Added export_examples step
         elif self.args.mode == "train-eval":
             return 2
         elif self.args.mode == "demo":

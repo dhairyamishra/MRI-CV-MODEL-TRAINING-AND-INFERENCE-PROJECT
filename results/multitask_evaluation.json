@@ -1,28 +1,28 @@
 {
   "segmentation": {
-    "dice": 0.0,
-    "dice_std": 0.0,
-    "iou": 0.0,
-    "iou_std": 0.0,
-    "n_samples": 0
+    "dice": 0.36701520465695386,
+    "dice_std": 0.3068329589007193,
+    "iou": 0.2711836571424184,
+    "iou_std": 0.2503102434013005,
+    "n_samples": 22
   },
   "classification": {
-    "accuracy": 0.6153846153846154,
-    "precision": 0.6153846153846154,
+    "accuracy": 0.7598944591029023,
+    "precision": 0.7331378299120235,
     "recall": 1.0,
-    "f1": 0.7619047619047619,
-    "roc_auc": 0.6305555555555555,
+    "f1": 0.8460236886632826,
+    "roc_auc": 0.862077519379845,
     "confusion_matrix": [
       [
-        0,
-        15
+        38,
+        91
       ],
       [
         0,
-        24
+        250
       ]
     ],
-    "n_samples": 39
+    "n_samples": 379
   },
   "metadata": {
     "checkpoint": "checkpoints/multitask_joint/best_model.pth",
@@ -35,6 +35,6 @@
       "cls_head": 1074,
       "total": 119379
     },
-    "combined_metric": 0.3076923076923077
+    "combined_metric": 0.5634548318799281
   }
 }

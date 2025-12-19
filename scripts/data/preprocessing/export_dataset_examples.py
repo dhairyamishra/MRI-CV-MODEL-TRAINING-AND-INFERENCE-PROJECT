@@ -122,7 +122,7 @@ def create_overlay(image: np.ndarray, mask: np.ndarray, alpha: float = 0.5) -> n
     return blended
 
 
-def save_kaggle_example(sample: Dict, output_dir: Path, index: int):
+def save_kaggle_example(sample: Dict, output_dir: Path, index: int, has_tumor: bool):
     """
     Save a Kaggle dataset example.
     
@@ -130,13 +130,17 @@ def save_kaggle_example(sample: Dict, output_dir: Path, index: int):
         sample: Sample dictionary
         output_dir: Output directory
         index: Sample index
+        has_tumor: Whether sample has tumor
     """
     image = sample['image']
     label = sample['label']
     metadata = sample['metadata']
     
-    # Create subdirectory
-    sample_dir = output_dir / f"kaggle_{index:03d}"
+    # Create subdirectory based on tumor presence
+    tumor_dir = output_dir / ("yes_tumor" if has_tumor else "no_tumor")
+    tumor_dir.mkdir(parents=True, exist_ok=True)
+    
+    sample_dir = tumor_dir / f"sample_{index:03d}"
     sample_dir.mkdir(parents=True, exist_ok=True)
     
     # Save image
@@ -162,7 +166,7 @@ def save_kaggle_example(sample: Dict, output_dir: Path, index: int):
     return sample_dir
 
 
-def save_brats_example(sample: Dict, output_dir: Path, index: int):
+def save_brats_example(sample: Dict, output_dir: Path, index: int, has_tumor: bool):
     """
     Save a BraTS dataset example.
     
@@ -170,13 +174,17 @@ def save_brats_example(sample: Dict, output_dir: Path, index: int):
         sample: Sample dictionary
         output_dir: Output directory
         index: Sample index
+        has_tumor: Whether sample has tumor
     """
     image = sample['image']
     mask = sample['mask']
     metadata = sample['metadata']
     
-    # Create subdirectory
-    sample_dir = output_dir / f"brats_{index:03d}"
+    # Create subdirectory based on tumor presence
+    tumor_dir = output_dir / ("yes_tumor" if has_tumor else "no_tumor")
+    tumor_dir.mkdir(parents=True, exist_ok=True)
+    
+    sample_dir = tumor_dir / f"sample_{index:03d}"
     sample_dir.mkdir(parents=True, exist_ok=True)
     
     # Save image
@@ -290,7 +298,7 @@ def create_comparison_grid(
 
 def export_dataset_examples(
     kaggle_dir: str = "data/processed/kaggle",
-    brats_dir: str = "data/processed/brats2d_full",
+    brats_dir: str = "data/processed/brats2d",
     output_dir: str = "data/dataset_examples",
     num_samples: int = 20,
     kaggle_with_tumor: int = 20,
@@ -339,23 +347,30 @@ def export_dataset_examples(
     kaggle_samples = []
     
     if kaggle_path.exists():
-        # Find files
-        yes_files = sorted(kaggle_path.glob("yes_*.npz"))
-        no_files = sorted(kaggle_path.glob("no_*.npz"))
+        # Find files from train/val/test subdirectories
+        yes_files = []
+        no_files = []
+        for subdir in ['train', 'val', 'test']:
+            subdir_path = kaggle_path / subdir
+            if subdir_path.exists():
+                yes_files.extend(sorted(subdir_path.glob("yes_*.npz")))
+                no_files.extend(sorted(subdir_path.glob("no_*.npz")))
         
         print(f"  Found: {len(yes_files)} tumor, {len(no_files)} no-tumor samples")
         
         # Sample with tumor
+        print(f"  Exporting {kaggle_with_tumor} tumor samples...")
         for i, npz_file in enumerate(yes_files[:kaggle_with_tumor]):
             sample = load_kaggle_sample(npz_file)
             kaggle_samples.append(sample)
-            save_kaggle_example(sample, kaggle_output, i)
+            save_kaggle_example(sample, kaggle_output, i, has_tumor=True)
         
         # Sample without tumor
+        print(f"  Exporting {kaggle_without_tumor} no-tumor samples...")
         for i, npz_file in enumerate(no_files[:kaggle_without_tumor]):
             sample = load_kaggle_sample(npz_file)
             kaggle_samples.append(sample)
-            save_kaggle_example(sample, kaggle_output, kaggle_with_tumor + i)
+            save_kaggle_example(sample, kaggle_output, i, has_tumor=False)
         
         print(f"  [OK] Exported {len(kaggle_samples)} Kaggle samples")
     else:
@@ -367,40 +382,58 @@ def export_dataset_examples(
     brats_samples = []
     
     if brats_path.exists():
-        # Find all files
-        all_files = sorted(brats_path.glob("*.npz"))
+        # Find all files from train/val/test subdirectories
+        all_files = []
+        for subdir in ['train', 'val', 'test']:
+            subdir_path = brats_path / subdir
+            if subdir_path.exists():
+                all_files.extend(sorted(subdir_path.glob("*.npz")))
         
         print(f"  Found: {len(all_files)} total slices")
+        print(f"  Categorizing by tumor presence (this may take a moment)...")
         
         # Separate by tumor presence
         tumor_files = []
         no_tumor_files = []
         
-        for npz_file in all_files:
+        from tqdm import tqdm
+        for npz_file in tqdm(all_files, desc="  Scanning", leave=False):
             try:
-                data = np.load(npz_file, allow_pickle=True)
-                metadata = data['metadata'].item() if 'metadata' in data else {}
-                
-                if metadata.get('has_tumor', False):
-                    tumor_files.append(npz_file)
-                else:
-                    no_tumor_files.append(npz_file)
+                # Only load metadata, not the full image data
+                with np.load(npz_file, allow_pickle=True) as data:
+                    metadata = data['metadata'].item() if 'metadata' in data else {}
+                    
+                    if metadata.get('has_tumor', False):
+                        tumor_files.append(npz_file)
+                    else:
+                        no_tumor_files.append(npz_file)
+                    
+                    # Early exit if we have enough samples
+                    if len(tumor_files) >= brats_with_tumor and len(no_tumor_files) >= brats_without_tumor:
+                        break
             except Exception:
                 continue
         
         print(f"  Categorized: {len(tumor_files)} tumor, {len(no_tumor_files)} no-tumor")
         
         # Sample with tumor
-        for i, npz_file in enumerate(tumor_files[:brats_with_tumor]):
+        actual_tumor = min(brats_with_tumor, len(tumor_files))
+        print(f"  Exporting {actual_tumor} tumor samples...")
+        for i, npz_file in enumerate(tumor_files[:actual_tumor]):
             sample = load_brats_sample(npz_file)
             brats_samples.append(sample)
-            save_brats_example(sample, brats_output, i)
+            save_brats_example(sample, brats_output, i, has_tumor=True)
         
-        # Sample without tumor
-        for i, npz_file in enumerate(no_tumor_files[:brats_without_tumor]):
-            sample = load_brats_sample(npz_file)
-            brats_samples.append(sample)
-            save_brats_example(sample, brats_output, brats_with_tumor + i)
+        # Sample without tumor (if available)
+        if len(no_tumor_files) > 0:
+            actual_no_tumor = min(brats_without_tumor, len(no_tumor_files))
+            print(f"  Exporting {actual_no_tumor} no-tumor samples...")
+            for i, npz_file in enumerate(no_tumor_files[:actual_no_tumor]):
+                sample = load_brats_sample(npz_file)
+                brats_samples.append(sample)
+                save_brats_example(sample, brats_output, i, has_tumor=False)
+        else:
+            print(f"  ℹ️  No no-tumor samples found (BraTS preprocessing filters empty slices)")
         
         print(f"  [OK] Exported {len(brats_samples)} BraTS samples")
     else:
@@ -483,7 +516,7 @@ Examples:
     parser.add_argument(
         "--brats-dir",
         type=str,
-        default="data/processed/brats2d_full",
+        default="data/processed/brats2d",
         help="BraTS processed data directory"
     )
     
