@@ -4,13 +4,23 @@ Here’s the execution-guide README you asked for — focused only on **“what 
 ---
 
 ````markdown
-# SliceWise – End-to-End Execution Guide ✅
+# SliceWise – End-to-End Execution Guide 
+
+**Last Updated**: December 19, 2025
 
 This document is a **step-by-step runbook** to go from:
 
 > **Fresh clone → data ready → configs → training → evaluation → tests → running the app**
 
 For explanations and architecture details, see the main `README.md`. This guide is just **“do this, see that”**.
+
+## Recent Enhancements (December 19, 2025)
+
+- **Brain Masking for Grad-CAM**: Eliminates red background artifacts, focuses on brain tissue only
+- **Robust Kaggle Preprocessing**: 97.1% quality pass rate with advanced morphological operations
+- **Skull Boundary Detection**: Automatic mask inversion detection for correct segmentation
+- **Segmentation Fixes**: Z-score normalization and proper visualization in UI
+- **API Improvements**: Fixed cv2 import, consistent preprocessing across all endpoints
 
 ---
 
@@ -176,15 +186,21 @@ python scripts/data/preprocessing/preprocess_all_brats.py
 If not already processed by the unified pipeline:
 
 ```bash
-python scripts/data/preprocessing/preprocess_kaggle_unified.py
-# or the specific Kaggle preprocessing script used in this repo:
-# python src/data/preprocess_kaggle_unified.py
+python src/data/preprocess_kaggle.py
 ```
 
 **Expected result:**
 
 * Creates `data/processed/kaggle/` with normalized `.npz` files
-* Logs summary statistics (counts, shape, normalization) to console.
+* Applies **robust brain masking** (97.1% quality pass rate)
+* Uses z-score normalization (mean=0, std=1) for consistent model input
+* Logs summary statistics (counts, shape, normalization, quality metrics) to console.
+
+**Key Features:**
+- Advanced morphological operations (closing, flood fill, convex hull)
+- Automatic quality checks (3-95% area, 75% max border)
+- Eliminates skull rings and background artifacts
+- Foreground-only normalization (background=0)
 
 ---
 
@@ -348,9 +364,16 @@ python scripts/run_full_pipeline.py --mode full --training-mode production
    * Image files under `visualizations/multitask_gradcam/` showing:
 
      * Input MRI
-     * Classification Grad-CAM
-     * Segmentation mask / overlays
+     * Classification Grad-CAM **with brain masking** (no background artifacts)
+     * Segmentation mask / overlays with skull boundary detection
      * Error maps
+
+   **Key Features:**
+   - Brain masking applied before and after Grad-CAM generation
+   - Eliminates red/hot activations in black background
+   - Focuses attention on clinically relevant brain tissue
+   - Improved overlay blending (cv2.addWeighted, 50% alpha)
+   - Cleaner, more professional visualizations
 
 3. **(Optional) Inference profiling**
 
@@ -457,7 +480,16 @@ python scripts/demo/run_demo_frontend.py
 
   * Upload MRI images
   * Run classification, segmentation, and multi-task predictions
-  * View Grad-CAMs, segmentation overlays, and patient-level summaries.
+  * View **brain-masked Grad-CAMs** (no background artifacts)
+  * View segmentation overlays with **skull boundary detection**
+  * View patient-level summaries with volume estimation
+
+**UI Features:**
+- ✅ Grad-CAM with automatic brain masking
+- ✅ Segmentation with z-score normalization (correct predictions)
+- ✅ Skull boundary detection for Kaggle images
+- ✅ Uncertainty estimation (MC Dropout + TTA)
+- ✅ Professional overlay visualizations
 
 ---
 
@@ -525,5 +557,38 @@ python scripts/demo/run_demo_pm2.py
 
 You now have the **end-to-end pipeline + app** running from a fresh clone.
 
-```
-```
+---
+
+## 13. Key Technical Enhancements (December 2025)
+
+### Brain Masking for Grad-CAM
+- **Problem**: Red/hot activations in black background (misleading)
+- **Solution**: Apply brain mask before and after Grad-CAM generation
+- **Result**: Clean visualizations focused on brain tissue only
+- **Files**: `src/inference/multi_task_predictor.py`, `app/backend/services/multitask_service.py`
+
+### Robust Kaggle Preprocessing
+- **Problem**: Skull rings, black blobs, inconsistent masks
+- **Solution**: Advanced morphological pipeline (closing, flood fill, convex hull)
+- **Result**: 97.1% quality pass rate (238/245 images)
+- **Files**: `src/data/brain_mask.py`, `src/data/preprocess_kaggle.py`
+
+### Segmentation Preprocessing Fix
+- **Problem**: Model showing "Not Detected" (0.0%) in UI
+- **Solution**: Added z-score normalization to all segmentation endpoints
+- **Result**: Model predictions now match evaluation results (96.5% probability)
+- **Files**: `app/backend/main_v2.py`, `app/backend/services/segmentation_service.py`
+
+### Skull Boundary Detection
+- **Problem**: Inverted segmentation masks on Kaggle images
+- **Solution**: Automatic detection and correction of mask inversion
+- **Result**: Correct tumor predictions with proper boundary detection
+- **Files**: `src/inference/multi_task_predictor.py`
+
+---
+
+**For detailed technical documentation, see:**
+- `documentation/GRADCAM_BRAIN_MASKING_FIX.md`
+- `documentation/ROBUST_BRAIN_MASKING_IMPLEMENTATION.md`
+- `documentation/SKULL_BOUNDARY_DETECTION_FIX_SUMMARY.md`
+- `BUGFIX_SEGMENTATION_ENDPOINT.md`
